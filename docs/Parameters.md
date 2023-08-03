@@ -1,0 +1,70 @@
+# Description of input parameters to [processVMPfiles](processVMPfiles.m)`
+
+- `dataRoot` a string defining the root level of where data files are stored `(default: ../Data)`
+- `vmpRoot` is a string defining where the `SN*/*.p` files are located relative to `dataRoot` `(default: VMP)`
+- `matRoot` is a string defining where the output of `odas_p2mat` files go relative to `dataRoot` `(default: VMP/Matfiles)`
+- `profileRoot` is a string defining where the profile directory is stored relative to `dataRoot` `(default: VMP)` 
+- `binnedRoot` is a string defining where the binned directory is stored relative to `dataRoot` `(default: VMP)` 
+- `logRoot` is a string defining where the logfile is stored relative to `dataRoot` `(default: VMP)` 
+- *GPS* related parameters
+  - `gpsClass` This is a class object for obtaining a GPS fix at a specified time. `(default: @GPSInfo)`
+  - 1gpsFilename` This is a filename input to the `gpsClass` object, relative to `dataRoot`. `(default: GPS/gps.nc)`
+  - `gpsMethod` The interpolation method to obtain a GPS fix for an unknown timestamp. Options include:
+    - linear
+    - nearest
+    - next
+    - previous
+    - pchip
+    - cubic
+    - v5cubic
+    - makima
+    - spline
+  - `gpsMaxTimeDiff` a warning is issued if the actual GPS fix is further than this time from the target time. The units here are seconds. `(default: 60)`
+- profile related parameters
+  - `profiel_pressureMin` This is the minimum pressure for a cast. The units are decibars. `(default: 0.5)`
+  - `profile_speedMin` The minimum vertical speed to be in a cast. The units are m/s. `(default: 0.3)`
+  - `profile_minDuration` The minimum duration of a cast in seconds. `(default: 7)`
+  - `profile_direction` The cast direction, up or down. `(default: down)` ***The code has only been tested with down!!!***
+- Top [trimming](Trim.md) parameters
+  - `trim_use` Should top trimming be done? (true or false) `(default: true)`
+  - `trim_quantile` is the quantile of the various variance metrics to use. `(default: 0.6)`
+  - `trim_dz` Triming bin width in decibars for calculating variances. `(default: 0.5)`
+  - `trim_minDepth` The depth to start looking at for triming. `(default: 1)`
+  - `trim_maxDepth` The depth to stop looking at for triming. `(default: 50)`
+  - `trim_extraDepth` Additional depth added to the automatic trim depth. This is in decibars and can be positive or negative. `(default: 0)`
+- [Bottom boundary layer trimming](BBL.md) parameters ***Bottom crash detection not implemented***
+  - `bbl_use` Should bottom trimming be done? (true or false) `(default: false)`
+  - `bbl_quantile` is the quantile of the various variance metrics to use. `(default: 0.6)`
+  - `bbl_dz` BBL triming bin width in decibars for calculating variances. `(default: 0.5)`
+  - `bbl_minDepth` The depth to start looking at for BBL triming. `(default: 10)`
+  - `bbl_maxDepth` The depth to stop looking at for BBL triming. `(default: 50)`
+  - `bbl_extraDepth` Additional depth added to the automatic BBL trim depth. This is in decibars and can be positive or negative. `(default: 0)`
+- [FP07 calibration and shift](FP07.md) parameters
+  - `fp07_calibration` Should FP07 calibration be done? (true or false) `(default: true)`
+  - `fp07_order` Order of polynomial fit to use. `(default: 2)`
+  - `fp07_reference` Reference slow variable to use for calibrating the FP07s. `(default: JAC_T)`
+- [Despiking](Despiking.md) parameters
+  - `despike_sh_thres` Shear probe threshold `(default: 8)`
+  - `despike_sh_smooth` Shear probe smoothing `(default: 0.5)`
+  - `despike_sh_N_FS` Shear probe N_FS `(default: 0.05)`
+  - `despike_sh_warning_fraction` Shear probe fraction above which to issue a warning. `(default: 0.03)`
+  - `despike_A_thres` Accelerometer probe threshold `(default: 8)`
+  - `despike_A_smooth` Accelerometer probe smoothing `(default: 0.5)`
+  - `despike_A_N_FS` Accelerometer probe N_FS `(default: 0.05)`
+  - `despike_A_warning_fraction` Shear probe fraction above which to issue a warning. `(default: 0.03)`
+- [Dissipation](Dissipation.md) parameters
+ - `diss_T1Norm` Positive value to normalize T1_fast by to calclate T_fast. `(default: 1)`
+ - `diss_T2Norm` Positive value to normalize T2_fast by to calclate T_fast. `(default: 1)`
+ - `diss_warning_ratio` If the ratio of the e samples are further than this apart, tag as big. `(default: 5)`
+ - `diss_warning_fraction` Isssue a warning if more than this fraction are *big*. `(default: 0.15)`
+ - Downward calculation
+   - `diss_downwards_fft_length_sec` Seconds for the FFT length. `(default: 0.5)`
+   - `diss_downwards_length_fac` Number of FFTs to combine. `(default: 2)`
+ - Upward calculation
+   - `diss_upwards_fft_length_sec` Seconds for the FFT length. `(default: 0.5)`
+   - `diss_upwards_length_fac` Number of FFTs to combine. `(default: 2)`
+- [Binning](Binning.md) parameters
+ - `bin_method` How should bins values be calculated? (median or mean) `(default: median)`
+ - `bin_width` With of a bin in decibars. Bins are centered on multiples of the width. `(default: 1)`
+ - `bin_dissFloor` Values less than this value are set to NaN. `(default: 1e-11)`
+ - `bin_dissRatio` If the ratio of e values is greater than this, then the minimum is taken. `(default: 5)`
