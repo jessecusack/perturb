@@ -1,16 +1,16 @@
 # perturb - a microstructure processing toolbox for Rockland Scientific instruments
 
 ## Required external softwware:
-- [https://www.mathworks.com/products/matlab.html](Matlab) (Tested with R2023a)
-- [https://rocklandscientific.com/support/tools/software-versions/](ODAS library) (Tested with ODAS-4.5.1)
+- (Matlab)[https://www.mathworks.com/products/matlab.html] (Tested with R2023a)
+- (ODAS Library)[https://rocklandscientific.com/support/tools/software-versions] (Tested with ODAS-4.5.1)
 
-For an [docs/overview.md](overview).
-For the [docs/data_flow.md](data flow).
-For the [docs/data_organization.md](data organization).
-For the [docs/variables.md](MatLab variable names and definitions).
-For the [docs/netCDF.md](NetCDF variable names and definitions).
+For an [overview.](docs/overview.md)
+For the [data flow.](docs/data_flow.md)
+For the [data organization.](docs/data_organization.md)
+For the [MatLab variable names and definitions.](docs/variables.md]
+For the [NetCDF variable names and definitions.](docs/netCDF.md)
 
 ## Authors
-* Jesse Cusack, [https://ceoas.oregonstate.edu](Oregon State University)
-* Fucent Wei, [https://ceoas.oregonstate.edu](Oregon State University)
-* Pat Welch, [https://ceoas.oregonstate.edu](Oregon State University)
+* Jesse Cusack, [Oregon State University](https://ceoas.oregonstate.edu)
+* Fucent Wei, [Oregon State University](https://ceoas.oregonstate.edu)
+* Pat Welch, [Oregon State University](https://ceoas.oregonstate.edu)
