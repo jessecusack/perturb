@@ -1,6 +1,6 @@
 # perturb - a microstructure processing toolbox for Rockland Scientific instruments
 
-## Required external softwware:
+***Required external softwware:***
 - [Matlab](https://www.mathworks.com/products/matlab.html) (Tested with R2023a)
 - [ODAS Library](https://rocklandscientific.com/support/tools/software-versions) (Tested with ODAS-4.5.1)
 
