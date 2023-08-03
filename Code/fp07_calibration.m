@@ -5,13 +5,16 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = fp07Calibration(a, indicesSlow, indicesFast, info)
-arguments
-    a struct
-    indicesSlow (2,:) int64
-    indicesFast (2,:) int64
-    info struct
-end % arguments
+function a = fp07_calibration(a, indicesSlow, indicesFast, info)
+arguments (Input)
+    a struct % Output of odas_p2mat
+    indicesSlow (2,:) int64 % Output of get_profile, indices into slow vectors for profiles
+    indicesFast (2,:) int64 % Output of get_profile, indices into fast vectors for profiles
+    info struct % Parameters, defaults from get_info
+end % arguments Input
+arguments (Output)
+    a struct % possibly modified version of odas_p2mat output
+end % arguments Output
 
 if ~info.fp07_calibration, return; end % Don't calibrate the FP07 sensors
 
