@@ -4,15 +4,21 @@
 - [Matlab](https://www.mathworks.com/products/matlab.html) (Tested with R2023a)
 - [ODAS Library](https://rocklandscientific.com/support/tools/software-versions) (Tested with ODAS-4.5.1)
 
-For an [overview.](docs/overview.md)
+[VMP250](docs/VMP250.md)
 <br>
-For the [data flow.](docs/data_flow.md)
+[MicroRider](docs/MicroRider.md)
 <br>
-For the [data organization.](docs/data_organization.md)
+[Overview of the system.](docs/overview.md)
 <br>
-For the [MatLab variable names and definitions.](docs/variables.md)
+[How data flows through the system.](docs/data_flow.md)
 <br>
-For the [NetCDF variable names and definitions.](docs/netCDF.md)
+[The data file structure.](docs/data_organization.md)
+<br>
+[MatLab files variable names and definitions.](docs/matlab_variables.md)
+<br>
+[NetCDF files variable names and definitions.](docs/netCDF.md)
+<br>
+[How to execute unit tests.](docs/unit_tests.md)
 
 ## Authors
 * Jesse Cusack, [Oregon State University](https://ceoas.oregonstate.edu)
