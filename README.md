@@ -4,9 +4,9 @@
 - [Matlab](https://www.mathworks.com/products/matlab.html) (Tested with R2023a)
 - [ODAS Library](https://rocklandscientific.com/support/tools/software-versions) (Tested with ODAS-4.5.1)
 
-[VMP250](docs/VMP250.md)
+[VMP250 Quickstart](docs/VMP250.md)
 <br>
-[MicroRider](docs/MicroRider.md)
+[MicroRider Quickstart](docs/MicroRider.md)
 <br>
 [Overview of the system.](docs/overview.md)
 <br>
@@ -24,3 +24,8 @@
 * Jesse Cusack, [Oregon State University](https://ceoas.oregonstate.edu)
 * Fucent Wei, [Oregon State University](https://ceoas.oregonstate.edu)
 * Pat Welch, [Oregon State University](https://ceoas.oregonstate.edu)
+
+### References:
+- [Rockland Scientific](https://rocklandscientific.com)
+- [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
+
