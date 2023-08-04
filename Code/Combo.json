@@ -1,0 +1,394 @@
+{
+	"compressionLevel": 5,
+	
+	"nameMap": {
+		"comment": "Table column name to NetCDF variable name",
+		"t0": "stime",
+		"t1": "etime",
+		"t": "time",
+		"JAC_T": "temp",
+		"JAC_C": "cond",
+		"JAC_SP": "SP",
+		"JAC_SA": "SA",
+		"JAC_rho": "rho",
+		"JAC_sigma": "sigma",
+		"JAC_theta": "theta"
+	},
+
+	"globalMap": {
+		"comment": "Names of table columns to use for global attributes",
+		"stime": "t0",
+		"lat": "lat",
+		"lon": "lon",
+		"depth": "minDepth"
+	},
+
+	"dimensions": {
+		"t0": "stime"
+	},
+
+	"vars": {
+		"time": {
+			"units": "seconds since 1970-01-01 00:00:00",
+			"calendar": "proleptic_gregorian",
+			"long_name": "stime",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"stime": {
+			"units": "seconds since 1970-01-01 00:00:00",
+			"calendar": "proleptic_gregorian",
+			"long_name": "time",
+			"standard_name": "time"
+		},
+		"etime": {
+			"units": "seconds since 1970-01-01 00:00:00",
+			"calendar": "proleptic_gregorian",
+			"long_name": "time_end",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"nSlow": {
+			"units": "",
+			"long_name": "number_of_slow_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"nFast": {
+			"units": "",
+			"long_name": "number_of_fast_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cntBBL": {
+			"units": "",
+			"long_name": "number_of_BBL_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cntDiss": {
+			"units": "",
+			"long_name": "number_of_dissipation_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cntSlow": {
+			"units": "",
+			"long_name": "number_of_slow_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cntFast": {
+			"units": "",
+			"long_name": "number_of_fast_samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"temp": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature",
+			"standard_name": "sea_water_temperature",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"temperature_fast": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T1_slow": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature_T1_slow",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T2_slow": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature_T2_slow",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T1_fast": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature_T1_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T2_fast": {
+			"units": "degrees_Celsius",
+			"long_name": "temperature_T2_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"gradT1": {
+			"units": "degrees_Celsius second^-1",
+			"long_name": "temperature_gradient_T1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"gradT2": {
+			"units": "degrees_Celsius second^-1",
+			"long_name": "temperature_gradient_T2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T1": {
+			"units": "Ohms",
+			"long_name": "T1_resistance",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T2": {
+			"units": "Ohms",
+			"long_name": "T2_resistance",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T1_dT1": {
+			"units": "Ohms",
+			"long_name": "T1_dT1_resistance",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T2_dT2": {
+			"units": "Ohms",
+			"long_name": "T2_dT2_resistance",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cond": {
+			"units": "mS cm^-1",
+			"long_name": "conductivity",
+			"standard_name": "sea_water_electrical_conductivity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"P": {
+			"units": "",
+			"long_name": "pressure_transducer_without_pre_emphasis",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"P_dP": {
+			"units": "",
+			"long_name": "pressure_transducer_with_pre_emphasis",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"PV": {
+			"units": "Volts",
+			"long_name": "pressure_transducer_voltage",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"P_slow": {
+			"units": "decibar",
+			"positive": "up",
+			"long_name": "pressure_slow",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"P_fast": {
+			"units": "decibar",
+			"positive": "up",
+			"long_name": "pressure_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"bin": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "bin_centroid_depth",
+			"standard_name": "depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+
+		"depth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"minDepth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "minimum_depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"maxDepth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "maximum_depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"bottomDepth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "bottom_depth",
+			"standard_name": "sea_floor_depth_below_sea_surface",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"trimDepth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "trim_depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"trimMaxDepth": {
+			"units": "meter",
+			"positive": "up",
+			"long_name": "trim_maximum_depth",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"lon": {
+			"units": "degrees_east",
+			"long_name": "longitude",
+			"standard_name": "longitude"
+		},
+		"lat": {
+			"units": "degrees_north",
+			"long_name": "latitude",
+			"standard_name": "latitude"
+		},
+		"dtGPS": {
+			"units": "seconds",
+			"long_name": "GPS_time_distance",
+			"standard_name": "time_sample_difference_due_to_collocation",
+			"comment": "Time between observation and GPS fix",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Ax": {
+			"units": "",
+			"long_name": "acceleration_x",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Ay": {
+			"units": "",
+			"long_name": "acceleration_y",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Incl_T": {
+			"units": "",
+			"long_name": "inclination_T",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Incl_X": {
+			"units": "degrees",
+			"long_name": "inclination_X",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Incl_Y": {
+			"units": "degrees",
+			"long_name": "inclination_Y",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"SP": {
+			"units": "",
+			"long_name": "practical_salinity",
+			"standard_name": "sea_water_practical_salinity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"SA": {
+			"units": "g kg^-1",
+			"long_name": "salinity",
+			"standard_name": "sea_water_salinity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"theta": {
+			"units": "degrees_Celsius",
+			"long_name": "conservative_temperature",
+			"standard_name": "sea_water_conservative_temperature",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"sigma": {
+			"units": "kg m^-3",
+			"long_name": "potential_density_anomaly",
+			"standard_name": "sea_water_potential_density",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"rho": {
+			"units": "kg m^-3",
+			"long_name": "density",
+			"standard_name": "sea_water_density",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"DO": {
+			"units": "micromol liter^-1",
+			"long_name": "disolved_oxygen",
+			"standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"DO_T": {
+			"units": "degrees_Celsius",
+			"long_name": "disolved_oxygen_temperature",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Chlorophyll": {
+			"units": "ppb",
+			"long_name": "chlorophyll",
+			"standard_name": "mass_concentration_of_chlorophyll_in_sea_water",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Turbidity": {
+			"units": "FTU",
+			"long_name": "turbidity",
+			"standard_name": "sea_water_turbidity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"FM": {
+			"units": "",
+			"long_name": "figure_of_merit",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"FM_bbl": {
+			"units": "",
+			"long_name": "figure_of_merit_bbl",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"W_slow": {
+			"units": "m sec^-1",
+			"long_name": "W_slow",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"W_fast": {
+			"units": "m sec^-1",
+			"long_name": "W_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"speed_slow": {
+			"units": "m sec^-1",
+			"long_name": "speed_slow",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"speed_fast": {
+			"units": "m sec^-1",
+			"long_name": "speed_fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"sh1": {
+			"units": "",
+			"long_name": "shear_probe_1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"sh2": {
+			"units": "",
+			"long_name": "shear_probe_2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e": {
+			"units": "Watts kg^-1",
+			"long_name": "dissipation",
+			"standard_name": "specific_turbulent_kinetic_energy_dissipation_in_sea_water",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e_bbl": {
+			"units": "Watts kg^-1",
+			"long_name": "dissipation_bbl",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"V_Bat": {
+			"units": "Volts",
+			"long_name": "battery_voltage",
+			"coverage_content_type": "physicalMeasurement"
+		}
+	},
+
+	"global": {
+		"processing_level": 2,
+		"naming_authority": "org.cfconventions",
+		"standard_name_vocabulary": "CF Standard Name Table v72",
+		"geospatial_vertical_positive": "down",
+		"geospatial_bounds_crs": "EPSG:4326",
+		"geospatial_bounds_vertical_crs": "Instantaneous_Water_Level_Height",
+		"geospatial_lat_units": "degrees_north",
+		"geospatial_lat_resolution": "1 meter",
+		"geospatial_lon_units": "degrees_east",
+		"geospatial_lon_resolution": "1 meter",
+		"geospatial_vertical_units": "meters",
+		"geospatial_vertical_resolution": "0.001 meter",
+		"instrument": "Rockland VMP",
+		"references": "https://github.com/mousebrains/VMP",
+		"title": "Depth binned VMP profiles",
+		"history": "None",
+		"source": "observations from VMP",
+		"Conventions": "CF-1.8, ACDD-1.3",
+		"keywords": "Dissipation, Salinity, Density, Disolved Oxygen, Chlorophyll, Turbidity",
+		"comment": "Data from Rockland VMP casts",
+		"summary": "Dissipation, CTD, DO, and fluorometer data from a Rockland VMP"
+	}
+}

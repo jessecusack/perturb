@@ -3,20 +3,20 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function bin_CTD(pInfo, info)
-arguments
-    pInfo table
-    info struct
-end % arguments
+function bin_CTD(profile_info, info)
+arguments (Input)
+    profile_info table % one row per profile, output of mat2profiles
+    info struct % parameters, defaults from get_info
+end % arguments Input
 
-fnCombo = info.("ctdFilename");
-fnInfo  = info.("ctdInfoFilename");
+fnCombo = info.("ctd_filename");
+fnInfo  = info.("ctd_info_filename");
 
 cInfo = table();
-[cInfo.fnProf, ix] = unique(pInfo.fnProf);
-cInfo.sn = pInfo.sn(ix);
-cInfo.basename = pInfo.basename(ix);
-cInfo.fnCTD = fullfile(info.ctdRoot, cInfo.sn, append(cInfo.basename, ".mat"));
+[cInfo.fnProf, ix] = unique(profile_info.fnProf);
+cInfo.sn = profile_info.sn(ix);
+cInfo.basename = profile_info.basename(ix);
+cInfo.fnCTD = fullfile(info.ctd_root, cInfo.sn, append(cInfo.basename, ".mat"));
 cInfo.qIncluded = false(size(cInfo.fnProf));
 
 if exist(fnInfo, "file")
@@ -100,7 +100,7 @@ for index = 1:size(newInfo,1)
 
     b.t = b.t + seconds(dtBin / 2); % Bin centroid
 
-    myMkDir(row.fnCTD);
+    my_mk_directory(row.fnCTD);
     save(row.fnCTD, "b");
 
     allNames = union(allNames, string(b.Properties.VariableNames));
@@ -133,8 +133,8 @@ tbl = vertcat(tbl{:}); % This takes care of column realignment
 [~, ix] = unique(tbl.t); % Unique and ascending in t
 tbl = tbl(ix,:);
 
-myMkDir(fnCombo);
-myMkDir(fnInfo);
+my_mk_directory(fnCombo);
+my_mk_directory(fnInfo);
 
 save(fnCombo, "tbl");
 save_netCDF(fnCombo, tbl, info);
@@ -145,17 +145,17 @@ fprintf("CTDbin wrote %dx%d to %s\n", size(tbl,1), size(tbl,2), fnCombo);
 end % bin_CTD
 
 
-function save_netCDF(fnCombo, tbl, info)
-arguments
-    fnCombo string
-    tbl table
-    info struct
+function save_netCDF(fn_combo, tbl, info)
+arguments (Input)
+    fn_combo string % Combined CTD filename
+    tbl table % Table to create NetCDF file from
+    info struct % Parameters, defaults from get_info
 end % arguments
 
-[dirname, basename] = fileparts(fnCombo);
+[dirname, basename] = fileparts(fn_combo);
 fnNC = fullfile(dirname, append(basename, ".nc"));
 myDir = fileparts(mfilename("fullpath"));
 fnCDL = fullfile(myDir, "CTD.json");
 
-mkNetCDF(fnNC, tbl, info, fnCDL);
+mk_NetCDF(fnNC, tbl, info, fnCDL);
 end % save_netCDF

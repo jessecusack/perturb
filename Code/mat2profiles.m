@@ -1,11 +1,14 @@
 % Split mat file into individual profiles
 
 function pInfo = mat2profiles(filenames, info)
-arguments
-    filenames table
-    info struct
-end % arguments
-%%
+arguments (Input)
+    filenames table % One row per file
+    info struct % Parameters, defaults from get_info
+end % arguments Input
+arguments (Output)
+    pInfo table % One row per profile
+end % arguments Output
+
 % Add additional profile related columns to the filenames table
 sz = size(filenames.sn);
 filenames.t0 = NaT(sz);
@@ -18,15 +21,15 @@ filenames.lonMin = nan(sz);
 filenames.latMax = nan(sz);
 filenames.lonMax = nan(sz);
 
-if exist(info.profileInfoFilename, "file") % Merge existing information
-    a = load(info.profileInfoFilename);
+if exist(info.profile_info_filename, "file") % Merge existing information
+    a = load(info.profile_info_filename);
     names = string(filenames.Properties.VariableNames);
-    filenames = myJoiner(filenames, a.filenames, ...
+    filenames = my_joiner(filenames, a.filenames, ...
         ["basename", "sn"], ...
         names(names.startsWith("fn")));
     % Replace fnBin names in a.pInfo with current binnedRoot, in case it
     % changed on us due to the signature.
-    a.pInfo.fnBin = fullfile(info.binnedRoot, a.pInfo.sn, append(a.pInfo.basename, ".mat"));
+    a.pInfo.fnBin = fullfile(info.binned_root, a.pInfo.sn, append(a.pInfo.basename, ".mat"));
     pInfo = a.pInfo;
 else
     pInfo = table();
@@ -59,15 +62,15 @@ for index = 1:size(filenames, 1) % Walk through filenames
     end % if ~isempty rows
 
     stime = tic();
-    myMkDir(fnProf);
+    my_mk_directory(fnProf);
     a = load(fnM); % Load the matfile for this set of casts
     a.label = append(fRow.sn, "/", fRow.basename);
 
     indicesSlow = get_profile(a.P_slow, a.W_slow, ...
-        info.profile_pressureMin, ...
-        info.profile_speedMin, ...
+        info.profile_pressure_min, ...
+        info.profile_speed_min, ...
         char(info.profile_direction), ...
-        info.profile_minDuration, ...
+        info.profile_min_duration, ...
         a.fs_slow);
 
     if isempty(indicesSlow) % No profiles found, so change qUse to false
@@ -84,14 +87,14 @@ for index = 1:size(filenames, 1) % Walk through filenames
         "nearest", "extrap"); % Fast indices for each profile
 
     % First change values in a for calibration and time shifts
-    a = fp07Calibration(a, indicesSlow, indicesFast, info); % Adjust T?_(slow|fast) and shift JAC_[TC]
+    a = fp07_calibration(a, indicesSlow, indicesFast, info); % Adjust T?_(slow|fast) and shift JAC_[TC]
     a = CT_align(a, indicesSlow, info); % Shift JAC_C
 
     if isempty(gps) % Only initialize GPS if needed
-        gps = info.gpsClass(info.gpsFilename, info.gpsMethod);
+        gps = info.gps_class(info.gps_filename, info.gps_method);
     end % if isempty gps
 
-    [ctd, chlorophyll] = mkCTD(a, indicesSlow, gps);
+    [ctd, chlorophyll] = mk_CTD(a, indicesSlow, gps);
 
     profiles = cell(nProfiles, 1);
     profileInfo = mk_profile_info(fRow, nProfiles);
@@ -138,7 +141,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
         profile.lat = gps.lat(profile.slow.t(1)); % Latitude at start of profile
         profile.lon = gps.lon(profile.slow.t(1)); % Longitude at start of profile
         profile.dtGPS = gps.dt(profile.slow.t(1)); % Nearest GPS timestamp
-        profile.slow = addSeawaterProperties(profile); % SP/SA/theta/rho/...
+        profile.slow = add_seawater_properties(profile); % SP/SA/theta/rho/...
         profile.fast.depth = interp1(profile.slow.t_slow, profile.slow.depth, ...
             profile.fast.t_fast, "linear", "extrap");
         profileInfo.lat(j) = profile.lat;
@@ -152,7 +155,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
         profileInfo.nFast(j) = numel(jj);
         profiles{j} = profile;
 
-        if profile.dtGPS > info.gpsMaxTimeDiff
+        if profile.dtGPS > info.gps_max_time_diff
             fprintf("WARNING: %s profile %d GPS fix %s from t0 %s\n", ...
                 a.label, j, string(seconds(profileInfo.dtGPS(j)), "hh:mm:ss"), ...
                 profileInfo.t0(j));
@@ -181,7 +184,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
         pInfo = profileInfo;
     else
         names = string(pInfo.Properties.VariableNames);
-        pInfo = myJoiner(pInfo, profileInfo, ...
+        pInfo = my_joiner(pInfo, profileInfo, ...
             ["basename", "sn", "index"], ...
             names(names.startsWith("fn")));
     end % if isempty
@@ -206,7 +209,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
 end % for index
 
 a = struct("filenames", filenames, "pInfo", pInfo);
-save(info.profileInfoFilename, "-struct", "a");
+save(info.profile_info_filename, "-struct", "a");
 end % mat2profiles
 
 function tbl = mk_profile_info(row, nProfiles)
@@ -217,12 +220,12 @@ end % for
 tbl.index = (1:nProfiles)';
 tbl.t0 = NaT(nProfiles,1);
 tbl.t1 = NaT(nProfiles,1);
-tbl.nSlow = nan(nProfiles,1);
-tbl.nFast = nan(nProfiles,1);
-tbl.minDepth = nan(nProfiles,1);
-tbl.maxDepth = nan(nProfiles,1);
-tbl.trimDepth = nan(nProfiles,1);
+tbl.n_slow = nan(nProfiles,1);
+tbl.n_fast = nan(nProfiles,1);
+tbl.min_depth = nan(nProfiles,1);
+tbl.max_depth = nan(nProfiles,1);
+tbl.trim_depth = nan(nProfiles,1);
 tbl.lat = nan(nProfiles,1);
 tbl.lon = nan(nProfiles,1);
-tbl.dtGPS = nan(nProfiles,1);
+tbl.dt_GPS = nan(nProfiles,1);
 end % mk_profile_info

@@ -6,7 +6,7 @@ arguments
     info struct
 end % arguments
 %% Bin the data into depth bins
-dz = info.bin_Width; % Bin stepsize (m)
+dz = info.bin_width; % Bin stepsize (m)
 
 method = info.bin_method; % Which method to aggregate the data together
 if ~isa(method, "function_handle")
@@ -182,7 +182,7 @@ for fnProf = unique(pInfo.fnProf)'
         "tbl", tbl(1:end-1,:), ... % Strip off last row which will be NaN
         "info", pRows);
 
-    myMkDir(fnBin);
+    my_mk_directory(fnBin);
     save(fnBin, "-struct", "profiles");
     fprintf("Saving %d profiles to %s\n", size(pRows,1), fnBin);
 end % for filenames

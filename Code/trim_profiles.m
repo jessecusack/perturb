@@ -11,14 +11,14 @@ arguments (Output)
 end % arguments Input
 %%
 dz = info.trim_dz;
-bins = info.trim_minDepth:dz:info.trim_maxDepth; % Depth bins for variance estimates
+bins = info.trim_min_depth:dz:info.trim_max_depth; % Depth bins for variance estimates
 
 qMinDepth = bins(1) - dz/2;
 qMaxDepth = bins(end) + dz/2;
 
 nProfiles = numel(profiles);
-pInfo.trimDepth = nan(nProfiles,1);
-pInfo.trimMaxDepth = nan(nProfiles,1);
+pInfo.trim_depth = nan(nProfiles,1);
+pInfo.trim_max_depth = nan(nProfiles,1);
 
 casts = cell(nProfiles,1);
 
@@ -77,7 +77,7 @@ for i = 1:numel(names)
 end % for name
 
 depths = table2array(depths);
-minDepth = quantile(depths, info.trim_quantile, 2);
-pInfo.trimDepth(qKeep) = minDepth;
-pInfo.trimMaxDepth(qKeep) = max(depths, [], 2);
+min_depth = quantile(depths, info.trim_quantile, 2);
+pInfo.trim_depth(qKeep) = min_depth;
+pInfo.trim_max_depth(qKeep) = max(depths, [], 2);
 end % trim_profiles
