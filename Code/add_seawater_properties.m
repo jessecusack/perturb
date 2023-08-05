@@ -1,12 +1,20 @@
 % Add in seawater properties to slow
 
-function slow = add_seawater_properties(profile)
+function slow = add_seawater_properties(profile, latDefault, lonDefault)
 arguments (Input)
     profile struct % Structure being built by mat2profiles
+    latDefault double = 0
+    lonDefault double = 0
 end % arguments Input
 arguments (Output)
     slow table % Slow variables with additional seawater columns
 end % arguments Output
+
+lat = profile.lat;
+lon = profile.lon;
+
+lat(isnan(lat)) = latDefault;
+lon(isnan(lon)) = lonDefault;
 
 slow = profile.slow;
 slow.JAC_SP = gsw_SP_from_C(slow.JAC_C, slow.JAC_T, slow.P_slow); % Practical salinity
