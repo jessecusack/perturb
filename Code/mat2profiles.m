@@ -27,7 +27,7 @@ if exist(info.profile_info_filename, "file") % Merge existing information
     filenames = my_joiner(filenames, a.filenames, ...
         ["basename", "sn"], ...
         names(names.startsWith("fn")));
-    % Replace fnBin names in a.pInfo with current binnedRoot, in case it
+    % Replace fnBin names in a.pInfo with current binned_root, in case it
     % changed on us due to the signature.
     a.pInfo.fnBin = fullfile(info.binned_root, a.pInfo.sn, append(a.pInfo.basename, ".mat"));
     pInfo = a.pInfo;
