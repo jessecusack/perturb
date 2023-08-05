@@ -16,7 +16,7 @@ end % arguments Output
 items = struct2table(dir(fullfile(info.vmp_root, "SN*/*"))); % All files
 items.name = string(items.name);
 items = items(endsWith(items.name, ".p", "IgnoreCase", true),:); % For case sensitive file systems
-items = items(~endsWith(items.name, "_orginal.p", "IgnoreCase", true),:);
+items = items(~endsWith(items.name, "_original.p", "IgnoreCase", true),:);
 items.folder = string(items.folder);
 
 tbl = table();
