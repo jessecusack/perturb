@@ -29,3 +29,12 @@
 - [Rockland Scientific](https://rocklandscientific.com)
 - [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
 
+# TODO:
+- Add chi
+- Bottom crash detection
+- BBL stress
+- CTD salinity spikes/thermal mass/...
+- documentation within the code
+- camel cast to snake case
+- unit tests
+- invalid GPS
