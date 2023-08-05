@@ -19,8 +19,8 @@ addParameter(p, "debug", false, @(x) ismember(x, [true, false])); % Turn on debu
 addParameter(p, "vmp_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/VMP")), @(x) isfolder(x));
 addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/Output")), validString);
 %% GPS related parameters
-addParameter(p, "gps_filename", "GPS/gps.nc", validString); % Relative to dataRoot
-addParameter(p, "gps_class", @GPSInfo, @(x) isa(x, "function_handle")); % Class to get GPS information from
+addParameter(p, "gps_filename", missing, validString); 
+addParameter(p, "gps_class", @GPS_nan, @(x) isa(x, "function_handle")); % Class to get GPS information from
 addParameter(p, "gps_method", "linear", @(x) ismember(x, ["linear", "nearest", "next", "previous", "pchip", "cubic", "v5cubic", "makima", "spline"]));
 addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time difference for warning
 %% Profile split parameters
