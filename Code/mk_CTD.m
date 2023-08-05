@@ -8,11 +8,13 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [ctd, fast] = mk_CTD(a, indicesSlow, gps)
+function [ctd, fast] = mk_CTD(a, indicesSlow, gps, latDefault, lonDefault)
 arguments
     a struct % Output from odas_p2mat
     indicesSlow (2,:) int64 % Output from get_profile for the slow variables
     gps GPS_base_class % GPS class for getting GPS fixes
+    latDefault double = 0
+    lonDefault double = 0
 end % arguments Input
 arguments (Output)
     ctd table  % slow CTD/DO/... variables
@@ -46,6 +48,11 @@ for name = string(fieldnames(nameMap))'
         end % if isequal
     end % if
 end % for name
+
+lat = ctd.lat;
+lon = ctd.lon;
+lat(isnan(lat)) = latDefault;
+lon(isnan(lon)) = lonDefault;
 
 ctd = addGPS(ctd, indicesSlow, gps);
 
