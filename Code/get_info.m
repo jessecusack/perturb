@@ -8,6 +8,7 @@
 %
 %%
 function a = get_info(varargin)
+
 p = inputParser();
 validString = @(x) isstring(x) || ischar(x) || iscellstr(x);
 validPositive = @(x) inRange(x, 0);
