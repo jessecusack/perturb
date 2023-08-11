@@ -7,7 +7,7 @@ my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
 data_root = "~/Desktop/ASTRAL/Data";
 vmp_root = fullfile(data_root, "VMP");
-output_root = fullfile(my_root, "../Temp");
+output_root = fullfile(data_root, "Temp");
 GPS_filename = fullfile(data_root, "GPS/gps.mat");
 
 addpath(code_root, "-begin");
