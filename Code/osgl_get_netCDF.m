@@ -1,14 +1,3 @@
-function a = osgl_get_netCDF(fn, varargin)
-arguments (Input)
-    fn string {mustBeFile} % Input filename
-end % arguments Input
-arguments (Repeating)
-    varargin cell % Optional arguments
-end % arguments Repeating
-arguments (Output)
-    a struct % Output structure of data read from fn
-end % arguments output
-
 % Load data from a netCDF file into a matlab structure.
 % If no optional arguments are supplied, all variables with
 % a supported data type are loaded.
@@ -28,9 +17,16 @@ end % arguments output
 %                      metadata standards
 %
 
-if (~exist(fn, 'file'))
-  error('File "%s" does not exist', fn);
-end
+function a = osgl_get_netCDF(fn, varargin)
+arguments (Input)
+    fn string {mustBeFile} % Input filename
+end % arguments Input
+arguments (Repeating)
+    varargin cell % Optional arguments
+end % arguments Repeating
+arguments (Output)
+    a struct % Output structure of data read from fn
+end % arguments output
 
 names = cell(numel(varargin),1); % Pre-allocate
 
@@ -227,6 +223,8 @@ refTime = datetime(str2double(tokens{1}), str2double(tokens{2}), str2double(toke
 
 data = NaT(size(data), "TimeZone", "UTC");
 data(qOkay) = refTime + dt;
+data.TimeZone = "UTC"; % Convert to UTC
+data.TimeZone = ""; % Drop an explict timezone since it causes other problems
 end % ctConvert
 
 function [names, varids] = loadNames(ncid)
