@@ -1,6 +1,8 @@
 # Data flow for [software suite](https://github.com/jessecusack/perturb/tree/main)
 
-- A list of potential `.P` files that exist in the source directory is created.
+- A list of potential `.P` files that exist in the *vmp_root* directory is created.
+- All the `.P` file headers are examined to see if they were created by the previous file "sizing" out. If so, then the previous and this file are appended to create a single `.P` file. [p_file_merger.m](../Code/p_file_merger.m)
+- A list of potential `.P` files that exist in the *vmp_root* directory is created, after the previous step.
 - For each of the `.P` files: [mat2profiles.m](../Code/mat2profiles.m)
   * If a corresponding `.mat` file from ***odas_p2mat*** exists and is newer than the `.P` file, nothing new is done.
   * A new `.mat` file is created by processing the `.P` file with ***odas_p2mat***.
