@@ -49,12 +49,10 @@ for name = string(fieldnames(nameMap))'
     end % if
 end % for name
 
-lat = ctd.lat;
-lon = ctd.lon;
-lat(isnan(lat)) = latDefault;
-lon(isnan(lon)) = lonDefault;
-
 ctd = addGPS(ctd, indicesSlow, gps);
+
+ctd.lat(isnan(ctd.lat)) = latDefault;
+ctd.lon(isnan(ctd.lon)) = lonDefault;
 
 ctd.SP = gsw_SP_from_C(ctd.C, ctd.T, ctd.T); % Practical salinity
 ctd.SA = gsw_SA_from_SP(ctd.SP, ctd.P, ctd.lon, ctd.lat); % Absolute salinity
