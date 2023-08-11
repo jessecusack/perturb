@@ -19,6 +19,8 @@ classdef GPS_base_class
                     = "linear"
             end % arguments
             [time, ix] = unique(time);
+            time.TimeZone = "UTC"; % Convert to UTC
+            time.TimeZone = ""; % Drop the timezone for interpolation
             tbl = timetable(time);
             tbl.lat = latitude(ix);
             tbl.lon = longitude(ix);
