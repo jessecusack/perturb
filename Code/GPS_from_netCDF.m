@@ -4,7 +4,7 @@
 
 classdef GPS_from_netCDF <GPS_base_class
     methods
-        function obj = GPS_from_csv(fn, method)
+        function obj = GPS_from_netCDF(fn, method)
             arguments
     	        fn string {mustBeFile}
         		method string {mustBeMember(method, ["linear", "nearest", "previous", "pchip", "cubic", "v5cubic", "makima", "spline"])} ...
