@@ -35,4 +35,9 @@ a.combo_info_filename = fullfile(a.binned_root, "combo.info.mat");
 a.combo_filename = fullfile(a.binned_root, "combo.mat");
 a.ctd_filename = fullfile(a.ctd_root, "CTD.mat");
 a.ctd_info_filename = fullfile(a.ctd_root, "CTD.info.mat");
+
+names = string(fieldnames(a));
+for name = names(endsWith(names, "_root") | endsWith(names, "_filename"))'
+    a.(name) = abspath(a.(name));
+end % for
 end % update_paths
