@@ -5,7 +5,7 @@
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = fullfile(my_root, "~/Desktop/Wake2025/Data");
+data_root = "~/Desktop/Wake2023/Data";
 vmp_root = fullfile(data_root, "VMP");
 output_root = fullfile(data_root, "Temp");
 GPS_filename = fullfile(data_root, "GPS/gps.nc");
