@@ -27,7 +27,7 @@ fprintf("%s\n\n", jsonencode(rmfield(info, "gps_class"), "PrettyPrint", true));
 try
     % When a P file reaches a specified size, it will be stopped and a new P file started
     % during a deployment. So we pull the P files from a single deployment into a single P file.
-    p_file_merger(info.vmp_root); % Merge any P-files that need to be merged
+    merge_all_p_files_in_directory(info.vmp_root); % Merge any P-files that need to be merged
 
     filenames = mk_filenames(info); % Build a list of filenames to be processed from .P files on disk
     filenames = convert2mat(filenames, info.debug); % Convert .P to .mat files using odas_p2mat
