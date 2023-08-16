@@ -22,7 +22,7 @@ cInfo.qIncluded = false(size(cInfo.fnProf));
 if exist(fnInfo, "file")
     lhs = load(fnInfo).cInfo;
     lhs.fnCTD = fullfile(info.ctd_root, lhs.sn, append(lhs.basename, ".mat")); % Update path if needed
-    cInfo = myJoiner(cInfo, lhs, "fnProf", "fnCTD");
+    cInfo = my_joiner(cInfo, lhs, "fnProf", "fnCTD");
 end % if exist
 
 newInfo = cInfo(~cInfo.qIncluded,:);
