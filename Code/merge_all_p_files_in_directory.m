@@ -4,7 +4,7 @@
 %
 % Ripped up version from William at Rockland
 %
-% August-2023
+% August-2023, Pat Welch, pat@mousebrains.com
 
 function merge_all_p_files_in_directory(vmp_root, pattern)
 arguments (Input)
@@ -17,6 +17,7 @@ end % arguments Input
 move_to_orig(bad_files, true); % Rename bad_files to _original or delete them if _original exists
 
 to_merge = build_file_lists(to_merge); % Build chains of files to merge
+
 for index = 1:numel(to_merge)
     merge_p_files(to_merge{index});
 end % for index
@@ -151,7 +152,7 @@ end % arguments Output
 q = rows.qMerge;
 
 to_merge = table();
-to_merge.fnLHS = mk_LHS_filename(rows.fn(q));
+to_merge.fnLHS = mk_LHS_filename(rows.fn(q), rows.fileNumber(q));
 to_merge.fnRHS = rows.fn(q);
 lhs = innerjoin(to_merge, rows, "LeftKeys", "fnLHS", "RightKeys", "fn");
 names = setdiff(lhs.Properties.VariableNames, ["fnLHS", "fnRHS"]);
@@ -166,23 +167,20 @@ dt = lhs.t0_RHS - lhs.tEnd_LHS;
 to_merge = lhs(dt > seconds(0) & dt < lhs.accuracy_LHS,:);
 end % find_files_to_merge
 
-function fnLHS = mk_LHS_filename(fnRHS)
+function fnLHS = mk_LHS_filename(fnRHS, fileNumber)
 arguments (Input)
     fnRHS (:,1) string
+    fileNumber uint16 % 4 digit file number at the end of fnRHS
 end % arguments Input
 arguments (Output)
     fnLHS (:,1) string
 end % arguments Output
 
-[dirname, name, suffix] = fileparts(fnRHS);
-n = strlength(name) - 4;
-textPart = extractBefore(name, n + 1);
-numericPart = str2double(extractAfter(name, n)); % Numeric portion of file number
-prevNumber = string(num2str(numericPart - 1, "%04d")); % File number of previous file
+prevFileNumber = string(num2str(fileNumber - 1, "%04d")); % Previous file's number
 
-q = ~isnan(numericPart);
-name(q) = append(textPart(q), prevNumber(q));
-fnLHS = fullfile(dirname, append(name, suffix));
+[dirname, name, suffix] = fileparts(fnRHS); % Split up fnRHS
+% Join directory, name without last four digits, previous file number, and suffix
+fnLHS = fullfile(dirname, append(extractBefore(name, strlength(name) - 3), prevFileNumber, suffix));
 end % mk_LHS_filename
 
 function [row, errmsg] = check_p_file(fn, bytes, dtMax)
@@ -202,16 +200,17 @@ row = struct( ...
     "endian", "ieee-be", ... % Try big-endian first
     "qDrop", false, ...
     "qMerge", false, ...
-    "nHeader", nan, ...
-    "nConfig", nan, ...
-    "nData", nan, ...
-    "fClock", nan, ...
-    "version", nan, ...
+    "fileNumber", nan, ... % Sequence number of the file
+    "nHeader", nan, ... % Length in bytes of the header, typically 128
+    "nConfig", nan, ... % Length in bytes of configuration payload
+    "nData", nan, ...   % Length in bytes of data payload
+    "fClock", nan, ...  % Clock frequency
+    "version", nan, ... % Firmware version
     "t0", NaT, ... % Time of configuration record
     "t1", NaT, ... % Time of first data record
     "tEnd", NaT, ... % Time of last data record
     "accuracy", seconds(1), ... % Maximum time between successive rollover files
-    "configHash", uint64(0) ... % Key hash of the config body
+    "configHash", "" ... % Key hash of the config body
     );
 
 [fid, errmsg] = my_open(fn, "rb", row.endian);
@@ -239,6 +238,7 @@ if hdr(end) ~= 2 % Not big-endian, so try little endian
     end % hdr
 end % if
 
+row.fileNumber = hdr(1); % file number
 row.nHeader = hdr(18); % Header size in bytes
 row.nConfig = hdr(12); % Configuration body in bytes
 row.nData = hdr(19); % Header+data block in bytes
@@ -251,7 +251,7 @@ if row.version == 6.1
     row.accuracy = seconds(200); % Maximum gap between successive rollover files
 end
 
-[cfg, n] = fread(fid, row.nConfig, "*char*1");
+[cfg, n] = fread(fid, row.nConfig, "*uint8");
 if numel(cfg) ~= row.nConfig
     my_close(fid, fn);
     errmsg = sprintf("Configuration body was not the correct length, %d != %d, in %s", ...
@@ -259,7 +259,11 @@ if numel(cfg) ~= row.nConfig
     row.qDrop = true;
     return;
 end
-row.configHash = keyHash(cfg);
+
+% Use SHA512 to minimize collison probabilities, for a 20kB ASCII cfg string,
+% the collision probability will be <2^(256-16) or ~1 in 10^72
+sha512 = java.security.MessageDigest.getInstance("SHA-512");
+row.configHash = strjoin(string(dec2hex(typecast(sha512.digest(uint8(cfg)), "uint8"))), "");
 
 [hdr, n] = fread(fid, 64, "*uint16"); % Read the first data header
 if n ~= 64
@@ -308,8 +312,7 @@ arguments (Output)
     filenames table % table with fn column of source filenames
 end % arguments Output
 
-[dirname, name, suffix] = fileparts(filenames.fn);
-filenames.fnOrig = fullfile(dirname, append(name, "_original", suffix));
+filenames.fnOrig = append(filenames.fn, ".orig");
 filenames.isfile = isfile(filenames.fnOrig); % Does the original already exist?
 filenames.qRenamed = false(size(filenames.fn));
 filenames.qDeleted = false(size(filenames.fn));
