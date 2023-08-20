@@ -16,12 +16,15 @@ arguments (Input)
     fnJSON string             % JSON file defining variable attributes
 end % arguments
 
+fn = abspath(fn); % Matlab's netcdf does not like ~, so make absolute
+
 if exist(fn, "file"), delete(fn); end
 
 [attrG, attrV, nameMap, compressionLevel, dimensions] = nc_load_JSON(fnJSON, info, tbl);
 
 dimNames = string(fieldnames(dimensions));
 
+fprintf("Creating %s\n", fn);
 ncid = netcdf.create(fn, ... % Create a fresh copy
     bitor(netcdf.getConstant("CLOBBER"), netcdf.getConstant("NETCDF4")));
 
