@@ -3,11 +3,12 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = CT_align(a, indicesSlow, info)
+function a = CT_align(a, indicesSlow, info, basename)
 arguments (Input)
     a struct % Output of odas_p2mat
     indicesSlow (2,:) int64 % output of get_profile for the slow variables
     info struct % parameters, defaults from get_info
+    basename string % Label for the file
 end % arguments Input
 arguments (Output)
     a struct % Possibly modified version of odas_p2mat structure
@@ -60,6 +61,6 @@ items.cumsum = cumsum(items.maxCorr .* items.n);
 
 iShift = round(items.lag(iMid) * fs_slow);
 fprintf("%s shifting %s by %f seconds to match %s\n", ...
-    a.label, CName, iShift / fs_slow, TName);
+    basename, CName, iShift / fs_slow, TName);
 a.(CName) = circshift(C, iShift);
 end % CTalign

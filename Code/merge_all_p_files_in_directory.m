@@ -6,13 +6,13 @@
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
-function merge_all_p_files_in_directory(vmp_root, pattern)
+function merge_all_p_files_in_directory(p_file_root, p_file_pattern)
 arguments (Input)
-    vmp_root string {mustBeFolder} % Root pattern to apply pattern to
-    pattern string="SN*/*" % glob pattern to match against, doesn't have .p due to case issues
+    p_file_root string {mustBeFolder} % Root pattern to apply pattern to
+    p_file_pattern string="*" % glob pattern to match against, doesn't have .p due to case issues
 end % arguments Input
 
-[to_merge, bad_files] = find_p_files_to_merge(vmp_root, pattern);
+[to_merge, bad_files] = find_p_files_to_merge(p_file_root, p_file_pattern);
 
 move_to_orig(bad_files, true); % Rename bad_files to _original or delete them if _original exists
 
@@ -76,17 +76,17 @@ my_delete_file(tmpName);
 move_from_orig(filenames); % Restore files
 end % merge_p_files
 
-function [toMerge, toDrop] = find_p_files_to_merge(vmp_root, pattern)
+function [toMerge, toDrop] = find_p_files_to_merge(p_file_root, p_file_pattern)
 arguments (Input)
-    vmp_root string {mustBeFolder} % Directory to look for pattern files in
-    pattern string="SN*/*" % Glob pattern to append to vmp_root
+    p_file_root string {mustBeFolder} % Directory to look for pattern files in
+    p_file_pattern string="SN*/*" % Glob pattern to append to p_file_root
 end % arguments Input
 arguments (Output)
     toMerge table % Table of LHS and RHS P files to be merged
     toDrop table % filenames which have problems in the header
 end % arguments Output
 
-items = struct2table(dir(fullfile(vmp_root, pattern))); % find candidate files
+items = struct2table(dir(fullfile(p_file_root, p_file_pattern))); % find candidate files
 items = items(~items.isdir & endsWith(items.name, ".p", "IgnoreCase", true),:); % Not folder and .[Pp]
 items = items(~endsWith(items.name, "_original.p", "IgnoreCase", true),:); % Not _original.p
 items.fn = string(fullfile(items.folder, items.name));

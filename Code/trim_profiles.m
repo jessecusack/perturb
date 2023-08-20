@@ -54,7 +54,7 @@ end % for index
 
 qKeep = ~cellfun(@isempty, casts); % casts to keep
 if ~any(qKeep)
-    fprintf("WARNING: No trimable casts found in %s %s\n", pInfo.sn(1), pInfo.basename(1));
+    fprintf("WARNING: No trimable casts found in %s\n", pInfo.basename(1));
     return;
 end % if ~any
 

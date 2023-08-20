@@ -6,7 +6,7 @@
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
 data_root = "~/Desktop/ASTRAL/Data";
-vmp_root = fullfile(data_root, "VMP");
+p_file_root = fullfile(data_root, "VMP");
 output_root = fullfile(data_root, "Temp");
 GPS_filename = fullfile(data_root, "GPS/gps.mat");
 
@@ -14,7 +14,7 @@ addpath(code_root, "-begin");
 
 process_VMP_files( ...
     "debug", true, ...
-    "vmp_root", vmp_root, ...      % Where the input .P files are located
+    "p_file_root", p_file_root, ... % Where the input .P files are located
     "output_root", output_root, ... % Where to write output to
     "gps_class", @GPS_from_mat, ... % Class to supply GPS data
     "gps_filename", GPS_filename, ...  % Input GPS data

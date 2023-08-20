@@ -21,7 +21,7 @@ if exist(info.combo_info_filename, "file")
     cInfo = my_joiner( ...
         cInfo, ...
         load(info.combo_info_filename).cInfo, ...
-        ["basename", "sn"], ...
+        "basename", ...
         names(names.startsWith("fn")));
 end % if exist
 
@@ -90,7 +90,7 @@ end % for index
 
 timeInfo = vertcat(timeInfo{:}); % Glue timeInfo together into a single table
 
-[~, ix] = unique(timeInfo(:,["t0", "sn", "basename"])); % Unique and ascending in time per instrument
+[~, ix] = unique(timeInfo(:,["t0", "basename"])); % Unique and ascending in time per instrument
 timeInfo = timeInfo(ix,:);
 
 for name = setdiff(string(tbl.Properties.VariableNames), "bin")

@@ -5,12 +5,13 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = fp07_calibration(a, indicesSlow, indicesFast, info)
+function a = fp07_calibration(a, indicesSlow, indicesFast, info, basename)
 arguments (Input)
     a struct % Output of odas_p2mat
     indicesSlow (2,:) int64 % Output of get_profile, indices into slow vectors for profiles
     indicesFast (2,:) int64 % Output of get_profile, indices into fast vectors for profiles
     info struct % Parameters, defaults from get_info
+    basename string % label for the file
 end % arguments Input
 arguments (Output)
     a struct % possibly modified version of odas_p2mat output
@@ -28,7 +29,7 @@ if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s 
 fp07Info = cell(size(TNames,1),1);
 for index = 1:size(TNames,1)
     row = TNames(index,:);
-    [a, row] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, row, info, cfgObj);
+    [a, row] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, row, info, cfgObj, basename);
     fp07Info{index} = row;
 end % for index
 TNames = vertcat(fp07Info{:});
@@ -45,7 +46,7 @@ end
 names = string(fieldnames(a)); % All variable names
 names = names(startsWith(names, prefix)); % Ones that start with prefix
 
-fprintf("%s shifting %s by %f seconds to match FP07(s)\n", a.label, strjoin(names, ", "), lag);
+fprintf("%s shifting %s by %f seconds to match FP07(s)\n", basename, strjoin(names, ", "), lag);
 
 for name = names'
     a.(name) = circshift(a.(name), iBack);
@@ -55,7 +56,8 @@ a.TNames = TNames;
 end % fp07Calibrationa 
 
 %%
-function [a, TNames] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, TNames, info, cfgObj)
+function [a, TNames] = calibrateProfiles(a, indicesSlow, indicesFast, ...
+    Treference, TNames, info, cfgObj, basename)
 arguments
     a struct
     indicesSlow (2,:) int64
@@ -64,6 +66,7 @@ arguments
     TNames table
     info struct
     cfgObj (1,:) struct
+    basename string
 end % arguments
 
 fs_slow = a.fs_slow;
@@ -128,7 +131,7 @@ TNames.T_0 = 1 ./ pFit(end); % Constant term
 TNames.beta = 1 ./ pFit(end-1:-1:1);
 
 fprintf("%s %s lag %f T_0 %g beta %s\n", ...
-    a.label, TNames.channel, TNames.lag, TNames.T_0, num2str(TNames.beta));
+    basename, TNames.channel, TNames.lag, TNames.T_0, num2str(TNames.beta));
 
 % The slow predicted temperature for the whole series
 RT_R0 = compute_RT_R0(TT, cfgObj, TNames.channel);
@@ -261,7 +264,7 @@ end % arguments
 tbl = [];
 
 if ~isfield(a, Treference)
-    fprintf("WARNING: Temperature reference, %s, not found in %s\n", Treference, a.label);
+    fprintf("WARNING: Temperature reference, %s, not found in %s\n", Treference, basename);
     Treference = [];
     return;
 end % if ~isfield
@@ -272,7 +275,7 @@ tbl = outerjoin( ...
     "Keys", "channel", "MergeKeys", true);
 
 if isempty(tbl)
-    fprintf("WARNING: No FP07 temperature sensors found for %s!\n", a.label);
+    fprintf("WARNING: No FP07 temperature sensors found for %s!\n", basename);
 end % if
 end % extractNames
 

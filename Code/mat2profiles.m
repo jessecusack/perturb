@@ -10,7 +10,7 @@ arguments (Output)
 end % arguments Output
 
 % Add additional profile related columns to the filenames table
-sz = size(filenames.sn);
+sz = size(filenames.basename);
 filenames.t0 = NaT(sz);
 filenames.t1 = NaT(sz);
 filenames.minDepth = nan(sz);
@@ -25,11 +25,11 @@ if exist(info.profile_info_filename, "file") % Merge existing information
     a = load(info.profile_info_filename);
     names = string(filenames.Properties.VariableNames);
     filenames = my_joiner(filenames, a.filenames, ...
-        ["basename", "sn"], ...
+        "basename", ...
         names(names.startsWith("fn")));
     % Replace fnBin names in a.pInfo with current binned_root, in case it
     % changed on us due to the signature.
-    a.pInfo.fnBin = fullfile(info.binned_root, a.pInfo.sn, append(a.pInfo.basename, ".mat"));
+    a.pInfo.fnBin = fullfile(info.binned_root, append(a.pInfo.basename, ".mat"));
     pInfo = a.pInfo;
 else
     pInfo = table();
@@ -42,7 +42,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
     fRow = filenames(index,:);
 
     if ~fRow.qUse
-        % fprintf("Skipping %s %s\n", fRow.sn, fRow.basename);
+        % fprintf("Skipping %s\n", fRow.basename);
         continue;
     end
 
@@ -56,7 +56,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
 
     pRows = pInfo(pInfo.fnProf == fnProf,:);
     if ~isempty(pRows) && all(~pRows.qUse)
-        fprintf("No useable rows for %s %s\n", fRow.sn, fRow.basename);
+        fprintf("No useable rows for %s\n", fRow.basename);
         disp(pRows);
         continue;
     end % if ~isempty rows
@@ -64,7 +64,6 @@ for index = 1:size(filenames, 1) % Walk through filenames
     stime = tic();
     my_mk_directory(fnProf);
     a = load(fnM); % Load the matfile for this set of casts
-    a.label = append(fRow.sn, "/", fRow.basename);
 
     indicesSlow = get_profile(a.P_slow, a.W_slow, ...
         info.profile_pressure_min, ...
@@ -75,20 +74,22 @@ for index = 1:size(filenames, 1) % Walk through filenames
 
     if isempty(indicesSlow) % No profiles found, so change qUse to false
         filenames.qUse(index) = false;
-        fprintf("No profiles found in %s %s\n", fRow.sn, fRow.basename);
+        fprintf("No profiles found in %s\n", fRow.basename);
         continue;
     end % if isempty indices
 
 
     nProfiles = size(indicesSlow, 2);
-    fprintf("%s spliting into %d profiles\n", a.label, nProfiles);
+
+    fprintf("%s spliting into %d profiles\n", fRow.basename, nProfiles);
 
     indicesFast = interp1(a.t_fast, 1:numel(a.t_fast), a.t_slow(indicesSlow), ...
         "nearest", "extrap"); % Fast indices for each profile
 
     % First change values in a for calibration and time shifts
-    a = fp07_calibration(a, indicesSlow, indicesFast, info); % Adjust T?_(slow|fast) and shift JAC_[TC]
-    a = CT_align(a, indicesSlow, info); % Shift JAC_C
+    % Adjust T?_(slow|fast) and shift JAC_[TC]
+    a = fp07_calibration(a, indicesSlow, indicesFast, info, fRow.basename);
+    a = CT_align(a, indicesSlow, info, fRow.basename); % Shift JAC_C to match JAC_T
 
     if isempty(gps) % Only initialize GPS if needed
         gps = info.gps_class(info.gps_filename, info.gps_method);
@@ -157,7 +158,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
 
         if profile.dtGPS > info.gps_max_time_diff
             fprintf("WARNING: %s profile %d GPS fix %s from t0 %s\n", ...
-                a.label, j, string(seconds(profileInfo.dtGPS(j)), "hh:mm:ss"), ...
+                fRow.basename, j, string(seconds(profileInfo.dtGPS(j)), "hh:mm:ss"), ...
                 profileInfo.t0(j));
         end % if profile
     end % for j
@@ -185,7 +186,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
     else
         names = string(pInfo.Properties.VariableNames);
         pInfo = my_joiner(pInfo, profileInfo, ...
-            ["basename", "sn", "index"], ...
+            ["basename", "index"], ...
             names(names.startsWith("fn")));
     end % if isempty
 
@@ -205,7 +206,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
     save(fnProf, "-struct", "profilesInfo");
 
     fprintf("%s took %.2f seconds to extract %d profiles\n", ...
-        a.label, toc(stime), numel(profiles));
+        fRow.basename, toc(stime), numel(profiles));
 end % for index
 
 a = struct("filenames", filenames, "pInfo", pInfo);
@@ -214,7 +215,7 @@ end % mat2profiles
 
 function tbl = mk_profile_info(row, nProfiles)
 tbl = table();
-for name = ["basename", "sn", "qUse", "fnM", "fnProf", "fnBin"]
+for name = ["basename", "qUse", "fnM", "fnProf", "fnBin"]
     tbl.(name) = repmat(row.(name), nProfiles, 1);
 end % for
 tbl.index = (1:nProfiles)';

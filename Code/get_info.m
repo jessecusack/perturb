@@ -17,8 +17,10 @@ validNotNegative = @(x) inRange(x, 0, inf, true);
 %% Debugging related parameters
 addParameter(p, "debug", false, @(x) ismember(x, [true, false])); % Turn on debugging messages
 %% Path related parameters
-addParameter(p, "vmp_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/VMP")), @(x) isfolder(x));
+addParameter(p, "p_file_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/VMP")), @(x) isfolder(x));
 addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/Output")), validString);
+%% Glob pattern appended to p_file_root to get list of P files
+addParameter(p, "p_file_pattern", "*", validString);
 %% GPS related parameters
 addParameter(p, "gps_filename", missing, validString); 
 addParameter(p, "gps_class", @GPS_nan, @(x) isa(x, "function_handle")); % Class to get GPS information from
@@ -99,9 +101,9 @@ addParameter(p, "netCDF_publisher_url", missing, validString);
 parse(p, varargin{:});
 a = p.Results(1);
 
-a.vmp_root = abspath(a.vmp_root);
-if ~isfolder(a.vmp_root)
-    error("vmp_root is not a folder, %s", a.vmp_root);
+a.p_file_root = abspath(a.p_file_root);
+if ~isfolder(a.p_file_root)
+    error("p_file_root is not a folder, %s", a.p_file_root);
 end % if
 
 names = string(p.Parameters);

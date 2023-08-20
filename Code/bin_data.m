@@ -26,11 +26,11 @@ for fnProf = unique(pInfo.fnProf)'
     fnBin = pRows.fnBin(1); % They are all the same name
 
     if isnewer(fnBin, fnProf)
-        fprintf("Skipping %s %s, already exist\n", pRows.sn(1), pRows.basename(1));
+        fprintf("Skipping %s, already exist\n", pRows.basename(1));
         continue;
     end % if isnewer
 
-    fprintf("Binning %d profiles for %s %s\n", size(pRows, 1), pRows.sn(1), pRows.basename(1));
+    fprintf("Binning %d profiles for %s\n", size(pRows, 1), pRows.basename(1));
     fprintf("loading %s\n", fnProf);
     profiles = load(fnProf).profiles;
     casts = cell(size(pRows,1),1);
@@ -69,8 +69,7 @@ for fnProf = unique(pInfo.fnProf)'
         end % if
 
         if isempty(fast) || isempty(slow)
-            fprintf("No bins found for profile %d in %s %s\n", ...
-                index, row.sn, row.basename);
+            fprintf("No bins found for profile %d in %s\n", index, row.basename);
             continue;
         end % No fast and slow data to work with
 

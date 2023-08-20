@@ -19,7 +19,7 @@ for index = 1:size(filenames,1)
     row = filenames(index,:);
     if ~row.qUse
         if debug
-            fprintf("%s not using %s\n", row.label);
+            fprintf("%s not using %s\n", row.basename);
         end % if info.debug
         continue;
     end % if ~qUse
@@ -27,7 +27,7 @@ for index = 1:size(filenames,1)
     fnM = row.fnM; % Output .mat filename
     if isnewer(fnM, fnP)
         if debug
-            fprintf("%s fnM is newer than fnP %s %s\n", row.label, fnP, fnM)
+            fprintf("%s fnM is newer than fnP %s %s\n", row.basename, fnP, fnM)
         end % if info.debug
         continue;
     end % if isnewer
@@ -37,7 +37,7 @@ for index = 1:size(filenames,1)
     try
         a = odas_p2mat(char(fnP)); % extract P file contents
         save(row.fnM, "-struct", "a"); % save into a mat file
-        fprintf("Took %.2f seconds to convert %s %s\n", toc(stime), row.sn, row.basename);
+        fprintf("Took %.2f seconds to convert %s\n", toc(stime), row.basename);
     catch ME
         filenames.qUse(index) = false;
         fprintf("Failed to convert %s\n\n%s\n", fnP, getReport(ME));

@@ -20,7 +20,7 @@ arguments (Output)
     profile struct % Modified version of profile with diss and bbl added
 end % arguments Output
 
-label = sprintf("%s/%s cast %d", pInfo.sn, pInfo.basename, pInfo.index);
+label = sprintf("%s cast %d", pInfo.basename, pInfo.index);
 
 [dissInfo, SH_HP, AA] = mk_diss_info(profile, info, pInfo, ...
     "diss_downwards_fft_length_sec", "diss_downwards_length_fac", label);
@@ -216,9 +216,9 @@ end % for name
 [b, ~, ~, raction] = despike(a, p.thresh, p.smooth, fs, round(p.N_FS * fs));
 
 if raction > p.warning_fraction
-    fprintf("WARNING: %s spike ratio %.1f%% for profile %d in %s/%s\n", ...
+    fprintf("WARNING: %s spike ratio %.1f%% for profile %d in %s\n", ...
         tit, raction * 100, ...
-        pInfo.index, pInfo.sn, pInfo.basename);
+        pInfo.index, pInfo.basename);
 end % raction >
 end % my_despike
 

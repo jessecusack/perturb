@@ -14,14 +14,13 @@ fnInfo  = info.("ctd_info_filename");
 
 cInfo = table();
 [cInfo.fnProf, ix] = unique(profile_info.fnProf);
-cInfo.sn = profile_info.sn(ix);
 cInfo.basename = profile_info.basename(ix);
-cInfo.fnCTD = fullfile(info.ctd_root, cInfo.sn, append(cInfo.basename, ".mat"));
+cInfo.fnCTD = fullfile(info.ctd_root, append(cInfo.basename, ".mat"));
 cInfo.qIncluded = false(size(cInfo.fnProf));
 
 if exist(fnInfo, "file")
     lhs = load(fnInfo).cInfo;
-    lhs.fnCTD = fullfile(info.ctd_root, lhs.sn, append(lhs.basename, ".mat")); % Update path if needed
+    lhs.fnCTD = fullfile(info.ctd_root, append(lhs.basename, ".mat")); % Update path if needed
     cInfo = my_joiner(cInfo, lhs, "fnProf", "fnCTD");
 end % if exist
 
