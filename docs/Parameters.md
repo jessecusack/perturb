@@ -1,11 +1,15 @@
 # Description of input parameters to [processVMPfiles](processVMPfiles.m)`
 
-- `dataRoot` a string defining the root level of where data files are stored `(default: ../Data)`
-- `vmpRoot` is a string defining where the `SN*/*.p` files are located relative to `dataRoot` `(default: VMP)`
-- `matRoot` is a string defining where the output of `odas_p2mat` files go relative to `dataRoot` `(default: VMP/Matfiles)`
-- `profileRoot` is a string defining where the profile directory is stored relative to `dataRoot` `(default: VMP)` 
-- `binnedRoot` is a string defining where the binned directory is stored relative to `dataRoot` `(default: VMP)` 
-- `logRoot` is a string defining where the logfile is stored relative to `dataRoot` `(default: VMP)` 
+- `data_root` a string defining the root level of where data files are stored `(default: ../Data)`
+- `p_file_root` is a string defining where the `.p` files are located relative to `dataRoot` `(default: VMP)`
+- `mat_root` is a string defining where the output of `odas_p2mat` files go relative to `dataRoot` `(default: VMP/Matfiles)`
+- `profile_root` is a string defining where the profile directory is stored relative to `dataRoot` `(default: VMP)` 
+- `binned_root` is a string defining where the binned directory is stored relative to `dataRoot` `(default: VMP)` 
+- `log_root` is a string defining where the logfile is stored relative to `dataRoot` `(default: VMP)` 
+
+- *P file* related parameters
+- `p_file_pattern` A glob pattern defining how to find `.P` files relative to `p_file_root`
+
 - *GPS* related parameters
   - `gpsClass` This is a class object for obtaining a GPS fix at a specified time. `(default: @GPSInfo)`
   - 1gpsFilename` This is a filename input to the `gpsClass` object, relative to `dataRoot`. `(default: GPS/gps.nc)`

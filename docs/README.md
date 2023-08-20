@@ -30,8 +30,8 @@ is:
 
 See [combo description](Combo.md) for information about the contents of `combo.mat`
 
-The `.P` files are expected to be in directories like `SN142/*.[pP]` 
-The outputs are saved into a similar structure.
+The `.P` files are located by joining `p_file_root` and `p_file_pattern`
+The outputs are saved into a similar structure as the original `.P` files.
 
 The profiles and binned directories have a hash attached to their name which is unique to the input parameters. If you change any parameter, a new directory try will probably be generated.
 
