@@ -45,7 +45,7 @@ end % arguments
 cInfo = combo.info;
 tbl = combo.tbl;
 
-cInfo = removevars(cInfo, ["basename", "sn", "qUse", "fnM", "fnProf", "fnBin", "index"]);
+cInfo = removevars(cInfo, ["basename", "qUse", "fnM", "fnProf", "fnBin", "index"]);
 
 [attrG, attrV, nameMap, compressionLevel] = nc_load_JSON(fnJSON, info, cInfo);
 
@@ -60,8 +60,11 @@ attrG.time_coverage_end = string(tMax, fmt);
 attrG.time_coverage_duration = sprintf("T%fS", seconds(tMax - tMin));
 attrG.time_coverage_resolution = sprintf("T%fS", seconds(mk_resolution(tbl.t)));
 
+fn = abspath(fn); % Matlab's netcdf does not like ~ in filenames, so get rid of it
+
 if exist(fn, "file"), delete(fn); end
 
+fprintf("Creating %s\n", fn);
 ncid = netcdf.create(fn, ... % Create a fresh copy
     bitor(netcdf.getConstant("CLOBBER"), netcdf.getConstant("NETCDF4")));
 
