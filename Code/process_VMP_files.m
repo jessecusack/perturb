@@ -17,7 +17,7 @@ rootSettings.matlab.general.matfile.SaveFormat.TemporaryValue = "v7.3";
 info = get_info(varargin{:}); % Parse arguments and supply defaults
 info = update_paths(info); % Populate all the paths
 
-my_mk_directory(info.log_filename, true); % Make sure the directory to write logfile to exists
+my_mk_directory(info.log_filename, info.debug); % Make sure the directory to write logfile to exists
 
 diary(info.log_filename);
 diary on; % Record all output
