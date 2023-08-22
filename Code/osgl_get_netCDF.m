@@ -21,7 +21,7 @@ function a = osgl_get_netCDF(fn, varargin)
 arguments (Input)
     fn string {mustBeFile} % Input filename
 end % arguments Input
-arguments (Repeating)
+arguments (Input,Repeating)
     varargin cell % Optional arguments
 end % arguments Repeating
 arguments (Output)
@@ -101,7 +101,7 @@ end % try valid_max
 
 try 
     values = netcdf.getAtt(ncid, varid, "valid_range");
-    warning("valid_range handling not yet implemented!");
+    warning("valid_range handling not yet implemented! %f %s", varid, values);
 %     minVal = values(1);
 %     maxVal = values(2);
 %     qOkay(data < minVal | data > maxVal) = false;
@@ -146,7 +146,7 @@ try
         return
     end % if
 catch ME
-    getReport(e)
+    getReport(ME)
     % Do nothing
 end
 
