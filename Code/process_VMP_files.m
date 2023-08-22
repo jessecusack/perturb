@@ -9,10 +9,6 @@
 
 function c_info = process_VMP_files(varargin)
 
-% Default for saves will now be v7.3 during this session
-rootSettings = settings();
-rootSettings.matlab.general.matfile.SaveFormat.TemporaryValue = "v7.3";
-
 % Process input arguments and build a structure with parameters
 info = get_info(varargin{:}); % Parse arguments and supply defaults
 info = update_paths(info); % Populate all the paths
@@ -30,8 +26,8 @@ try
     merge_all_p_files_in_directory(info.p_file_root, info.p_file_pattern); 
 
     filenames = mk_filenames(info); % Build a list of filenames to be processed from .P files on disk
-    filenames = convert2mat(filenames, info.debug); % Convert .P to .mat files using odas_p2mat
-    save(info.p2mat_filename, "filenames"); % Save the list of filenames for future processing
+    filenames = convert2mat(filenames, info); % Convert .P to .mat files using odas_p2mat
+    save(info.p2mat_filename, "filenames", info.matlab_file_format); % Save the list of filenames for future processing
 
     p_info = mat2profiles(filenames, info); % Split into profiles
 

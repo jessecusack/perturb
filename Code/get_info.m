@@ -16,6 +16,9 @@ validNotNegative = @(x) inRange(x, 0, inf, true);
 
 %% Debugging related parameters
 addParameter(p, "debug", false, @(x) ismember(x, [true, false])); % Turn on debugging messages
+%% Matlab binary file version to save files as
+% Tables require v6 or greater
+addParameter(p, "matlab_file_format", "-v7.3", @(x) ismember(x, ["-v7.3", "-v7", "-v6"])); 
 %% Path related parameters
 addParameter(p, "p_file_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/VMP")), @(x) isfolder(x));
 addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/Output")), validString);

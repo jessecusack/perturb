@@ -4,10 +4,10 @@
 %
 %%
 
-function filenames = convert2mat(filenames, debug)
+function filenames = convert2mat(filenames, info)
 arguments (Input)
     filenames table % List of filenames to work with, output of mk_filenames
-    debug logical = false % Should debugging messages be printed out?
+    info struct % Defaults from get_info
 end % arguments Input
 arguments (Output)
     filenames table % qUse may be updated if there is a problem converting the file
@@ -18,7 +18,7 @@ end % arguments Output
 for index = 1:size(filenames,1)
     row = filenames(index,:);
     if ~row.qUse
-        if debug
+        if info.debug
             fprintf("%s not using %s\n", row.basename);
         end % if info.debug
         continue;
@@ -26,7 +26,7 @@ for index = 1:size(filenames,1)
     fnP = row.fnP; % Input .P filename
     fnM = row.fnM; % Output .mat filename
     if isnewer(fnM, fnP)
-        if debug
+        if info.debug
             fprintf("%s fnM is newer than fnP %s %s\n", row.basename, fnP, fnM)
         end % if info.debug
         continue;
@@ -36,7 +36,7 @@ for index = 1:size(filenames,1)
     my_mk_directory(fnM); % Make sure target directory exists
     try
         a = odas_p2mat(char(fnP)); % extract P file contents
-        save(row.fnM, "-struct", "a"); % save into a mat file
+        save(row.fnM, "-struct", "a", info.matlab_file_format); % save into a mat file
         fprintf("Took %.2f seconds to convert %s\n", toc(stime), row.basename);
     catch ME
         filenames.qUse(index) = false;

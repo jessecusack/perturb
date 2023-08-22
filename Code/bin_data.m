@@ -163,15 +163,9 @@ for fnProf = unique(pInfo.fnProf)'
         end % if isempty
         for name = setdiff(string(rhs.Properties.VariableNames), "bin")
             try
-            tbl.(name)(iLeft,iCast) = rhs.(name)(iRight);
+                tbl.(name)(iLeft,iCast) = rhs.(name)(iRight);
             catch ME
-                ME
-                name
-                iCast
-                size(iRight)
-                size(iLeft)
-                head(rhs)
-                head(tbl)
+                fprintf("Error setting name %s iCast %d\n", name, iCast);
                 rethrow(ME)
             end % try
         end % for name
@@ -182,7 +176,7 @@ for fnProf = unique(pInfo.fnProf)'
         "info", pRows);
 
     my_mk_directory(fnBin);
-    save(fnBin, "-struct", "profiles");
+    save(fnBin, "-struct", "profiles", info.matlab_file_format);
     fprintf("Saving %d profiles to %s\n", size(pRows,1), fnBin);
 end % for filenames
 end % bin_data

@@ -203,14 +203,14 @@ for index = 1:size(filenames, 1) % Walk through filenames
     profilesInfo.pInfo = profileInfo;
     profilesInfo.ctd = ctd;
     profilesInfo.chlorophyll = chlorophyll;
-    save(fnProf, "-struct", "profilesInfo");
+    save(fnProf, "-struct", "profilesInfo", info.matlab_file_format);
 
     fprintf("%s took %.2f seconds to extract %d profiles\n", ...
         fRow.basename, toc(stime), numel(profiles));
 end % for index
 
 a = struct("filenames", filenames, "pInfo", pInfo);
-save(info.profile_info_filename, "-struct", "a");
+save(info.profile_info_filename, "-struct", "a", info.matlab_file_format);
 end % mat2profiles
 
 function tbl = mk_profile_info(row, nProfiles)

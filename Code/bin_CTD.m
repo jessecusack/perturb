@@ -100,7 +100,7 @@ for index = 1:size(newInfo,1)
     b.t = b.t + seconds(dtBin / 2); % Bin centroid
 
     my_mk_directory(row.fnCTD);
-    save(row.fnCTD, "b");
+    save(row.fnCTD, "b", info.matlab_file_format);
 
     allNames = union(allNames, string(b.Properties.VariableNames));
     tbl{index} = b;
@@ -135,11 +135,11 @@ tbl = tbl(ix,:);
 my_mk_directory(fnCombo);
 my_mk_directory(fnInfo);
 
-save(fnCombo, "tbl");
+save(fnCombo, "tbl", info.matlab_file_format);
 save_netCDF(fnCombo, tbl, info);
 
 cInfo.qIncluded(:) = true;
-save(fnInfo, "cInfo");
+save(fnInfo, "cInfo", info.matlab_file_format);
 fprintf("CTDbin wrote %dx%d to %s\n", size(tbl,1), size(tbl,2), fnCombo);
 end % bin_CTD
 

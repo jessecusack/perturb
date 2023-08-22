@@ -100,11 +100,11 @@ end % for name
 combo = struct();
 combo.info = timeInfo;
 combo.tbl = tbl;
-save(info.combo_filename, "-struct", "combo");
+save(info.combo_filename, "-struct", "combo", info.matlab_file_format);
 
 cInfo.qIncluded(:) = true;
 
-save(info.combo_info_filename, "cInfo");
+save(info.combo_info_filename, "cInfo", info.matlab_file_format);
 
 fprintf("Took %.2f seconds to write %dx%d to %s\n", ...
     toc(stime), size(tbl.t,1), size(tbl.t, 2), info.combo_filename);
