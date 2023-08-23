@@ -36,8 +36,6 @@ tbl.fnBin  = fullfile(info.binned_root,  fn);
 if exist(info.p2mat_filename, "file") % Join to existing information
     rhs = load(info.p2mat_filename).filenames;
     names = string(tbl.Properties.VariableNames);
-    tbl
-    rhs
     tbl = my_joiner(tbl, rhs, ...
         "basename", ...
         names(names.startsWith("fn")));
