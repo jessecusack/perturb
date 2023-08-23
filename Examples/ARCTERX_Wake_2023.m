@@ -8,7 +8,9 @@ code_root = fullfile(my_root, "../Code");
 data_root = "~/Desktop/Wake2023/Data";
 p_file_root = fullfile(data_root, "VMP");
 output_root = fullfile(data_root, "Temp");
+
 GPS_filename = fullfile(data_root, "GPS/gps.nc");
+GPS_class = GPS_from_netCDF(GPS_filename);
 
 addpath(code_root, "-begin");
 
@@ -17,8 +19,7 @@ process_VMP_files( ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
     "p_file_pattern", "SN*/*", ...   % Glob pattern appended to p_file_root to locate P files
     "output_root", output_root, ...  % Where to write output to
-    "gps_class", @GPS_from_netCDF, ... % Class to supply GPS data
-    "gps_filename", GPS_filename, ...  % Input GPS data
+    "gps_class", GPS_class, ... % Class to supply GPS data
     "diss_epsilon_minimum", 3e-10, ...   % Drop dissipation estimates smaller than this value
     "netCDF_contributor_name", "Pat Welch", ...
     "netCDF_contributor_role", "researcher", ...

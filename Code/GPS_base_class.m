@@ -10,23 +10,46 @@ classdef GPS_base_class
     end % properties
 
     methods
-        function obj = GPS_base_class(time, latitude, longitude, method)
+        function obj = GPS_base_class(method)
             arguments (Input)
+                method string ...
+                    {mustBeMember(method, ["linear", "nearest", "previous", "pchip", "cubic", "v5cubic", "makima", "spline"])} ...
+                    = "linear"
+            end % arguments
+
+            obj.method = method;
+            obj.tbl = table();
+        end % GPS_common
+
+        function obj = initialize(obj)
+            arguments (Input)
+                obj GPS_base_class
+            end % arguments Input
+            arguments (Output)
+                obj GPS_base_class
+            end % arguments Output
+
+            error("No initialization method provided.")
+        end % initialize
+
+        function obj = addTimeLatLon(obj, time, latitude, longitude)
+            arguments (Input)
+                obj GPS_base_class
                 time (:,1) datetime {mustBeNonempty}
                 latitude (:,1) double {mustBeNonempty}
                 longitude (:,1) double {mustBeNonempty}
-                method string {mustBeMember(method, ["linear", "nearest", "previous", "pchip", "cubic", "v5cubic", "makima", "spline"])} ...
-                    = "linear"
-            end % arguments
+            end
+            arguments (Output)
+                obj GPS_base_class
+            end
+
             [time, ix] = unique(time);
             time.TimeZone = "UTC"; % Convert to UTC
             time.TimeZone = ""; % Drop the timezone for interpolation
-            tbl = timetable(time);
-            tbl.lat = latitude(ix);
-            tbl.lon = longitude(ix);
-            obj.tbl = tbl;
-            obj.method = method;
-        end % GPS_common
+            obj.tbl = timetable(time);
+            obj.tbl.lat = latitude(ix);
+            obj.tbl.lon = longitude(ix);
+        end
 
         function val = lat(obj, time)
             arguments (Input)
