@@ -22,7 +22,7 @@ arguments (Input)
     fn string {mustBeFile} % Input filename
 end % arguments Input
 arguments (Input,Repeating)
-    varargin cell % Optional arguments
+    varargin % Optional arguments
 end % arguments Repeating
 arguments (Output)
     a struct % Output structure of data read from fn
