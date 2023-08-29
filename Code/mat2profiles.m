@@ -36,7 +36,7 @@ else
     pInfo.fnProf = strings(0);
 end % exist
 
-gps = []; % Only load gps info if needed
+gps = []; % Only initialize gps info if needed
 
 for index = 1:size(filenames, 1) % Walk through filenames
     fRow = filenames(index,:);
@@ -92,7 +92,7 @@ for index = 1:size(filenames, 1) % Walk through filenames
     a = CT_align(a, indicesSlow, info, fRow.basename); % Shift JAC_C to match JAC_T
 
     if isempty(gps) % Only initialize GPS if needed
-        gps = info.gps_class(info.gps_filename, info.gps_method);
+        gps = info.gps_class.initialize();
     end % if isempty gps
 
     [ctd, chlorophyll] = mk_CTD(a, indicesSlow, gps);

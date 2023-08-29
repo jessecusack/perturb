@@ -25,9 +25,7 @@ addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")),
 %% Glob pattern appended to p_file_root to get list of P files
 addParameter(p, "p_file_pattern", "*", validString);
 %% GPS related parameters
-addParameter(p, "gps_filename", missing, validString); 
-addParameter(p, "gps_class", @GPS_nan, @(x) isa(x, "function_handle")); % Class to get GPS information from
-addParameter(p, "gps_method", "linear", @(x) ismember(x, ["linear", "nearest", "next", "previous", "pchip", "cubic", "v5cubic", "makima", "spline"]));
+addParameter(p, "gps_class", GPS_NaN(), @(x) isa(x, "GPS_base_class")); % Class to get GPS information from
 addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time difference for warning
 %% Profile split parameters
 addParameter(p, "profile_pressure_min", 0.5, validPositive); % Minimum pressure in dbar for a profile
