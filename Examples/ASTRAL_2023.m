@@ -9,10 +9,10 @@ data_root = "~/Desktop/ASTRAL/Data";
 p_file_root = fullfile(data_root, "VMP");
 output_root = fullfile(data_root, "Temp");
 
+addpath(code_root, "-begin"); % Before reference to GPS_from_mat
+
 GPS_filename = fullfile(data_root, "GPS/gps.mat");
 GPS_class = GPS_from_mat(GPS_filename);
-
-addpath(code_root, "-begin");
 
 process_VMP_files( ...
     "debug", true, ...

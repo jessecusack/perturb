@@ -9,10 +9,10 @@ data_root = fullfile(my_root, "../Data");
 p_file_root = fullfile(data_root, "VMP");
 output_root = fullfile(my_root, "../Temp");
 
+addpath(code_root, "-begin"); % Before reference to GPS_from_csv
+
 GPS_filename = fullfile(data_root, "GPS/gps.csv");
 GPS_class = GPS_from_csv(GPS_filename);
-
-addpath(code_root, "-begin");
 
 process_VMP_files( ...
     "debug", true, ...
