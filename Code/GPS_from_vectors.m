@@ -23,6 +23,15 @@ classdef GPS_from_vectors <GPS_base_class
             end % arguments Output
 
             obj = obj@GPS_base_class(method);
+
+            if size(time) ~= size(latitude) || size(time) ~= size(longitude)
+                error("Time, latitude, and longitude must all have the same size!");
+            end % if size
+
+	    if ~isdatetime(time)
+                error("Time must be a vector of datetime objects, %s.", class(time))
+            end % if isdatetime
+
             obj.time  = time;
             obj.latitude = latitude;
             obj.longitude = longitude;
