@@ -6,12 +6,12 @@ GPS information for where and when the `.P` file was generated.
 The outputs include:
 * profiles with
   - A timestamp
-  - A geo-reference
+  - A [geo-reference](GPS.md)
   - A depth reference
   - Turbulence/dissipation estimates
   - Other instrument sensor information, such as CTD, DO, Chlorophyll, Turbidity
 * depth binned combined profiles
-* time binned other instrument sensor information with a geo-reference
+* time binned scalar instrument sensor information with a [geo-reference](GPS.md)
 
 [VMP250 Quickstart](VMP250.md)
 <br>
