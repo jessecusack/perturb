@@ -37,4 +37,3 @@
 - documentation within the code
 - camel cast to snake case
 - unit tests
-- invalid GPS
