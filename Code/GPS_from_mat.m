@@ -42,7 +42,12 @@ classdef GPS_from_mat <GPS_base_class
                 obj GPS_from_mat
             end % arguments Output
 
-            a = load(obj.filename).(obj.variableName);
+            a = load(obj.filename);
+
+            if ~isempty(obj.variableName)
+                a = a.(obj.variableName);
+            end % ~ isempty
+
             obj = obj.addTimeLatLon(a.(obj.timeName), a.(obj.latName), a.(obj.lonName));
         end % initialize
     end % methods
