@@ -43,6 +43,10 @@ classdef GPS_base_class
                 obj GPS_base_class
             end
 
+            if ~isdatetime(time)
+                error("Time must be a vector of datetime objects, %s", class(time));
+            end % if isdatetime
+
             [time, ix] = unique(time);
             time.TimeZone = "UTC"; % Convert to UTC
             time.TimeZone = ""; % Drop the timezone for interpolation
