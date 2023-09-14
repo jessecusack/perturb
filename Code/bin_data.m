@@ -35,10 +35,14 @@ for fnProf = unique(pInfo.fnProf)'
     profiles = load(fnProf).profiles;
     casts = cell(size(pRows,1),1);
     
-    minDepth = min(pRows.minDepth, [], "omitmissing"); % Minimum depth in casts
-    maxDepth = max(pRows.maxDepth, [], "omitmissing"); % Maximum depth in casts
+    minDepth = min(pRows.min_depth, [], "omitmissing"); % Minimum depth in casts
+    maxDepth = max(pRows.max_depth, [], "omitmissing"); % Maximum depth in casts
+
+    if isnan(minDepth) || isnan(maxDepth), continue; end
 
     allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
+
+    if numel(allBins) < 2, continue; end
 
     for index = 1:size(pRows,1)
         row = pRows(index,:);
