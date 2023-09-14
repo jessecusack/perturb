@@ -47,7 +47,7 @@ classdef GPS_base_class
                 error("Time must be a vector of datetime objects, %s", class(time));
             end % if isdatetime
 
-	    if size(time) ~= size(latitude) || size(time) ~= size(longitude)
+	    if ~isequal(size(time), size(latitude)) || ~isequal(size(time), size(longitude))
                 error("Time, latitude, and longitude must all have the same size.")
             end % if isdatetime
 
