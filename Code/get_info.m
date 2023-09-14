@@ -24,6 +24,8 @@ addParameter(p, "p_file_root", string(fullfile(fileparts(mfilename("fullpath")),
 addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/Output")), validString);
 %% Glob pattern appended to p_file_root to get list of P files
 addParameter(p, "p_file_pattern", "*", validString);
+%% Should p files be merged if they were broken up due to size of file breaks?
+addParameter(p, "p_file_merge", false, @(x) ismember(x, [true, false]));
 %% GPS related parameters
 addParameter(p, "gps_class", GPS_NaN(), @(x) isa(x, "GPS_base_class")); % Class to get GPS information from
 addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time difference for warning
@@ -50,6 +52,8 @@ addParameter(p, "bbl_extra_depth", 0, validNotNegative); % Extra depth to add to
 addParameter(p, "fp07_calibration", true, @(x) ismember(x, [true, false])); % Perform an in-situ calibration of the FP07 probes agains JAC_T
 addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3)); % Steinhart-Hart equation order
 addParameter(p, "fp07_reference", "JAC_T", validString); % Which sensor is the reference sensor
+%% Does the instrument of CT information?
+addParameter(p, "CT_has", true, @(x) ismember(x, [true, false]));
 %% Despike parameters for shear dissipation calculation
 % [thresh, smooth, and length] (in seconds) -> Rockland default value,
 addParameter(p, "despike_sh_thresh", 8, validPositive); % Shear probe
