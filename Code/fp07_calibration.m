@@ -21,7 +21,7 @@ if ~info.fp07_calibration, return; end % Don't calibrate the FP07 sensors
 
 cfgObj = setupstr(char(a.setupfilestr));
 
-[Treference, TNames] = extractNames(a, info.fp07_reference);
+[Treference, TNames] = extractNames(a, info.fp07_reference, basename);
 
 if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s  found
 
@@ -255,10 +255,11 @@ end % ismissing
 end % getTemperatures
 
 %%
-function [Treference, tbl] = extractNames(a, Treference)
+function [Treference, tbl] = extractNames(a, Treference, basename)
 arguments
     a struct
     Treference string
+    basename string
 end % arguments
 
 tbl = [];
