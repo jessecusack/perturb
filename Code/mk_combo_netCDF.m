@@ -94,6 +94,6 @@ end % arguments Output
 
 dt = diff(t);
 n = sum(~isnan(dt));
-mu = mean(dt, "omitmissing");
+mu = mean(dt, "omitnan");
 resolution = sum(mu .* n) ./ sum(n);
 end % mk_resolution
