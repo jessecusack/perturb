@@ -102,6 +102,7 @@ addParameter(p, "netCDF_publisher_institution", missing, validString);
 addParameter(p, "netCDF_publisher_name", missing, validString);
 addParameter(p, "netCDF_publisher_type", missing, validString);
 addParameter(p, "netCDF_publisher_url", missing, validString);
+addParameter(p, "netCDF_title", missing, validString);
 %%
 parse(p, varargin{:});
 a = p.Results(1);

@@ -125,23 +125,6 @@
 		"processing_level": 1,
 		"naming_authority": "org.cfconventions",
 		"standard_name_vocabulary": "CF Standard Name Table v72",
-		"geospatial_vertical_positive": "down",
-		"geospatial_bounds_crs": "EPSG:4326",
-		"geospatial_bounds_vertical_crs": "Instantaneous_Water_Level_Height",
-		"geospatial_lat_units": "degrees_north",
-		"geospatial_lat_resolution": "1 meter",
-		"geospatial_lon_units": "degrees_east",
-		"geospatial_lon_resolution": "1 meter",
-		"geospatial_vertical_units": "meters",
-		"geospatial_vertical_resolution": "0.001 meter",
-		"instrument": "Rockland VMP",
-		"references": "https://github.com/mousebrains/VMP",
-		"title": "CTD, DO, and Fluorometer data from VMP",
-		"history": "None",
-		"source": "observations from VMP",
-		"Conventions": "CF-1.8, ACDD-1.3",
-		"keywords": "Salinity, Density, Disolved Oxygen, Chlorophyll, Turbidity",
-		"comment": "Data from Rockland VMP casts",
-		"summary": "CTD, DO, and fluorometer data from a Rockland VMP"
+		"Conventions": "CF-1.8, ACDD-1.3"
 	}
 }
