@@ -43,19 +43,19 @@ for index = 1:numel(names)
     attr = attrV.(nameNC);
     switch class(val)
         case "datetime"
-            attr.valid_min = posixtime(min(val(:), [], "omitmissing"));
-            attr.valid_max = posixtime(max(val(:), [], "omitmissing"));
+            attr.valid_min = posixtime(min(val(:), [], "omitnan"));
+            attr.valid_max = posixtime(max(val(:), [], "omitnan"));
             attr.units = "seconds since 1970-01-01 00:00:00";
             attr.calendar = "proleptic_gregorian";
         case "logical"
             attr.dtype = "bool";
-            attr.valid_min = min(val(:), [], "omitmissing");
-            attr.valid_max = max(val(:), [], "omitmissing");
+            attr.valid_min = min(val(:), [], "omitnan");
+            attr.valid_max = max(val(:), [], "omitnan");
         case {"char", "string"}
             ;
         otherwise
-            attr.valid_min = min(val(:), [], "omitmissing");
-            attr.valid_max = max(val(:), [], "omitmissing");
+            attr.valid_min = min(val(:), [], "omitnan");
+            attr.valid_max = max(val(:), [], "omitnan");
     end
     nc_put_attribute(ncid, varID(index), attr);
 end % for

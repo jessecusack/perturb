@@ -13,8 +13,8 @@ end % arguments Output
 sz = size(filenames.basename);
 filenames.t0 = NaT(sz);
 filenames.t1 = NaT(sz);
-filenames.minDepth = nan(sz);
-filenames.maxDepth = nan(sz);
+filenames.min_depth = nan(sz);
+filenames.max_depth = nan(sz);
 filenames.nProfiles = nan(sz);
 filenames.latMin = nan(sz);
 filenames.lonMin = nan(sz);
@@ -78,7 +78,6 @@ for index = 1:size(filenames, 1) % Walk through filenames
         continue;
     end % if isempty indices
 
-
     nProfiles = size(indicesSlow, 2);
 
     fprintf("%s spliting into %d profiles\n", fRow.basename, nProfiles);
@@ -95,7 +94,11 @@ for index = 1:size(filenames, 1) % Walk through filenames
         gps = info.gps_class.initialize();
     end % if isempty gps
 
-    [ctd, chlorophyll] = mk_CTD(a, indicesSlow, gps);
+    if info.CT_has
+        [ctd, chlorophyll] = mk_CTD(a, indicesSlow, gps);
+    else
+        ctd = [];
+    end % if CTD_make_full_file
 
     profiles = cell(nProfiles, 1);
     profileInfo = mk_profile_info(fRow, nProfiles);
@@ -148,14 +151,13 @@ for index = 1:size(filenames, 1) % Walk through filenames
         profileInfo.lat(j) = profile.lat;
         profileInfo.lon(j) = profile.lon;
         profileInfo.dtGPS(j) = profile.dtGPS;
-        profileInfo.minDepth(j) = min(profile.slow.depth);
-        profileInfo.maxDepth(j) = max(profile.slow.depth);
+        profileInfo.min_depth(j) = min(profile.slow.depth, [], "omitnan");
+        profileInfo.max_depth(j) = max(profile.slow.depth, [], "omitnan");
         profileInfo.t0(j) = profile.slow.t(1);
         profileInfo.t1(j) = profile.slow.t(end);
-        profileInfo.nSlow(j) = numel(ii);
-        profileInfo.nFast(j) = numel(jj);
+        profileInfo.n_slow(j) = numel(ii);
+        profileInfo.n_fast(j) = numel(jj);
         profiles{j} = profile;
-
         if profile.dtGPS > info.gps_max_time_diff
             fprintf("WARNING: %s profile %d GPS fix %s from t0 %s\n", ...
                 fRow.basename, j, string(seconds(profileInfo.dtGPS(j)), "hh:mm:ss"), ...
@@ -172,8 +174,8 @@ for index = 1:size(filenames, 1) % Walk through filenames
 
     fRow.t0 = min(profileInfo.t0);
     fRow.t1 = max(profileInfo.t1);
-    fRow.minDepth = min(profileInfo.minDepth);
-    fRow.maxDepth = max(profileInfo.maxDepth);
+    fRow.min_depth = min(profileInfo.min_depth);
+    fRow.max_depth = max(profileInfo.max_depth);
     fRow.nProfiles = nProfiles;
     fRow.latMin = min(profileInfo.lat);
     fRow.lonMin = min(profileInfo.lon);
@@ -201,8 +203,10 @@ for index = 1:size(filenames, 1) % Walk through filenames
     profilesInfo.profiles = profiles;
     profilesInfo.fRow = fRow;
     profilesInfo.pInfo = profileInfo;
-    profilesInfo.ctd = ctd;
-    profilesInfo.chlorophyll = chlorophyll;
+    if ~isempty(ctd)
+        profilesInfo.ctd = ctd;
+        profilesInfo.chlorophyll = chlorophyll;
+    end % if ~isempty
     save(fnProf, "-struct", "profilesInfo", info.matlab_file_format);
 
     fprintf("%s took %.2f seconds to extract %d profiles\n", ...

@@ -11,9 +11,9 @@ dz = info.bin_width; % Bin stepsize (m)
 method = info.bin_method; % Which method to aggregate the data together
 if ~isa(method, "function_handle")
     if method == "median"
-        method = @(x) median(x, 1, "omitmissing");
+        method = @(x) median(x, 1, "omitnan");
     elseif method == "mean"
-        method = @(x) mean(x, 1, "omitmissing");
+        method = @(x) mean(x, 1, "omitnan");
     else
         error("Unrecognized binning method %s\n", method)
     end % if
@@ -35,10 +35,14 @@ for fnProf = unique(pInfo.fnProf)'
     profiles = load(fnProf).profiles;
     casts = cell(size(pRows,1),1);
     
-    minDepth = min(pRows.minDepth, [], "omitmissing"); % Minimum depth in casts
-    maxDepth = max(pRows.maxDepth, [], "omitmissing"); % Maximum depth in casts
+    minDepth = min(pRows.min_depth, [], "omitnan"); % Minimum depth in casts
+    maxDepth = max(pRows.max_depth, [], "omitnan"); % Maximum depth in casts
+
+    if isnan(minDepth) || isnan(maxDepth), continue; end
 
     allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
+
+    if numel(allBins) < 2, continue; end
 
     for index = 1:size(pRows,1)
         row = pRows(index,:);

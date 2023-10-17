@@ -38,8 +38,8 @@ for item = [gm.lat, "lat"; gm.lon, "lon"; gm.depth, "vertical"]'
     if ismember(name, names)
         prefix = append("geospatial_", item(2), "_");
         val = tbl.(name);
-        vMin = min(val(:), [], "omitmissing");
-        vMax = max(val(:), [], "omitmissing");
+        vMin = min(val(:), [], "omitnan");
+        vMax = max(val(:), [], "omitnan");
         attr.(append(prefix, "min")) = vMin;
         attr.(append(prefix, "max")) = vMax;
         switch name

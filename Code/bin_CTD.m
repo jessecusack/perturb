@@ -9,6 +9,8 @@ arguments (Input)
     info struct % parameters, defaults from get_info
 end % arguments Input
 
+if ~info.CT_has, return; end
+
 fnCombo = info.("ctd_filename");
 fnInfo  = info.("ctd_info_filename");
 
@@ -69,14 +71,14 @@ for index = 1:size(newInfo,1)
 
     ctd.grp = findgroups(interp1(tBins, iBins, ctd.t, "previous"));
 
-    myFun = @(tbl, name) rowfun(@(x) median(x, "omitmissing"), tbl, ...
+    myFun = @(tbl, name) rowfun(@(x) median(x, "omitnan"), tbl, ...
         "InputVariables", name, ...
         "GroupingVariables", "grp", ...
         "OutputVariableNames", name);
 
     b = myFun(ctd, "t");
     b = removevars(b, "grp");
-    b = renamevars(b, "GroupCount", "nSlow");
+    b = renamevars(b, "GroupCount", "n_slow");
     b.tSlow = b.t;
     b.t = interp1(tBins, tBins, b.tSlow, "previous");
     for name = setdiff(string(ctd.Properties.VariableNames), ["grp", "t"])
@@ -92,7 +94,7 @@ for index = 1:size(newInfo,1)
             bb.(name) = temp.(name);
         end % for
         bb = removevars(bb, "grp");
-        bb = renamevars(bb, ["GroupCount", "t"], ["nFast", "tFast"]);
+        bb = renamevars(bb, ["GroupCount", "t"], ["n_fast", "tFast"]);
         bb.t = interp1(tBins, tBins, bb.tFast, "previous");
         b = outerjoin(b, bb, "Keys", "t", "MergeKeys", true);
     end % if ~isempty

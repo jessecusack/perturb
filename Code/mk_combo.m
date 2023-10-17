@@ -36,6 +36,7 @@ casts = cell(numel(filenames)+qExist,1); % +1 for combo file itself
 for index = 1:numel(filenames)
     stime = tic();
     fn = filenames(index);
+    if ~isfile(fn), continue; end % when there were no depth bins, a file is not generated
     rhs = load(fn);
     if isempty(rhs), continue; end % I don't expect this to ever happen, but...
     casts{index} = rhs;

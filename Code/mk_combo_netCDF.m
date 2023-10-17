@@ -72,7 +72,7 @@ nc_put_attribute(ncid, netcdf.getConstant("NC_GLOBAL"), attrG); % Add any global
 
 dimIDs = nan(2,1);
 dimIDs(1) = netcdf.defDim(ncid, "bin", size(tbl,1));
-dimIDs(2) = netcdf.defDim(ncid, "time", size(cInfo,1));
+dimIDs(2) = netcdf.defDim(ncid, "profile", size(cInfo,1));
 
 varID = nc_create_variables(ncid, dimIDs(2), nameMap, cInfo, attrV, compressionLevel);
 tblID = nc_create_variables(ncid, dimIDs, nameMap, tbl, attrV, compressionLevel);
@@ -94,6 +94,6 @@ end % arguments Output
 
 dt = diff(t);
 n = sum(~isnan(dt));
-mu = mean(dt, "omitmissing");
+mu = mean(dt, "omitnan");
 resolution = sum(mu .* n) ./ sum(n);
 end % mk_resolution

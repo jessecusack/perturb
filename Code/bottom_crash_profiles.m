@@ -16,5 +16,5 @@ if info.bbl_use
 end % if info.bbl_use
 
 nProfiles = numel(profiles);
-pInfo.bottomDepth = pInfo.maxDepth + 1; % Past the deepest part of each profile
+pInfo.bottomDepth = pInfo.max_depth + 1; % Past the deepest part of each profile
 end % trimProfiles

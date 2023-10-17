@@ -264,12 +264,12 @@ L_f_hat = L_hat .* Vf.^(3/4);
 
 var_ln_epsilon = 5.5 ./ (1 + (L_f_hat ./ 4).^(7/9)); % Variance of epsilon in log space
 sigma_ln_epsilon = sqrt(var_ln_epsilon); % Standard deviation of epsilon in log space
-mu_sigma_ln_epsilon = mean(sigma_ln_epsilon, 2, "omitmissing"); % Mean across shear probes at each time
+mu_sigma_ln_epsilon = mean(sigma_ln_epsilon, 2, "omitnan"); % Mean across shear probes at each time
 CF95_range = 1.96 * sqrt(2) * mu_sigma_ln_epsilon; % 95% confidence interval in log space
 
 for iter = 1:(size(epsilon,2)-1) % To avoid an infinite loop, this is the an at most amount
-    minE = min(epsilon, [], 2, "omitmissing");
-    [maxE, ix] = max(epsilon, [], 2, "omitmissing"); % get indices in case we want to drop them
+    minE = min(epsilon, [], 2, "omitnan");
+    [maxE, ix] = max(epsilon, [], 2, "omitnan"); % get indices in case we want to drop them
     ratio = abs(diff(log([minE, maxE]), 1, 2));
     q = ratio > CF95_range; % If minE and maxE ratio -> 95% confidence interval
     if ~any(q), break; end % We're done, we can use all the values
@@ -281,7 +281,7 @@ for iter = 1:(size(epsilon,2)-1) % To avoid an infinite loop, this is the an at 
     end % if
 end % for iter
 
-mu = exp(mean(log(epsilon), 2, "omitmissing")); % Take the mean of the remaining values in log space
+mu = exp(mean(log(epsilon), 2, "omitnan")); % Take the mean of the remaining values in log space
 diss.epsilonMean = mu;
 diss.epsilonLnSigma = mu_sigma_ln_epsilon;
 end % mk_epsilon_mean

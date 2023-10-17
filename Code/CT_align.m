@@ -14,6 +14,10 @@ arguments (Output)
     a struct % Possibly modified version of odas_p2mat structure
 end % arguments Output
 
+if ~info.CT_has
+    return % No CT data to align
+end % isempty
+
 TName = info.fp07_reference;
 
 if contains(TName, "_")

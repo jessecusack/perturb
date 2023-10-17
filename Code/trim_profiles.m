@@ -35,11 +35,11 @@ for index = pInfo.index'
     pFast = rowfun(@(x) x(1), fast, "InputVariables", "bin", "GroupingVariables", "grp", "OutputVariableNames", "P");
     pSlow = rowfun(@(x) x(1), slow, "InputVariables", "bin", "GroupingVariables", "grp", "OutputVariableNames", "P");
     for name = setdiff(string(fast.Properties.VariableNames), ["bin", "grp", "P_fast"])
-        a = rowfun(@(x) var(x, "omitmissing"), fast, "InputVariables", name, "GroupingVariables", "grp", "OutputVariableNames", name);
+        a = rowfun(@(x) var(x, "omitnan"), fast, "InputVariables", name, "GroupingVariables", "grp", "OutputVariableNames", name);
         pFast.(name) = sqrt(a.(name));
     end % for name fast
     for name = setdiff(string(slow.Properties.VariableNames), ["bin", "grp", "P_slow"])
-        a = rowfun(@(x) var(x, "omitmissing"), slow, "InputVariables", name, "GroupingVariables", "grp", "OutputVariableNames", name);
+        a = rowfun(@(x) var(x, "omitnan"), slow, "InputVariables", name, "GroupingVariables", "grp", "OutputVariableNames", name);
         pSlow.(name) = sqrt(a.(name));
     end % for name slow
     [~, ileft, iright] = innerjoin(pFast, pSlow, "Keys", "grp");
@@ -65,7 +65,7 @@ a = vertcat(casts{:}); % Combine all the casts to get the median value for the v
 depths = table();
 for i = 1:numel(names)
     name = names(i);
-    aMid = median(a.(name), "omitmissing");
+    aMid = median(a.(name), "omitnan");
     depths.(name) = nan(numel(casts),1);
     for j = 1:numel(casts)
         cast = casts{j};
