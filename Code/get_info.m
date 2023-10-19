@@ -42,6 +42,7 @@ addParameter(p, "trim_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Whic
 addParameter(p, "trim_use", true, @(x) ismember(x, [true, false])); % Should the trim depth be used to trim the top of dives off
 addParameter(p, "trim_extra_depth", 0, validNotNegative); % Extra depth to add to the trim depth value when processing dissipation
 %% Cast trimming from the bottom up, think bottom crashing to go after BBL
+addParameter(p, "bbl_calculate", false, @(x) ismember(x, [true, false])); % Calculate BBL stuff
 addParameter(p, "bbl_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "bbl_min_depth", 10, validPositive); % Minimum depth to look at for variances
 addParameter(p, "bbl_max_depth", 50, validPositive); % Maximum depth to look down to for variances
@@ -77,7 +78,8 @@ addParameter(p, "diss_epsilon_minimum", 3e-10, validPositive); % Dissipation est
 addParameter(p, "bin_method", "median", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
 %% CTD time binning parameters
-addParameter(p, "bin_ctd_dt", 0.5, validPositive); % Width in seconds of CTD binning
+addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
+addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T"], validString); % Sensors to time bin
 %% NetCDF global attributes
 addParameter(p, "netCDF_acknowledgement", missing, validString);
 addParameter(p, "netCDF_contributor_name", missing, validString);

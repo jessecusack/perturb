@@ -67,7 +67,7 @@ classdef GPS_base_class
             arguments (Output)
                 val double
             end % arguments Output
-
+            
             val = interp1(obj.tbl.time, obj.tbl.lat, time, obj.method, "extrap");
         end % lat
 

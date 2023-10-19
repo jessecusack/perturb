@@ -1,17 +1,18 @@
 % Trim the initial part of profiles before the VMP is stable and out of the prop wash
 
-function pInfo = trim_profiles(profiles, pInfo, info)
+function pInfo = trim_profiles(profiles, pInfo, pars)
 arguments (Input)
     profiles cell % Cell array of individual profiles
     pInfo table % Summary information for each profile
-    info struct % Parameters, defaults from get_info
+    pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
     pInfo table % Updated summary information for each profile
 end % arguments Input
 %%
-dz = info.trim_dz;
-bins = info.trim_min_depth:dz:info.trim_max_depth; % Depth bins for variance estimates
+
+dz = pars.trim_dz;
+bins = pars.trim_min_depth:dz:pars.trim_max_depth; % Depth bins for variance estimates
 
 qMinDepth = bins(1) - dz/2;
 qMaxDepth = bins(end) + dz/2;
@@ -54,7 +55,7 @@ end % for index
 
 qKeep = ~cellfun(@isempty, casts); % casts to keep
 if ~any(qKeep)
-    fprintf("WARNING: No trimable casts found in %s\n", pInfo.basename(1));
+    fprintf("WARNING: No trimable casts found in %s\n", pInfo.name(1));
     return;
 end % if ~any
 
@@ -77,7 +78,7 @@ for i = 1:numel(names)
 end % for name
 
 depths = table2array(depths);
-min_depth = quantile(depths, info.trim_quantile, 2);
+min_depth = quantile(depths, pars.trim_quantile, 2);
 pInfo.trim_depth(qKeep) = min_depth;
 pInfo.trim_max_depth(qKeep) = max(depths, [], 2);
 end % trim_profiles

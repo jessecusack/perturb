@@ -10,23 +10,23 @@
 %
 % June-2023, Pat Welch, pat@mousebrains.com
 
-function profile = calc_diss_shear(profile, pInfo, info)
+function profile = calc_diss_shear(profile, pInfo, pars)
 arguments (Input)
     profile struct % Profile information
     pInfo table % Summary information about the profile
-    info struct % Parameters, defaults from get_info
+    pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
     profile struct % Modified version of profile with diss and bbl added
 end % arguments Output
 
-label = sprintf("%s cast %d", pInfo.basename, pInfo.index);
+label = sprintf("%s cast %d", pInfo.name, pInfo.index);
 
-[dissInfo, SH_HP, AA] = mk_diss_info(profile, info, pInfo, ...
+[dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, ...
     "diss_downwards_fft_length_sec", "diss_downwards_length_fac", label);
 
-if info.trim_use % Trim the top of the profile
-    q = dissInfo.P >= (pInfo.trim_depth + info.trim_extra_depth);
+if pars.trim_use % Trim the top of the profile
+    q = dissInfo.P >= (pInfo.trim_depth + pars.trim_extra_depth);
     SH_HP = SH_HP(q,:);
     AA  = AA(q,:);
     for name = ["speed", "T", "t", "P"]
@@ -37,8 +37,8 @@ end % if trim_use
 if size(SH_HP,1) >= dissInfo.diss_length % enough data to work with
     try
         diss = get_diss_odas(SH_HP, AA, dissInfo);
-        diss = mk_epsilon_mean(diss, info.diss_epsilon_minimum, dissInfo.diss_length, ...
-            profile.fs_fast, info.diss_warning_fraction, label);
+        diss = mk_epsilon_mean(diss, pars.diss_epsilon_minimum, dissInfo.diss_length, ...
+            profile.fs_fast, pars.diss_warning_fraction, label);
         diss.depth = interp1(profile.slow.t_slow, profile.slow.depth, diss.t, "linear", "extrap");
         diss.t = pInfo.t0 + seconds(diss.t - diss.t(1));
         profile.diss = mk_diss_struct(diss, dissInfo);
@@ -57,44 +57,46 @@ end % if ~isempty
 
 %% Calculate dissipation bottom to top
 
-[dissInfo, SH_HP, AA] = mk_diss_info(profile, info, pInfo, ...
-    "diss_upwards_fft_length_sec", "diss_upwards_length_fac", label);
+if pars.bbl_calculate
+    [dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, ...
+        "diss_upwards_fft_length_sec", "diss_upwards_length_fac", label);
 
-if info.bbl_use % Trim the bottom of the profile
-    q = dissInfo.P <= (pInfo.bottomDepth + info.bbl_extraDepth);
-    SH_HP = SH_HP(q,:);
-    AA  = AA(q,:);
-    for name = ["speed", "T", "t", "P"]
-        dissInfo.(name) = dissInfo.(name)(q);
-    end % for name
-end % if trim_use
+    if pars.bbl_use % Trim the bottom of the profile
+        q = dissInfo.P <= (pInfo.bottomDepth + pars.bbl_extraDepth);
+        SH_HP = SH_HP(q,:);
+        AA  = AA(q,:);
+        for name = ["speed", "T", "t", "P"]
+            dissInfo.(name) = dissInfo.(name)(q);
+        end % for name
+    end % if trim_use
 
-if size(SH_HP,1) >= dissInfo.diss_length % enough data to work with
-    % flip upside down so the dissipation is calculated from the bottom upwards
+    if size(SH_HP,1) >= dissInfo.diss_length % enough data to work with
+        % flip upside down so the dissipation is calculated from the bottom upwards
 
-    SH_HP = flipud(SH_HP);
-    AA = flipud(AA);
-    for name = ["speed", "T", "t", "P"]
-        dissInfo.(name) = flipud(dissInfo.(name));
-    end % for name
+        SH_HP = flipud(SH_HP);
+        AA = flipud(AA);
+        for name = ["speed", "T", "t", "P"]
+            dissInfo.(name) = flipud(dissInfo.(name));
+        end % for name
 
-    try
-        diss = get_diss_odas(SH_HP, AA, dissInfo);
-        diss = mk_epsilon_mean(diss, info.diss_epsilon_minimum, dissInfo.diss_length, ...
-            profile.fs_fast, info.diss_warning_fraction, label);
-        diss.depth = interp1(profile.slow.t_slow, profile.slow.depth, diss.t, "linear", "extrap");
-        profile.bbl = mk_diss_struct(diss, dissInfo);
-    catch ME
-        fprintf("Error %s calculating Bottom->Top dissipation, %s\n", label, ME.message);
-        for i = 1:numel(ME.stack)
-            stk = ME.stack(i);
-            fprintf("Stack(%d) line=%d name=%s file=%s\n", i, stk.line, string(stk.name), string(stk.file));
-        end % for i
-        profile.diss = mk_empty_diss_struct(dissInfo);
-    end % try
-else % Too little data, so fudge up profile.diss
-    profile.diss = mk_empty_diss_struct(dissInfo);
-end % if ~isempty
+        try
+            diss = get_diss_odas(SH_HP, AA, dissInfo);
+            diss = mk_epsilon_mean(diss, pars.diss_epsilon_minimum, dissInfo.diss_length, ...
+                profile.fs_fast, pars.diss_warning_fraction, label);
+            diss.depth = interp1(profile.slow.t_slow, profile.slow.depth, diss.t, "linear", "extrap");
+            profile.bbl = mk_diss_struct(diss, dissInfo);
+        catch ME
+            fprintf("Error %s calculating Bottom->Top dissipation, %s\n", label, ME.message);
+            for i = 1:numel(ME.stack)
+                stk = ME.stack(i);
+                fprintf("Stack(%d) line=%d name=%s file=%s\n", i, stk.line, string(stk.name), string(stk.file));
+            end % for i
+            profile.bbl = mk_empty_diss_struct(dissInfo);
+        end % try
+    else % Too little data, so fudge up profile.diss
+        profile.bbl = mk_empty_diss_struct(dissInfo);
+    end % if ~isempty
+end % pars.bbl_calculate
 end % calc_diss_shear
 
 function dInfo = mk_empty_diss_struct(dissInfo)
@@ -218,7 +220,7 @@ end % for name
 if raction > p.warning_fraction
     fprintf("WARNING: %s spike ratio %.1f%% for profile %d in %s\n", ...
         tit, raction * 100, ...
-        pInfo.index, pInfo.basename);
+        pInfo.index, pInfo.name);
 end % raction >
 end % my_despike
 

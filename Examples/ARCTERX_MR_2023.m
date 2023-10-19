@@ -3,11 +3,13 @@
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
+glider = "685";
+
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = "~/Desktop/ARCTERX/2023 IOP/Glider Offload/OSU685/MR";
+data_root = append("~/Desktop/ARCTERX/2023 IOP/glider-offload/OSU", glider, "/MR");
 p_file_root = data_root;
-output_root = "~/Desktop/ARCTERX/2023 IOP/tpw_MR/685";
+output_root = append("~/Desktop/ARCTERX/2023 IOP/tpw_MR/", glider);
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 % 
@@ -15,7 +17,7 @@ addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 % GPS_class = GPS_from_mat(GPS_filename);
 GPS_class = GPS_NaN();
 
-process_VMP_files( ...
+process_P_files( ...
     "debug", true, ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
     "output_root", output_root, ... % Where to write output to
