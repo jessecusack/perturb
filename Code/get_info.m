@@ -66,10 +66,10 @@ addParameter(p, "despike_A_smooth", 0.5, validPositive);
 addParameter(p, "despike_A_N_FS", 0.05, validPositive);
 addParameter(p, "despike_A_warning_fraction", 0.02, validPositive); % Warning fraction
 %% Dissipation parameters
-addParameter(p, "diss_downwards_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds for top -> bottom estimates
-addParameter(p, "diss_upwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for bottom -> top estimates
-addParameter(p, "diss_downwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for top -> bottom estimates
-addParameter(p, "diss_upwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for bottom -> top estimates
+addParameter(p, "diss_forwards_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds for start of profile to end
+addParameter(p, "diss_backwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for end of profile to start
+addParameter(p, "diss_forwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for start of profile to end
+addParameter(p, "diss_backwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for end of profile to start
 addParameter(p, "diss_T1_norm", 1, validPositive); % Value to multiple T1_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
