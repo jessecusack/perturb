@@ -108,6 +108,9 @@ try
     my_mk_directory(qUseDB, pars.debug);
     save(qUseDB, "qUse", pars.matlab_file_format);
 
+    binned = binned(~cellfun(@isempty, binned)); % Prune empty bins
+    ctd = ctd(~cellfun(@isempty, ctd)); % Prune empty bins
+
     qBinned = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), binned); % Valid data for profile depth binning
     qCTD = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), ctd); % Valid data for CTD time binning
 

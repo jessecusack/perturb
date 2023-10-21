@@ -65,18 +65,18 @@ nTimes = sum(rowfun(@(x) size(x, 1), data, ...
 names = rowfun(@(x) string(x.Properties.VariableNames), data, ...
     "InputVariables", "data", ...
     "ExtractCellContents", true, ...
-    "OutputVariableNames", "a" ...
+    "OutputFormat", "cell" ...
     ); % Names in all the profiles
-names = unique(names.a(:));
+names = unique(horzcat(names{:}));
 
 [~, ix] = sort(lower(names));
 names = names(ix);
-names = ["t"; setdiff(names, "t")];
+names = ["t", setdiff(names, "t")];
 
 tbl = table();
 tbl.t = NaT(nTimes,1);
 
-for name = names(2:end)'
+for name = names(2:end)
     tbl.(name) = nan(nTimes,1);
 end % for name
 
