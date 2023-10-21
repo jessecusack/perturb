@@ -23,7 +23,7 @@ end % arguments Output
 label = sprintf("%s cast %d", pInfo.name, pInfo.index);
 
 [dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, ...
-    "diss_downwards_fft_length_sec", "diss_downwards_length_fac", label);
+    "diss_forwards_fft_length_sec", "diss_forwards_length_fac", label);
 
 if pars.trim_use % Trim the top of the profile
     q = dissInfo.P >= (pInfo.trim_depth + pars.trim_extra_depth);
@@ -59,7 +59,7 @@ end % if ~isempty
 
 if pars.bbl_calculate
     [dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, ...
-        "diss_upwards_fft_length_sec", "diss_upwards_length_fac", label);
+        "diss_backwards_fft_length_sec", "diss_backwards_length_fac", label);
 
     if pars.bbl_use % Trim the bottom of the profile
         q = dissInfo.P <= (pInfo.bottomDepth + pars.bbl_extraDepth);
