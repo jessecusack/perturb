@@ -139,7 +139,7 @@ arguments (Output)
     ctd    (2,1) cell
 end % arguments Input
 
-binned = missing;
+binned = {missing, []};
 ctd = missing;
 
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
