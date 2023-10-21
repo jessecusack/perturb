@@ -72,7 +72,8 @@ directory = fullfile(root, append(prefix, "_0000"));
 items = struct2table(dir(fullfile(root, append(prefix, "_*"))));
 
 if ~isempty(items)
-    n = regexp(string(items.folder), append("^", prefix, "_(\d{4})$"), "tokens", "once");
+    n = regexp(string(items.name), append("^", prefix, "_(\d{4})$"), "tokens", "once");
+    n = n(~cellfun(@isempty, n)); % Get rid of things like CTD_combo_\d{4} when looking for CTD_\d{4}
     if ~isempty(n)
         n = max(str2double(string(n)));
         directory = fullfile(root, sprintf("%s_%04d", prefix, n + 1));
@@ -117,5 +118,5 @@ qKeep = ismember(namesAll, names) & ~qDrop;
 json = jsonencode(rmfield(a, namesAll(~qKeep)), "PrettyPrint", true);
 
 sha1 = java.security.MessageDigest.getInstance("SHA-1");
-hash = join(string(dec2hex(uint8(sha1.digest(double(json))), 2)), "");
+hash = join(string(dec2hex(uint8(sha1.digest(uint8(json))), 2)), "");
 end % mk_hash_json
