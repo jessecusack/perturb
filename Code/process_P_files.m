@@ -10,6 +10,11 @@
 
 function pars = process_P_files(varargin)
 stime = tic();
+
+% Turn off name conflict warning for the input method I need to make ODAS work
+warningState = warning; % Current status
+warning("off", "MATLAB:dispatcher:nameConflict");
+
 % Process input arguments and build a structure with parameters
 pars = get_info(varargin{:}); % Parse arguments and supply defaults
 pars = update_paths(pars); % Populate all the paths
@@ -127,6 +132,8 @@ catch ME
         datetime(), toc(stime));
     diary off
 end % try
+
+warning(warningState); % Restore the warning status
 end % process_P_files
 
 function [row, binned, ctd] = P_to_binned_profile(row, pars)
