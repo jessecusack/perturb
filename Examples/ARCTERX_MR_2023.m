@@ -8,6 +8,7 @@ glider = "685";
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
 data_root = append("~/Desktop/ARCTERX/2023 IOP/glider-offload/OSU", glider, "/MR");
+
 p_file_root = data_root;
 output_root = append("~/Desktop/ARCTERX/2023 IOP/tpw_MR/", glider);
 
@@ -27,6 +28,8 @@ process_P_files( ...
     "profile_speed_min", 0.1, ... % Vertical speed cutoff
     "fp07_calibration", false, ... % Don't calibrate FP07s
     "CT_has", false, ... % Doesn't have CT information
+    "diss_forwards_fft_length_sec", 1, ... % 1 second FFT lengths (This is really forward in time)
+    "diss_forwards_length_fac", 10, ... % 10 overlaps, so at 0.1m/s -> 1 m
     "diss_epsilon_minimum", 1e-13, ...   % Drop dissipation estimates smaller than this value
     "trim_use", false, ... % Don't trim at the top
     "netCDF_contributor_name", "Pat Welch", ...
