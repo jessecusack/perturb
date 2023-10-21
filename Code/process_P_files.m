@@ -38,8 +38,6 @@ try
     end % isempty gcp
 
     p_filenames = load_P_file_headers(p_filenames, pars); % Get the header record for each P file
-    % p_filenames = p_filenames(1:20,:);
-    % p_filenames
 
     if pars.p_file_merge % merge P files that were rolled over due to size
         my_mk_directory(fullfile(pars.p_merge_root, "dummy"), pars.debug);
@@ -143,7 +141,7 @@ arguments (Output)
 end % arguments Input
 
 binned = {missing, []};
-ctd = missing;
+ctd = {missing, []};
 
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
 if ~row.qMatOkay, return; end % Failed going through odas_p2mat
@@ -152,8 +150,6 @@ gps = [];
 
 if pars.CT_has
     [row, ctd, gps] = ctd2binned(row, mat, pars, gps); % we can bin up scalers with no profiles
-else
-    ctd = missing;
 end % if CT_has
 
 
