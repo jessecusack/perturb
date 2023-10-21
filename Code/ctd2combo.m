@@ -4,34 +4,70 @@
 %
 % Oct-2023, Pat Welch, pat@mousebrains.com
 
-function ctd2combo(ctd, p_filenames, pars)
+function ctd2combo(ctd, pars)
 arguments (Input)
     ctd (:,1) cell
-    p_filenames table
     pars struct
 end % arguments Input
 
 if ~pars.CT_has, return; end
 
-fnCombo = fullfile(pars.ctd_root, "ctd.combo.mat");
+data = table();
+data.fn = cellfun(@(x) x{1}, ctd);
+data.data = cellfun(@(x) x{2}, ctd, "UniformOutput", false);
+
+data = data(~ismissing(data.fn),:);
+
+fnCombo = fullfile(pars.ctd_combo_root, "ctd.combo.mat");
 if isfile(fnCombo)
-    items = struct2table(dir(fullfile(pars.ctd_root, pars.p_file_pattern)));
-    items = items(~items.isdir,:);
-    mtime = max(items.datenum);
-    items = dir(fnCombo);
-    if items.datenum > mtime
+    data.datenum = nan(size(data.fn));
+    for index = 1:size(data,1)
+        fn = data.fn(index);
+        if isfile(fn)
+            item = dir(fn);
+            data.datenum(index) = item(1).datenum;
+        else
+            fprintf("WARNING: %s does not exist!\n", fn);
+            data.fn(index) = missing;
+        end % if
+    end % for index
+    mtime = max(data.datenum, [], "omitnan");
+    item = dir(fnCombo);
+    if item.datenum > mtime
         fprintf("No need to rebuild CTD combo, %s is newer than inputs\n", fnCombo);
         return;
     end
+    fprintf("Rebuilding %s\n", fnCombo);
+    disp(data.fn(data.datenum >= item.datenum));
 end % if isfile
 
-names = strings(0);
-nTimes = 0;
-for index = 1:numel(ctd)
-    tbl = ctd{index};
-    nTimes = nTimes + size(tbl,1);
-    names = union(names, string(tbl.Properties.VariableNames));
-end % for index
+if any(cellfun(@isempty, data.data))
+    items = cell(size(data.data));
+    dd = parallel.pool.Constant(data); % Doesn't change from here on
+    parfor index = 1:size(data,1)
+        if ~isempty(dd.Value.data{index})
+            items{index} = dd.Value.data{index};
+        else
+            fprintf("Loading %s\n", dd.Value.fn(index));
+            items{index} = load(dd.Value.fn(index)).binned;
+        end % if ~isempty
+    end % parfor
+    delete(dd);
+    data.data = items;
+end % if any
+
+nTimes = sum(rowfun(@(x) size(x, 1), data, ...
+    "InputVariables", "data", ...
+    "ExtractCellContents", true, ...
+    "OutputFormat", "uniform" ...
+    )); % How many profiles are there in total
+
+names = rowfun(@(x) string(x.Properties.VariableNames), data, ...
+    "InputVariables", "data", ...
+    "ExtractCellContents", true, ...
+    "OutputVariableNames", "a" ...
+    ); % Names in all the profiles
+names = unique(names.a(:));
 
 [~, ix] = sort(lower(names));
 names = names(ix);
@@ -41,13 +77,12 @@ tbl = table();
 tbl.t = NaT(nTimes,1);
 
 for name = names(2:end)'
-    name
     tbl.(name) = nan(nTimes,1);
 end % for name
 
 offset = 0;
 for index = 1:numel(ctd)
-    a = ctd{index};
+    a = data.data{index};
     ii = offset + (1:size(a,1));
     offset = offset + size(a,1);
     for name = string(a.Properties.VariableNames)
@@ -55,14 +90,10 @@ for index = 1:numel(ctd)
     end % for name
 end % for index
 
-[~, ix] = unique(tbl.t);
+[~, ix] = unique(tbl.t); % Should be sorted, but who knows
 tbl = tbl(ix,:);
-
-data = struct();
-data.ctd = tbl;
-data.info = p_filenames;
 
 my_mk_directory(fnCombo, pars.debug);
 fprintf("Writing %s\n", fnCombo);
-save(fnCombo, "-struct", "data", pars.matlab_file_format);
+save(fnCombo, "tbl", pars.matlab_file_format);
 end % ctd2combo

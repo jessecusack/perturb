@@ -2,7 +2,7 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, binned] = profile2binned(row, a, pars)
+function [row, retval] = profile2binned(row, a, pars)
 arguments (Input)
     row table % row to work on
     a struct % Output of mat2profile
@@ -10,11 +10,11 @@ arguments (Input)
 end % arguments Input
 arguments (Output)
     row table % row worked on
-    binned struct % binned profiles
+    retval (2,1) cell % {filename or missing, empty or binned profiles}
 end % arguments Output
 
 if ~row.qProfileOkay
-    binned = [];
+    retval = {missing, []};
     return;
 end % if ~row.qProfileOkay
 
@@ -23,7 +23,7 @@ fnBin = fullfile(pars.binned_root, append(row.name, ".mat"));
 row.fnBin = fnBin;
 
 if isnewer(fnBin, fnProf)
-    binned = load(fnBin); % We want this for combining
+    retval = {fnBin, []}; % We want this for combining
     fprintf("%s: %s is newer than %s\n", row.name, row.fnBin, row.fnProf);
     return;
 end % if isnewer
@@ -59,7 +59,8 @@ minDepth = min(pInfo.min_depth, [], "omitnan"); % Minimum depth in casts
 maxDepth = max(pInfo.max_depth, [], "omitnan"); % Maximum depth in casts
 
 if isnan(minDepth) || isnan(maxDepth)
-    binned = [];
+    retval = {missing, []};
+    row.qProfileOkay = false;
     fprintf("%s: nan in min or max depth\n", row.name);
     return;
 end % if
@@ -67,7 +68,8 @@ end % if
 allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
 
 if numel(allBins) < 2
-    binned = [];
+    retval = {missing, []};
+    row.qProfileOkay = false;
     fprintf("%s: Number of allBins, %d < 2\n", row.name, numel(allBins));
     return;
 end
@@ -165,6 +167,13 @@ if any(qDrop)
     pInfo = pInfo(~qDrop,:);
 end % any qDrop
 
+if isempty(casts)
+    retval = {missing, []};
+    row.qProfileOkay = false;
+    fprintf("%s: No usable casts found in %s\n", row.name, row.fnProf);
+    return;
+end
+
 nCasts = numel(casts);
 nBins = numel(allBins);
 
@@ -210,6 +219,7 @@ binned = struct ( ...
 my_mk_directory(fnBin);
 save(fnBin, "-struct", "binned", pars.matlab_file_format);
 fprintf("%s: Saving %d profiles to %s\n", row.name, size(pInfo,1), fnBin);
+retval = {fnBin, binned};
 end % bin_data
 
 function tbl = bin_diss(diss, suffix, method)

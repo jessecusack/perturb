@@ -108,11 +108,15 @@ try
     my_mk_directory(qUseDB, pars.debug);
     save(qUseDB, "qUse", pars.matlab_file_format);
 
-    qBinned = ~cellfun(@isempty, binned); % Valid data for profile depth binning
-    qCTD = ~cellfun(@isempty, ctd); % Valid data for CTD time binning
+    qBinned = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), binned); % Valid data for profile depth binning
+    qCTD = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), ctd); % Valid data for CTD time binning
 
-    profiles2combo(binned(qBinned), p_filenames(qBinned,:), pars);
-    ctd2combo(ctd(qCTD), p_filenames(qCTD,:), pars);
+    if any(qBinned)
+        profiles2combo(binned(qBinned), pars);
+    end % if any qBinned
+    if any(qCTD)
+        ctd2combo(ctd(qCTD), pars);
+    end % if any qCTD
 
     fprintf("\n********* Finished at %s in %.0f seconds **********\n", datetime(), toc(stime));
     diary off;
@@ -131,12 +135,12 @@ arguments (Input)
 end % arguments Input
 arguments (Output)
     row (1,:) table
-    binned % Empty or struct
-    ctd    % Empty or struct
+    binned (2,1) cell 
+    ctd    (2,1) cell
 end % arguments Input
 
-binned = [];
-ctd = [];
+binned = missing;
+ctd = missing;
 
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
 if ~row.qMatOkay, return; end % Failed going through odas_p2mat
@@ -146,8 +150,9 @@ gps = [];
 if pars.CT_has
     [row, ctd, gps] = ctd2binned(row, mat, pars, gps); % we can bin up scalers with no profiles
 else
-    ctd = [];
+    ctd = missing;
 end % if CT_has
+
 
 if ~row.qProfileOkay, return; end % Failed in the past, so don't go any further
 [row, profiles, mat, gps] = mat2profile(row, mat, pars, gps);

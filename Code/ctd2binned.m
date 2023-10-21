@@ -3,7 +3,7 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, binned, gps] = ctd2binned(row, mat, pars, gps)
+function [row, retval, gps] = ctd2binned(row, mat, pars, gps)
 arguments (Input)
     row table % row to work on
     mat struct % Output of mat2profile
@@ -12,15 +12,15 @@ arguments (Input)
 end % arguments Input
 arguments (Output)
     row table % row worked on
-    binned table % binned profiles
-    gps % empty or GPS_base_class
+    retval (2,1) cell % (filename ormissing) and (binned or empty)
+    gps % empty GPS_base_class
 end % arguments Output
 
 fnCTD = fullfile(pars.ctd_root, append(row.name, ".mat"));
 row.fnCTD = fnCTD;
 
 if isnewer(fnCTD, row.fnMat)
-    binned = load(fnCTD).binned; % We want this for combined
+    retval = {fnCTD, []}; % Filename of the data
     fprintf("%s: %s is newer than %s\n", row.name, row.fnMat, row.fnCTD);
     return;
 end
@@ -51,7 +51,7 @@ for name = intersect(string(fieldnames(mat)), pars.ctd_bin_variables)'
 end % for
 
 if isempty(tblSlow) && isempty(tblFast)
-    binned = [];
+    retval = {missing, []};
     return;
 end
 
@@ -68,9 +68,9 @@ if ~isempty(tblSlow)
     binned = binTable(dtBin, mat.t_slow, mat.P_slow, tblSlow, binned, "Slow");
 end % if ~isempty tblSlow
 
-if ~isempty(tblSlow)
+if ~isempty(tblFast)
     binned = binTable(dtBin, mat.t_fast, [], tblFast, binned, "Fast");
-end % if ~isempty tblSlow
+end % if ~isempty tblFast
 
 binned.t = t0 + seconds(binned.t);
 
@@ -111,6 +111,8 @@ my_mk_directory(fnCTD);
 
 save(fnCTD, "binned", pars.matlab_file_format);
 fprintf("%s: wrote %s\n", row.name, fnCTD);
+
+retval = {fnCTD, binned};
 end % bin_CTD
 
 function binned = binTable(dtBin, t, pressure, tbl, binned, suffix)
