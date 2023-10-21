@@ -37,8 +37,7 @@ if isfile(fnCombo)
         fprintf("No need to rebuild CTD combo, %s is newer than inputs\n", fnCombo);
         return;
     end
-    fprintf("Rebuilding %s\n", fnCombo);
-    disp(data.fn(data.datenum >= item.datenum));
+    fprintf("Rebuilding %s due to %d files\n", fnCombo, sum(data.datenum >= item.datenum));
 end % if isfile
 
 if any(cellfun(@isempty, data.data))
