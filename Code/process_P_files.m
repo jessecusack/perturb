@@ -34,6 +34,8 @@ try
         return;
     end
 
+    p_filenames = p_filenames(1:10,:);
+
     % Sort out if the Parallel Computing Toolbox is installed or not
     toolboxes = matlab.addons.installedAddons;
     if ~ismember("Parallel Computing Toolbox", toolboxes.Name)
@@ -55,7 +57,6 @@ try
     qUseDB = fullfile(pars.database_root, "qUse.db.mat");
     if isfile(qUseDB)
         qUse = load(qUseDB).qUse;
-        head(p_filenames)
         [~, iLHS, iRHS] = innerjoin(p_filenames, qUse, "Keys", "name");
         if ~isempty(iLHS)
             p_filenames.qMatOkay(iLHS) = qUse.qMatOkay(iRHS);
@@ -153,16 +154,18 @@ ctd = {missing, []};
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
 if ~row.qMatOkay, return; end % Failed going through odas_p2mat
 
-gps = [];
-
 if pars.CT_has
-    [row, ctd, gps] = ctd2binned(row, mat, pars, gps); % we can bin up scalers with no profiles
+    % We use the profiles information to get "tow-yo" estimates for GPS locations.
+    [row, ctd, mat, gps] = ctd2binned(row, mat, pars); % we can bin up scalers with no profiles
+else % GPS may not be initialized
+    gps = []; % May be populated if needed
 end % if CT_has
 
+if ~row.qProfileOkay, return; end % Failed in the past, so don't work on the profiles
 
-if ~row.qProfileOkay, return; end % Failed in the past, so don't go any further
-[row, profiles, mat, gps] = mat2profile(row, mat, pars, gps);
-if ~row.qProfileOkay, return; end
+[row, profiles] = mat2profile(row, mat, pars, gps); % Split into profiles
 
-[row, binned] = profile2binned(row, profiles, pars);
+if ~row.qProfileOkay, return; end % Nothing more to do
+
+[row, binned] = profile2binned(row, profiles, pars); % Bin profiles by depth
 end %s process_P_to_binned_profile
