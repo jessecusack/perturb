@@ -33,7 +33,7 @@ addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time differen
 addParameter(p, "profile_pressure_min", 0.5, validPositive); % Minimum pressure in dbar for a profile
 addParameter(p, "profile_speed_min", 0.3, validPositive); % Minimum vertical speed in m/s for a profile
 addParameter(p, "profile_min_duration", 7, validPositive); % Minimum cast length in seconds for a profile
-addParameter(p, "profile_direction", "down", @(x) ismember(x, ["up", "down"])); % profile direction, up or down
+addParameter(p, "profile_direction", "down", @(x) ismember(x, ["up", "down", "time"])); % profile direction, up, down, or time
 %% Cast trimming for shear dissipation estimates to drop initial instabilities
 addParameter(p, "trim_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "trim_min_depth", 1, validPositive); % Minimum depth to look at for variances
