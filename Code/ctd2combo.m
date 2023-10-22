@@ -4,13 +4,33 @@
 %
 % Oct-2023, Pat Welch, pat@mousebrains.com
 
-function ctd2combo(ctd, pars)
+function tbl = ctd2combo(ctd, pars)
 arguments (Input)
     ctd (:,1) cell
     pars struct
 end % arguments Input
+arguments (Output)
+    tbl table % Binned CTD data
+end % arguments Output
 
-if ~pars.CT_has, return; end
+if ~pars.CT_has || isempty(ctd), return; end
+
+[tbl, fnCombo] = save2combo(ctd, pars);
+save2NetCDF(tbl, fnCombo, pars);
+end % ctd2combo
+
+function [tbl, fnCombo] = save2combo(ctd, pars)
+arguments (Input)
+    ctd (:,1) cell
+    pars struct
+end % arguments Input
+arguments (Output)
+    tbl table % Binned CTD data
+    fnCombo string % Filename of combined CTD information
+end % arguments Output
+
+tbl = table(); % In case we return early
+fnCombo = fullfile(pars.ctd_combo_root, "ctd.combo.mat");
 
 data = table();
 data.fn = cellfun(@(x) x{1}, ctd);
@@ -18,7 +38,6 @@ data.data = cellfun(@(x) x{2}, ctd, "UniformOutput", false);
 
 data = data(~ismissing(data.fn),:);
 
-fnCombo = fullfile(pars.ctd_combo_root, "ctd.combo.mat");
 if isfile(fnCombo)
     data.datenum = nan(size(data.fn));
     for index = 1:size(data,1)
@@ -96,3 +115,27 @@ my_mk_directory(fnCombo, pars.debug);
 fprintf("Writing %s\n", fnCombo);
 save(fnCombo, "tbl", pars.matlab_file_format);
 end % ctd2combo
+
+function save2NetCDF(tbl, fnCombo, pars)
+arguments (Input)
+    tbl table
+    fnCombo string {mustBeFile}
+    pars struct
+end % arguments Input
+
+[dirname, basename] = fileparts(fnCombo);
+fnNC = fullfile(dirname, append(basename, ".nc"));
+
+if isnewer(fnNC, fnCombo)
+    fprintf("No need to rebuild %s\n", fnNC);
+    return;
+end % if isnewer
+
+if isempty(tbl)
+    fprintf("Loading %s\n", fnCombo);
+    tbl = load(fnCombo).tbl;
+end % if isempty
+
+fnCDL = fullfile(fileparts(mfilename("fullpath")), "CTD.json");
+mk_NetCDF(fnNC, tbl, pars, fnCDL);
+end % save2NetCDF
