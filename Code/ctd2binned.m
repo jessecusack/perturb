@@ -157,6 +157,7 @@ names = string(tbl.Properties.VariableNames);
 iNames = ["t", names];
 oNames = [iNames, append(names, "_std")];
 cNames = setdiff(oNames, "t");
+
 tbl.t = round(t / dtBin) * dtBin;
 tbl.grp = findgroups(tbl.t);
 a = rowfun(@myMedian, tbl, ...
@@ -164,16 +165,13 @@ a = rowfun(@myMedian, tbl, ...
     "GroupingVariables", "grp", ...
     "OutputVariableNames", oNames);
 [~, iLHS, iRHS] = innerjoin(binned, a, "Keys", "t");
-try
+
+if size(binned,1) ~= numel(iLHS) % There are more binned rows than iLHS
+    binned(:, cNames) = array2table(nan(size(binned,1), numel(cNames)));
+end % if
+
 binned.(append("n", suffix))(iLHS) = a.GroupCount(iRHS);
 binned(iLHS, cNames) = a(iRHS, cNames);
-catch ME
-    disp(a(IRHS,:)); 
-    disp(binned(iLHS,:));
-    disp(cNames);
-    disp(suffix);
-    rethrow(ME)
-end % try
 end % binTable
 
 function varargout = myMedian(varargin)
