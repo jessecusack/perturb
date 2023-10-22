@@ -20,7 +20,7 @@ arguments (Input)
     pars struct
 end % arguments Input
 arguments (Output)
-    a table
+    a struct
     fnCombo string
 end % arguments Output
 
