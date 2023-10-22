@@ -20,11 +20,11 @@ arguments (Input)
     pars struct
 end % arguments Input
 arguments (Output)
-    a struct
+    a % Can be either empty or struct
     fnCombo string
 end % arguments Output
 
-a = table(); % Empty table for early returns
+a = []; % Empty for early returns
 fnCombo = fullfile(pars.combo_root, "combo.mat");
 
 data = table();
@@ -140,7 +140,7 @@ end % save2combo
 
 function save2NetCDF(a, fnCombo, pars)
 arguments (Input)
-    a
+    a struct
     fnCombo string {mustBeFile}
     pars struct
 end % arguments Input
