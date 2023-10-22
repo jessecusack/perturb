@@ -2,7 +2,7 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, profilesInfo, mat, gps] = mat2profile(row, mat, pars, gps)
+function [row, profilesInfo] = mat2profile(row, mat, pars, gps)
 arguments (Input)
     row table % row to work on
     mat struct % Output of odas_p2mat
@@ -12,8 +12,6 @@ end % arguments Input
 arguments (Output)
     row table % row worked on
     profilesInfo struct % profiles extracted from a
-    mat struct % Output of odas_p2mat
-    gps % either empty or GPS_base_class
 end % arguments Output
 
 stime = tic();
