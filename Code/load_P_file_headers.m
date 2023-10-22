@@ -16,7 +16,7 @@ dbFN = fullfile(pars.database_root, "pfilenames.db.mat");
 
 if isfile(dbFN)
     db = load(dbFN).db; % Load what was done before
-    [~, iLHS, iRHS] = outerjoin(filenames, db, "Keys", "fn");
+    [~, iLHS, iRHS] = outerjoin(filenames, db, "Keys", "name");
     indices = nan(1,size(filenames,1));
     qLeftOnly = iLHS ~= 0 & iRHS == 0;
     indices(iLHS(qLeftOnly)) = iLHS(qLeftOnly); % New entries
@@ -31,9 +31,11 @@ else % No previous information, so do everybody
     db = table();
 end % if isfile
 
-if isempty(indices)
+if isempty(indices) % Nothing needs redone 
     if ~isempty(db)
         db = db(~db.qDrop,:); % Drop files that are corrupted.
+        [~, ~, iRHS] = innerjoin(filenames, db, "Keys", "name");
+        db = db(iRHS,:); % Only return overlap
     end % if ~isempty
     return; % Nothing new to look at
 end % if isempty
@@ -52,7 +54,7 @@ rows = vertcat(rows{:});
 if isempty(db)
     db = rows;
 else
-    [~, iLHS, iRHS] = outerjoin(db, rows, "Keys", "fn");
+    [~, iLHS, iRHS] = outerjoin(db, rows, "Keys", "name");
     qJoint = iLHS ~= 0 & iRHS ~= 0;
     if any(qJoint)
         db(iLHS(qJoint),:) = rows(iRHS(qJoint),:);
