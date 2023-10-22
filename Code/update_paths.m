@@ -15,7 +15,7 @@ end % arguments
 names = string(fieldnames(a))'; % All the fields in info
 
 qP2Mat = startsWith(names, "p_file_");
-qCTD = startsWith(names, "ctd_bin_"); % ctd binning parameters
+qCTD = startsWith(names, "ctd_bin_") | startsWith(names, "profile_"); % ctd binning parameters
 qCombo = startsWith(names, "netCDF_"); % Used in combined phase
 qBinning = startsWith(names, "bin_") & ~qCombo; % Parameters for binning
 qProfile = ~qCTD & ~qCombo & ~qBinning; % Parameters used in profile generation
