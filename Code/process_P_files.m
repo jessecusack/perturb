@@ -34,8 +34,6 @@ try
         return;
     end
 
-    p_filenames = p_filenames(1:10,:);
-
     % Sort out if the Parallel Computing Toolbox is installed or not
     toolboxes = matlab.addons.installedAddons;
     if ~ismember("Parallel Computing Toolbox", toolboxes.Name)
