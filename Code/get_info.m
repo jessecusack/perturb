@@ -75,7 +75,7 @@ addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast t
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
 addParameter(p, "diss_epsilon_minimum", 3e-10, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
 %% Binning parameters
-addParameter(p, "bin_method", "median", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
+addParameter(p, "bin_method", "mean", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
 %% CTD time binning parameters
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
