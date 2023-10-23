@@ -229,8 +229,6 @@ arguments
     method function_handle
 end
 
-logNormalNames = ["e", "epsilonMean"];
-
 suffix = append("_", suffix);
 
 names = string(diss.Properties.VariableNames);
@@ -243,11 +241,7 @@ tbl = table();
 tbl.cnt = splitapply(@numel, diss.t, grp);
 
 for name = setdiff(names, "t")
-    qLog = ismember(name, logNormalNames); % Is this a log normal column
-    val = diss.(name);
-    if qLog, val = log(val); end
-    tbl.(name) = splitapply(method, val, grp);
-    if qLog, tbl.(name) = exp(tbl.(name)); end
+    tbl.(name) = splitapply(method, diss.(name), grp);
 end % for
 
 names = setdiff(string(tbl.Properties.VariableNames), "bin");
