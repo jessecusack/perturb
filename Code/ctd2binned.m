@@ -160,7 +160,7 @@ cNames = setdiff(oNames, "t");
 
 tbl.t = round(t / dtBin) * dtBin;
 tbl.grp = findgroups(tbl.t);
-a = rowfun(@myMedian, tbl, ...
+a = rowfun(@myMean, tbl, ...
     "InputVariables", iNames, ...
     "GroupingVariables", "grp", ...
     "OutputVariableNames", oNames);
@@ -174,11 +174,11 @@ binned.(append("n", suffix))(iLHS) = a.GroupCount(iRHS);
 binned(iLHS, cNames) = a(iRHS, cNames);
 end % binTable
 
-function varargout = myMedian(varargin)
-mu = cellfun(@(x) median(x, "omitnan"), varargin, "UniformOutput", false);
+function varargout = myMean(varargin)
+mu = cellfun(@(x) mean(x, "omitnan"), varargin, "UniformOutput", false);
 sigma = cellfun(@(x) std(x, "omitnan"), varargin(2:end), "UniformOutput", false);
 varargout = [mu, sigma];
-end % myMedian
+end % myMean
 
 function ctd = addGPS(ctd, tSlow, gps)
 arguments (Input)
