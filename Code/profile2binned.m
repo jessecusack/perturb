@@ -48,7 +48,6 @@ if ~isa(method, "function_handle")
     end % if
 end % if ~isa
 
-
 pInfo = a.pInfo;
 profiles = a.profiles;
 
