@@ -7,16 +7,18 @@ glider = "685";
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = append("~/Desktop/ARCTERX/2023 IOP/glider-offload/OSU", glider, "/MR");
+
+google_root = "~/Google Drive/Shared drives/GliderGroup/ARCTERX/IOP-2023-gliders/data/";
+
+data_root = fullfile(google_root, "glider-offload", sprintf("OSU%s", glider), "MR");
 
 p_file_root = data_root;
 output_root = append("~/Desktop/ARCTERX/2023 IOP/tpw_MR/", glider);
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_mat
-% 
-% GPS_filename = fullfile(data_root, "GPS/gps.mat");
-% GPS_class = GPS_from_mat(GPS_filename);
-GPS_class = GPS_NaN();
+
+GPS_filename = fullfile(google_root, "tpw", sprintf("OSU%s.gps.mat", glider));
+GPS_class = GPS_from_mat(GPS_filename, missing);
 
 process_P_files( ...
     "debug", true, ...
