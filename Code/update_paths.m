@@ -14,22 +14,26 @@ end % arguments
 
 names = string(fieldnames(a))'; % All the fields in info
 
-qP2Mat = startsWith(names, "p_file_");
+qPfiles = startsWith(names, "p_file_");
+qP2Mat = startsWith(names, "p2mat_");
 qCTD = startsWith(names, "ctd_bin_") | startsWith(names, "profile_"); % ctd binning parameters
 qCombo = startsWith(names, "netCDF_"); % Used in combined phase
 qBinning = startsWith(names, "bin_") & ~qCombo; % Parameters for binning
 qProfile = ~qCTD & ~qCombo & ~qBinning; % Parameters used in profile generation
 
-[hashCTD,     jsonCTD]       = mk_hash_json(a, names(qCTD));
-[hashCTDcombo, jsonCTDcombo] = mk_hash_json(a, names(qCTD | qP2Mat | qCombo));
-[hashCombo,   jsonCombo]     = mk_hash_json(a, names(qCombo | qProfile | qBinning | qP2Mat));
-[hashProfile, jsonProfile]   = mk_hash_json(a, names(qProfile));
-[hashBinning, jsonBinning]   = mk_hash_json(a, names(qBinning));
+[hashP2Mat,   jsonP2Mat]     = mk_hash_json(a, names(qP2Mat));
+[hashCTD,     jsonCTD]       = mk_hash_json(a, names(qCTD | qP2Mat));
+[hashCTDcombo, jsonCTDcombo] = mk_hash_json(a, names(qCTD | qP2Mat | qPfiles | qCombo));
+[hashCombo,   jsonCombo]     = mk_hash_json(a, names(qCombo | qProfile | qBinning | qP2Mat | qPfiles));
+[hashProfile, jsonProfile]   = mk_hash_json(a, names(qProfile | qP2Mat));
+[hashBinning, jsonBinning]   = mk_hash_json(a, names(qBinning | qP2Mat));
 
 a.output_root = abspath(a.output_root); % Get rid of ~ or relative paths
 my_mk_directory(a.output_root); % Make sure the root path exists
 
-a.mat_root       = fullfile(a.output_root, "Matfiles");
+a.mat_root       = mkRootDir(a.output_root, "Matfiles", hashP2Mat, jsonP2Mat);
+a.p_trim_root    = mkRootDir(a.output_root, "trimed_p_files", hashP2Mat, jsonP2Mat);
+a.p_merge_root   = mkRootDir(a.output_root, "merged_p_files", hashP2Mat, jsonP2Mat); % Merged P files
 a.ctd_root       = mkRootDir(a.output_root, "CTD", hashCTD, jsonCTD);
 a.ctd_combo_root = mkRootDir(a.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
 a.combo_root     = mkRootDir(a.output_root, "combo", hashCombo, jsonCombo);
@@ -37,7 +41,6 @@ a.profile_root   = mkRootDir(a.output_root, "profiles", hashProfile, jsonProfile
 a.binned_root    = mkRootDir(a.output_root, "binned", hashBinning, jsonBinning);
 
 a.log_root = fullfile(a.output_root, "logs"); % Where to write log files to
-a.p_merge_root = fullfile(a.output_root, "merged_p_files"); % Merged P files
 a.database_root = fullfile(a.output_root, "database"); % Where to store various databases
 
 a.log_filename = fullfile(a.log_root, "master.log"); % output of diary

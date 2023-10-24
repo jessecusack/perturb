@@ -29,6 +29,17 @@ addParameter(p, "p_file_merge", false, @(x) ismember(x, [true, false]));
 %% GPS related parameters
 addParameter(p, "gps_class", GPS_NaN(), @(x) isa(x, "GPS_base_class")); % Class to get GPS information from
 addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time difference for warning
+%% Parameters for odas_p2mat
+addParameter(p, "p2mat_aoa", [], @(x) isnumeric(x)); % Angle-of-attack
+addParameter(p, "p2mat_constant_speed", [], validNotNegative); % Through water speed
+addParameter(p, "p2mat_constant_temp", [], @(x) inRange(x, -4, 80)); % water temperature in C
+addParameter(p, "p2mat_gradC_method", missing, validString); % micro conductivity gradient method
+addParameter(p, "p2mat_gradT_method", missing, validString); % micro conductivity gradient method
+addParameter(p, "p2mat_hotel_file", missing, @(x) isfile(x)); % micro conductivity gradient method
+addParameter(p, "p2mat_speed_cutout", nan, validPositive); % Ignore speeds below this value
+addParameter(p, "p2mat_speed_tau", nan, validNotNegative); % For smoothing of the speed
+addParameter(p, "p2mat_time_offset", nan, @(x) isnumeric(x)); % offset to apply to time in seconds
+addParameter(p, "p2mat_vehicle", missing, validString); % name of the vehicle
 %% Profile split parameters
 addParameter(p, "profile_pressure_min", 0.5, validPositive); % Minimum pressure in dbar for a profile
 addParameter(p, "profile_speed_min", 0.3, validPositive); % Minimum vertical speed in m/s for a profile
