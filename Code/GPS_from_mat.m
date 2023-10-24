@@ -44,7 +44,7 @@ classdef GPS_from_mat <GPS_base_class
 
             a = load(obj.filename);
 
-            if ~isempty(obj.variableName)
+            if ~ismissing(obj.variableName)
                 a = a.(obj.variableName);
             end % ~ isempty
 
