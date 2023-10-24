@@ -106,6 +106,8 @@ end % if direction
 lat = binned.lat;
 lat(isnan(lat)) = latitude_default;
 
+binned.pressure(binned.pressure < -10 | binned.pressure > 12000) = nan; % Physical constraints for the pressure
+
 binned.depth = gsw_depth_from_z(gsw_z_from_p(binned.pressure, lat));
 
 if all(ismember(["JAC_T", "JAC_C"], fieldnames(mat))) % We can calculate seawater properties
