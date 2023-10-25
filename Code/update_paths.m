@@ -15,12 +15,16 @@ end % arguments
 names = string(fieldnames(a))'; % All the fields in info
 
 qPfiles = startsWith(names, "p_file_");
+qPfilesTrim = qPfiles & endsWith(names, "_trim");
+qPfilesMerge = qPfiles & endsWith(names, "_merge");
 qP2Mat = startsWith(names, "p2mat_");
 qCTD = startsWith(names, "ctd_bin_") | startsWith(names, "profile_"); % ctd binning parameters
 qCombo = startsWith(names, "netCDF_"); % Used in combined phase
 qBinning = startsWith(names, "bin_") & ~qCombo; % Parameters for binning
 qProfile = ~qCTD & ~qCombo & ~qBinning; % Parameters used in profile generation
 
+[hashPtrimmed,   jsonPtrimmed] = mk_hash_json(a, names(qPfilesTrim));
+[hashPmerged,   jsonPmerged] = mk_hash_json(a, names(qPfilesMerge));
 [hashP2Mat,   jsonP2Mat]     = mk_hash_json(a, names(qP2Mat));
 [hashCTD,     jsonCTD]       = mk_hash_json(a, names(qCTD | qP2Mat));
 [hashCTDcombo, jsonCTDcombo] = mk_hash_json(a, names(qCTD | qP2Mat | qPfiles | qCombo));
@@ -31,9 +35,13 @@ qProfile = ~qCTD & ~qCombo & ~qBinning; % Parameters used in profile generation
 a.output_root = abspath(a.output_root); % Get rid of ~ or relative paths
 my_mk_directory(a.output_root); % Make sure the root path exists
 
+if a.p_file_trim
+    a.p_trim_root    = mkRootDir(a.output_root, "trimed_p_files", hashPtrimmed, jsonPtrimmed); % Trimmed P files
+end % if a.p_file_trim
+if a.p_file_merge
+    a.p_merge_root   = mkRootDir(a.output_root, "merged_p_files", hashPmerged, jsonPmerged); % Merged P files
+end % if a.p_file_merge
 a.mat_root       = mkRootDir(a.output_root, "Matfiles", hashP2Mat, jsonP2Mat);
-a.p_trim_root    = mkRootDir(a.output_root, "trimed_p_files", hashP2Mat, jsonP2Mat);
-a.p_merge_root   = mkRootDir(a.output_root, "merged_p_files", hashP2Mat, jsonP2Mat); % Merged P files
 a.ctd_root       = mkRootDir(a.output_root, "CTD", hashCTD, jsonCTD);
 a.ctd_combo_root = mkRootDir(a.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
 a.combo_root     = mkRootDir(a.output_root, "combo", hashCombo, jsonCombo);
