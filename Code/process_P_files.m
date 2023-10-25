@@ -43,6 +43,7 @@ try
     end % isempty gcp
 
     p_filenames = load_P_file_headers(p_filenames, pars); % Get the header record for each P file
+    p_filenames = trim_P_files(p_filenames, pars); % Trim fractional records in P files
 
     if pars.p_file_merge % merge P files that were rolled over due to size
         my_mk_directory(fullfile(pars.p_merge_root, "dummy"), pars.debug);
