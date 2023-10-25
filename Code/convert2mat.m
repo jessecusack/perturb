@@ -32,7 +32,6 @@ end % if isnewer
 try
     stime = tic();
     p2args = mkP2MatArgs(pars);
-    p2args
     a = odas_p2mat(char(row.fn), p2args{:}); % extract P file contents
     my_mk_directory(row.fnMat);
     save(row.fnMat, "-struct", "a", pars.matlab_file_format); % save into a mat file
@@ -60,7 +59,6 @@ args = cell(numel(names), 2);
 for index = 1:numel(names)
     name = names(index);
     val = pars.(name);
-    fprintf("index %d name %s\n", index, name);
     if ismissing(val), continue; end
     if isempty(val), continue; end
     fprintf("Assigning %s\n", extractAfter(name, "p2mat_"));
