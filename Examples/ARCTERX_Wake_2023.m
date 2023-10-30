@@ -1,5 +1,5 @@
 %
-% Convert test .P files to binned data
+% Convert ARCTERX Wake VMP .P files to binned data
 %
 % June-2023, Pat Welch, pat@mousebrains.com
 
