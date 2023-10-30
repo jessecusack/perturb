@@ -156,7 +156,6 @@ for index = 1:numel(profiles)
         tbl = outerjoin(tbl, tblB, "Keys", "bin", "MergeKeys", true);
     end % if ~isempty bbl
     %%
-
     casts{index} = tbl;
 end % for index
 
@@ -195,15 +194,15 @@ end % for name
 
 for iCast = 1:nCasts
     rhs = casts{iCast};
-    [~, iLeft, iRight] = innerjoin(tbl, rhs, "Keys", "bin");
-    if isempty(iLeft)
+    [~, iLHS, iRHS] = innerjoin(tbl, rhs, "Keys", "bin");
+    if isempty(iLHS)
         disp(head(tbl));
         disp(head(rhs));
         error("Unexpected empty innerjoin");
     end % if isempty
     for name = setdiff(string(rhs.Properties.VariableNames), "bin")
         try
-            tbl.(name)(iLeft,iCast) = rhs.(name)(iRight);
+            tbl.(name)(iLHS,iCast) = rhs.(name)(iRHS);
         catch ME
             fprintf("Error setting name %s iCast %d\n", name, iCast);
             rethrow(ME)
@@ -246,4 +245,13 @@ end % for
 names = setdiff(string(tbl.Properties.VariableNames), "bin");
 names = names(~endsWith(names, suffix));
 tbl = renamevars(tbl, names, append(names, suffix));
+
+for name = string(tbl.Properties.VariableNames)
+    if size(tbl.(name),2) == 1, continue; end
+    for iCnt = 1:size(tbl.(name),2) % Create a new variable for each column
+        vName = append(extractBefore(name, "_"), string(iCnt), "_", extractAfter(name, "_"));
+        tbl.(vName) = tbl.(name)(:,iCnt);
+    end % for iCnt
+    tbl = removevars(tbl, name);
+end % for name
 end % bin_diss
