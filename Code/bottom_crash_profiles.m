@@ -11,10 +11,9 @@ arguments (Output)
 end % arguments Output
 %%
 
-if info.bbl_use
-    warning("Bottom Crash Detection not implemented!");
-end % if info.bbl_use
+if ~info.bbl_use, return; end % Don't do any BBL stuff
 
-nProfiles = numel(profiles);
+warning("Bottom Crash Detection not implemented!");
+
 pInfo.bottomDepth = pInfo.max_depth + 1; % Past the deepest part of each profile
 end % trimProfiles
