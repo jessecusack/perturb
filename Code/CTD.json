@@ -6,7 +6,11 @@
 		"t": "time",
 		"T": "temp",
 		"P": "pressure",
-		"C": "cond"
+		"C": "cond",
+		"JAC_T": "temp",
+		"JAC_T_std": "temp_std",
+		"JAC_C": "cond",
+		"JAC_C_std": "cond_std"
 	},
 
 	"globalMap": {
@@ -34,10 +38,20 @@
 			"standard_name": "sea_water_temperature",
 			"coverage_content_type": "physicalMeasurement"
 		},
+		"temp_std": {
+			"units": "degree_C",
+			"long_name": "Temperature standard deviation",
+			"coverage_content_type": "physicalMeasurement"
+		},
 		"cond": {
 			"units": "mS cm-1",
 			"long_name": "Conductivity",
 			"standard_name": "sea_water_electrical_conductivity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"cond_std": {
+			"units": "mS cm-1",
+			"long_name": "Conductivity standard deviation",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"pressure": {
@@ -45,6 +59,11 @@
 			"positive": "down",
 			"long_name": "Pressure",
 			"standard_name": "sea_water_pressure_due_to_sea_water",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"pressure_std": {
+			"units": "dbar",
+			"long_name": "Pressure standard deviation",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"depth": {
@@ -107,10 +126,30 @@
 			"standard_name": "mole_concentration_of_dissolved_molecular_oxygen_in_sea_water",
 			"coverage_content_type": "physicalMeasurement"
 		},
+		"DO_std": {
+			"units": "umol l-1",
+			"long_name": "Dissolved oxygen standard deviation",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"DO_T": {
+			"units": "degree_C",
+			"long_name": "dissolved oxygen temperature",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"DO_T_std": {
+			"units": "degree_C",
+			"long_name": "dissolved oxygen temperature standard deviation",
+			"coverage_content_type": "physicalMeasurement"
+		},
 		"Chlorophyll": {
 			"units": "ppb",
 			"long_name": "Chlorophyll",
 			"standard_name": "mass_concentration_of_chlorophyll_in_sea_water",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"Chlorophyll_std": {
+			"units": "ppb",
+			"long_name": "Chlorophyll standard deviation",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"Turbidity": {
