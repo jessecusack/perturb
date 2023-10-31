@@ -182,5 +182,4 @@ tbl.max_depth = nan(nProfiles,1);
 tbl.trim_depth = nan(nProfiles,1);
 tbl.lat = nan(nProfiles,1);
 tbl.lon = nan(nProfiles,1);
-tbl.dt_GPS = nan(nProfiles,1);
 end % mk_profile_info
