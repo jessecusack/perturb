@@ -4,43 +4,69 @@
 %
 %%
 
-function filenames = convert2mat(filenames, info)
+function [row, a] = convert2mat(row, pars)
 arguments (Input)
-    filenames table % List of filenames to work with, output of mk_filenames
-    info struct % Defaults from get_info
+    row (1,:) table % List of filenames to work with, output of mk_filenames
+    pars struct     % Defaults from get_info
 end % arguments Input
 arguments (Output)
-    filenames table % qUse may be updated if there is a problem converting the file
+    row (1,:) table % qUse may be updated if there is a problem converting the file
+    a struct        % Output of odas_p2mat
 end % arguments Output
 
 % Use odas_p2mat to generate a mat file version of each pfile
 
-for index = 1:size(filenames,1)
-    row = filenames(index,:);
-    if ~row.qUse
-        if info.debug
-            fprintf("%s not using %s\n", row.basename);
-        end % if info.debug
-        continue;
-    end % if ~qUse
-    fnP = row.fnP; % Input .P filename
-    fnM = row.fnM; % Output .mat filename
-    if isnewer(fnM, fnP)
-        if info.debug
-            fprintf("%s fnM is newer than fnP %s %s\n", row.basename, fnP, fnM)
-        end % if info.debug
-        continue;
-    end % if isnewer
-    stime = tic();
+if ~row.qMatOkay % Converting from a P file to a mat file has already failed
+    a = [];
+    return;
+end % if ~row.qUse
 
-    my_mk_directory(fnM); % Make sure target directory exists
-    try
-        a = odas_p2mat(char(fnP)); % extract P file contents
-        save(row.fnM, "-struct", "a", info.matlab_file_format); % save into a mat file
-        fprintf("Took %.2f seconds to convert %s\n", toc(stime), row.basename);
-    catch ME
-        filenames.qUse(index) = false;
-        fprintf("Failed to convert %s\n\n%s\n", fnP, getReport(ME));
-    end % try catch
-end % for index
+row.fnMat = fullfile(pars.mat_root, append(row.name, ".mat"));
+
+if isnewer(row.fnMat, row.fn)
+    a = [];
+    fprintf("%s: %s is newer than %s\n", row.name, row.fnMat, row.fn);
+    return;
+end % if isnewer
+
+try
+    stime = tic();
+    p2args = mkP2MatArgs(pars);
+    a = odas_p2mat(char(row.fn), p2args{:}); % extract P file contents
+    my_mk_directory(row.fnMat);
+    save(row.fnMat, "-struct", "a", pars.matlab_file_format); % save into a mat file
+    row.qMatOkay = true;
+    fprintf("Took %.2f seconds to convert %s\n", toc(stime), row.name);
+catch ME
+    row.qMatOkay = false;
+    a = [];
+    fprintf("Failed to convert %s\n\n%s\n", row.fn, getReport(ME));
+end % try catch
 end % convert2mat
+
+function args = mkP2MatArgs(pars)
+arguments (Input)
+    pars struct % Defaults from get_info
+end % arguments Input
+arguments (Output)
+    args cell
+end % arguments Output
+
+names = string(fieldnames(pars))';
+names = names(startsWith(names, "p2mat_"));
+args = cell(numel(names), 2);
+
+for index = 1:numel(names)
+    name = names(index);
+    val = pars.(name);
+    if ismissing(val), continue; end
+    if isempty(val), continue; end
+    fprintf("Assigning %s\n", extractAfter(name, "p2mat_"));
+    args{index,1} = extractAfter(name, "p2mat_");
+    args{index,2} = val;
+end % for name
+
+q = ~cellfun(@isempty, args(:,1));
+args = args(q,:);
+args = args(:);
+end % mkP2MatArgs

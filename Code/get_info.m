@@ -13,9 +13,10 @@ p = inputParser();
 validString = @(x) isstring(x) || ischar(x) || iscellstr(x);
 validPositive = @(x) inRange(x, 0);
 validNotNegative = @(x) inRange(x, 0, inf, true);
+validLogical = @(x) ismember(x, [true, false]);
 
 %% Debugging related parameters
-addParameter(p, "debug", false, @(x) ismember(x, [true, false])); % Turn on debugging messages
+addParameter(p, "debug", false, validLogical); % Turn on debugging messages
 %% Matlab binary file version to save files as
 % Tables require v6 or greater
 addParameter(p, "matlab_file_format", "-v7.3", @(x) ismember(x, ["-v7.3", "-v7", "-v6"])); 
@@ -24,36 +25,52 @@ addParameter(p, "p_file_root", string(fullfile(fileparts(mfilename("fullpath")),
 addParameter(p, "output_root", string(fullfile(fileparts(mfilename("fullpath")), "../Data/Output")), validString);
 %% Glob pattern appended to p_file_root to get list of P files
 addParameter(p, "p_file_pattern", "*", validString);
+%% Should p files be trimmed that have non-integral number of records.
+% patch_odas.m does this, but generates a warning that makes it look like the processing has
+% big problems. So I'll pre-trim things before the call to odas_p2mat
+addParameter(p, "p_file_trim", true, validLogical);
 %% Should p files be merged if they were broken up due to size of file breaks?
-addParameter(p, "p_file_merge", false, @(x) ismember(x, [true, false]));
+addParameter(p, "p_file_merge", false, validLogical);
 %% GPS related parameters
 addParameter(p, "gps_class", GPS_NaN(), @(x) isa(x, "GPS_base_class")); % Class to get GPS information from
 addParameter(p, "gps_max_time_diff", 60, validPositive); % maximum time difference for warning
+%% Parameters for odas_p2mat
+addParameter(p, "p2mat_aoa", [], @(x) isnumeric(x)); % Angle-of-attack
+addParameter(p, "p2mat_constant_speed", [], validNotNegative); % Through water speed
+addParameter(p, "p2mat_constant_temp", [], @(x) inRange(x, -4, 80)); % water temperature in C
+addParameter(p, "p2mat_gradC_method", missing, validString); % micro conductivity gradient method
+addParameter(p, "p2mat_gradT_method", missing, validString); % micro conductivity gradient method
+addParameter(p, "p2mat_hotel_file", missing, @(x) isfile(x)); % micro conductivity gradient method
+addParameter(p, "p2mat_speed_cutout", nan, validPositive); % Ignore speeds below this value
+addParameter(p, "p2mat_speed_tau", nan, validNotNegative); % For smoothing of the speed
+addParameter(p, "p2mat_time_offset", nan, @(x) isnumeric(x)); % offset to apply to time in seconds
+addParameter(p, "p2mat_vehicle", missing, validString); % name of the vehicle
 %% Profile split parameters
 addParameter(p, "profile_pressure_min", 0.5, validPositive); % Minimum pressure in dbar for a profile
 addParameter(p, "profile_speed_min", 0.3, validPositive); % Minimum vertical speed in m/s for a profile
 addParameter(p, "profile_min_duration", 7, validPositive); % Minimum cast length in seconds for a profile
-addParameter(p, "profile_direction", "down", @(x) ismember(x, ["up", "down"])); % profile direction, up or down
+addParameter(p, "profile_direction", "down", @(x) ismember(x, ["up", "down", "time"])); % profile direction, up, down, or time
 %% Cast trimming for shear dissipation estimates to drop initial instabilities
 addParameter(p, "trim_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "trim_min_depth", 1, validPositive); % Minimum depth to look at for variances
 addParameter(p, "trim_max_depth", 50, validPositive); % maximum depth to look down to for variances
 addParameter(p, "trim_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "trim_use", true, @(x) ismember(x, [true, false])); % Should the trim depth be used to trim the top of dives off
+addParameter(p, "trim_use", true, validLogical); % Should the trim depth be used to trim the top of dives off
 addParameter(p, "trim_extra_depth", 0, validNotNegative); % Extra depth to add to the trim depth value when processing dissipation
 %% Cast trimming from the bottom up, think bottom crashing to go after BBL
+addParameter(p, "bbl_calculate", false, validLogical); % Calculate BBL stuff
 addParameter(p, "bbl_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "bbl_min_depth", 10, validPositive); % Minimum depth to look at for variances
 addParameter(p, "bbl_max_depth", 50, validPositive); % Maximum depth to look down to for variances
 addParameter(p, "bbl_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "bbl_use", false, @(x) ismember(x, [true, false])); % Should the bbl depth be used to trim the top of dives off
+addParameter(p, "bbl_use", false, validLogical); % Should the bbl depth be used to trim the top of dives off
 addParameter(p, "bbl_extra_depth", 0, validNotNegative); % Extra depth to add to the bottom depth value when processing dissipation
 %% FP07 calibration
-addParameter(p, "fp07_calibration", true, @(x) ismember(x, [true, false])); % Perform an in-situ calibration of the FP07 probes agains JAC_T
+addParameter(p, "fp07_calibration", true, validLogical); % Perform an in-situ calibration of the FP07 probes agains JAC_T
 addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3)); % Steinhart-Hart equation order
 addParameter(p, "fp07_reference", "JAC_T", validString); % Which sensor is the reference sensor
 %% Does the instrument of CT information?
-addParameter(p, "CT_has", true, @(x) ismember(x, [true, false]));
+addParameter(p, "CT_has", true, validLogical);
 %% Despike parameters for shear dissipation calculation
 % [thresh, smooth, and length] (in seconds) -> Rockland default value,
 addParameter(p, "despike_sh_thresh", 8, validPositive); % Shear probe
@@ -65,19 +82,20 @@ addParameter(p, "despike_A_smooth", 0.5, validPositive);
 addParameter(p, "despike_A_N_FS", 0.05, validPositive);
 addParameter(p, "despike_A_warning_fraction", 0.02, validPositive); % Warning fraction
 %% Dissipation parameters
-addParameter(p, "diss_downwards_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds for top -> bottom estimates
-addParameter(p, "diss_upwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for bottom -> top estimates
-addParameter(p, "diss_downwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for top -> bottom estimates
-addParameter(p, "diss_upwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for bottom -> top estimates
+addParameter(p, "diss_forwards_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds for start of profile to end
+addParameter(p, "diss_backwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for end of profile to start
+addParameter(p, "diss_forwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for start of profile to end
+addParameter(p, "diss_backwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for end of profile to start
 addParameter(p, "diss_T1_norm", 1, validPositive); % Value to multiple T1_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
-addParameter(p, "diss_epsilon_minimum", 3e-10, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
+addParameter(p, "diss_epsilon_minimum", 1e-13, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
 %% Binning parameters
-addParameter(p, "bin_method", "median", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
+addParameter(p, "bin_method", "mean", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
 %% CTD time binning parameters
-addParameter(p, "bin_ctd_dt", 0.5, validPositive); % Width in seconds of CTD binning
+addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
+addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T"], validString); % Sensors to time bin
 %% NetCDF global attributes
 addParameter(p, "netCDF_acknowledgement", missing, validString);
 addParameter(p, "netCDF_contributor_name", missing, validString);

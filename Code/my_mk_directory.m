@@ -14,6 +14,6 @@ if ~exist(directory, "dir") % Directory does not exist
     if debug
         fprintf("Creating %s\n", directory);
     end % if debug
-    mkdir(directory)
+    [~, ~, ~] = mkdir(directory); % Returned arguments silences errors when parallized
 end % ~exist directory
 end % mkMyDir

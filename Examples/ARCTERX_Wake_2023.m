@@ -1,5 +1,5 @@
 %
-% Convert test .P files to binned data
+% Convert ARCTERX Wake VMP .P files to binned data
 %
 % June-2023, Pat Welch, pat@mousebrains.com
 
@@ -14,7 +14,7 @@ addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 GPS_filename = fullfile(data_root, "GPS/gps.nc");
 GPS_class = GPS_from_netCDF(GPS_filename);
 
-process_VMP_files( ...
+process_P_files( ...
     "debug", true, ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
     "p_file_pattern", "SN*/*", ...   % Glob pattern appended to p_file_root to locate P files

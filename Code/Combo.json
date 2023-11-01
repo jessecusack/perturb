@@ -62,7 +62,7 @@
 			"long_name": "Number of BBL samples",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"cntDiss": {
+		"cnt_diss": {
 			"units": "",
 			"long_name": "Number of dissipation samples",
 			"coverage_content_type": "physicalMeasurement"
@@ -75,6 +75,107 @@
 		"cntFast": {
 			"units": "",
 			"long_name": "Number of fast samples",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e1_diss": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate shear probe 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e2_diss": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate shear probe 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"epsilonMean_diss": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate using all  probes",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"epsilonLnSigma_diss": {
+			"units": "Watt kg^-1",
+			"long_name": "Natural log of expected standard deviation",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e1_bbl": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate shear probe 1, bbl",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"e2_bbl": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate shear probe 2, bbl",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"epsilonMean_bbl": {
+			"units": "Watt kg^-1",
+			"long_name": "Dissipation estimate using all probes, , bblbackwards",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"epsilonLnSigma_bbl": {
+			"units": "Watt kg^-1",
+			"long_name": "Natural log of expected standard deviation, bbl",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"nu_diss": {
+			"units": "m^2 s^-1",
+			"long_name": "Kinematic viscosity",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"nu_bbl": {
+			"units": "m^2 s^-1",
+			"long_name": "Kinematic viscosity, BBL",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"mad1_diss": {
+			"units": "",
+			"long_name": "Mean absolute deviation of log of spectral values, probe 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"mad2_diss": {
+			"units": "",
+			"long_name": "Mean absolute deviation of log of spectral values, probe 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"mad1_bbl": {
+			"units": "",
+			"long_name": "Mean absolute deviation of log of spectral values, probe 1, BBL",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"mad2_bbl": {
+			"units": "",
+			"long_name": "Mean absolute deviation of log of spectral values, probe 2, BBL",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"dof1_diss": {
+			"units": "",
+			"long_name": "DOF for epsilon, probe 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"dof2_diss": {
+			"units": "",
+			"long_name": "DOF for epsilon, probe 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"dof1_bbl": {
+			"units": "",
+			"long_name": "DOF for epsilon, probe 1, BBL",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"dof2_bbl": {
+			"units": "",
+			"long_name": "DOF for epsilon, probe 2, BBL",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"method1_diss": {
+			"units": "",
+			"long_name": "Method for e1 choice",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"method2_diss": {
+			"units": "",
+			"long_name": "Method for e2 choice",
+			"long_name": "Mean absolute deviation of log of spectral values, probe 2",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"temp": {
@@ -110,6 +211,12 @@
 		"T2_fast": {
 			"units": "degree_C",
 			"long_name": "Temperature T2 fast",
+			"standard_name": "sea_water_temperature",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"T_diss": {
+			"units": "degree_C",
+			"long_name": "Temperature T dissipation",
 			"standard_name": "sea_water_temperature",
 			"coverage_content_type": "physicalMeasurement"
 		},
@@ -178,6 +285,20 @@
 			"standard_name": "sea_water_pressure",
 			"coverage_content_type": "physicalMeasurement"
 		},
+		"P_diss": {
+			"units": "dbar",
+			"positive": "down",
+			"long_name": "Pressure diss",
+			"standard_name": "sea_water_pressure",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"P_bbl": {
+			"units": "dbar",
+			"positive": "down",
+			"long_name": "Pressure bbl",
+			"standard_name": "sea_water_pressure",
+			"coverage_content_type": "physicalMeasurement"
+		},
 		"bin": {
 			"units": "m",
 			"positive": "down",
@@ -192,28 +313,34 @@
 			"long_name": "depth",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"minDepth": {
+		"depth_diss": {
+			"units": "m",
+			"positive": "down",
+			"long_name": "depth_diss",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"min_depth": {
 			"units": "m",
 			"long_name": "Minimum depth",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"maxDepth": {
+		"max_depth": {
 			"units": "m",
 			"long_name": "Maximum depth",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"bottomDepth": {
+		"bottom_depth": {
 			"units": "m",
 			"long_name": "Bottom depth",
 			"standard_name": "sea_floor_depth_below_sea_surface",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"trimDepth": {
+		"trim_depth": {
 			"units": "m",
 			"long_name": "Trim depth",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"trimMaxDepth": {
+		"trim_max_depth": {
 			"units": "m",
 			"long_name": "Trim maximum depth",
 			"coverage_content_type": "physicalMeasurement"
@@ -313,14 +440,44 @@
 			"standard_name": "sea_water_turbidity",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"FM": {
+		"FM1_diss": {
 			"units": "",
-			"long_name": "Figure of merit",
+			"long_name": "Figure of merit 1",
 			"coverage_content_type": "physicalMeasurement"
 		},
-		"FM_bbl": {
+		"FM2_diss": {
 			"units": "",
-			"long_name": "Figure of merit BBL",
+			"long_name": "Figure of merit 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"FM1_bbl": {
+			"units": "",
+			"long_name": "Figure of merit BBL 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"FM2_bbl": {
+			"units": "",
+			"long_name": "Figure of merit BBL 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"K1_max_diss": {
+			"units": "",
+			"long_name": "Maximum Wavenumber 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"K2_max_diss": {
+			"units": "",
+			"long_name": "Maximum Wavenumber 2",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"K1_max_bbl": {
+			"units": "",
+			"long_name": "Maximum Wavenumber BBL 1",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"K2_max_bbl": {
+			"units": "",
+			"long_name": "Maximum Wavenumber BBL 2",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"W_slow": {
@@ -341,6 +498,16 @@
 		"speed_fast": {
 			"units": "m s-1",
 			"long_name": "Speed fast",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"speed_diss": {
+			"units": "m s-1",
+			"long_name": "Speed diss",
+			"coverage_content_type": "physicalMeasurement"
+		},
+		"speed_bbl": {
+			"units": "m s-1",
+			"long_name": "Speed bbl",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"sh1": {
