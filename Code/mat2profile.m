@@ -54,10 +54,10 @@ indicesFast = interp1(mat.t_fast, 1:numel(mat.t_fast), mat.t_slow(indicesSlow), 
     "nearest", "extrap"); % Fast indices for each profile
 
 % First change values in a for calibration and time shifts
-% Adjust T?_(slow|fast) and shift JAC_[TC]
+% Adjust T?_(slow|fast) and shift CT_T_name and CT_C_name
 
 mat = fp07_calibration(mat, indicesSlow, indicesFast, pars, row.name);
-mat = CT_align(mat, indicesSlow, pars, row.name); % Shift JAC_C to match JAC_T
+mat = CT_align(mat, indicesSlow, pars, row.name); % Shift CT_C_name to match CT_T_name
 
 if isempty(gps) % Only initialize GPS if needed
     gps = pars.gps_class.initialize();
@@ -108,7 +108,7 @@ for j = 1:nProfiles
     profile.lat = gps.lat(profile.slow.t(1)); % Latitude at start of profile
     profile.lon = gps.lon(profile.slow.t(1)); % Longitude at start of profile
     profile.dtGPS = gps.dt(profile.slow.t(1)); % Nearest GPS timestamp
-    profile.slow = add_seawater_properties(profile); % SP/SA/theta/rho/...
+    profile.slow = add_seawater_properties(profile, pars); % SP/SA/theta/rho/...
     profile.fast.depth = interp1(profile.slow.t_slow, profile.slow.depth, ...
         profile.fast.t_fast, "linear", "extrap");
     profileInfo.lat(j) = profile.lat;

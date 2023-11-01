@@ -3,33 +3,33 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = CT_align(a, indicesSlow, info, basename)
+function a = CT_align(a, indicesSlow, pars, basename)
 arguments (Input)
     a struct % Output of odas_p2mat
     indicesSlow (2,:) int64 % output of get_profile for the slow variables
-    info struct % parameters, defaults from get_info
+    pars struct % parameters, defaults from get_info
     basename string % Label for the file
 end % arguments Input
 arguments (Output)
     a struct % Possibly modified version of odas_p2mat structure
 end % arguments Output
 
-if ~info.CT_has
+if ismissing(pars.CT_T_name) || ismissing(pars.CT_C_name)
     return % No CT data to align
 end % isempty
 
-TName = info.fp07_reference;
+TName = pars.CT_T_name;
+CName = pars.CT_C_name;
 
-if contains(TName, "_")
-    parts = split(TName, "_");
-    prefix = parts(1);
-else
-    prefix = "JAC_";
-end % if
+if ~isfield(a, TName)
+    warning("CT_T_name, %s, is not in odas_p2mat structure", TName);
+    return;
+end % if TName
 
-names = string(fieldnames(a));
-names = names(startsWith(names, prefix));
-CName = names(names ~= TName);
+if ~isfield(a, CName)
+    warning("CT_C_name, %s, is not in odas_p2mat structure", CName);
+    return;
+end % if CName
 
 T = a.(TName);
 C = a.(CName);

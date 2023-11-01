@@ -41,7 +41,9 @@ tblFast = table();
 szSlow = size(mat.t_slow);
 szFast = size(mat.t_fast);
 
-for name = intersect(string(fieldnames(mat)), pars.ctd_bin_variables)'
+ctd_bin_variables = unique([pars.CT_T_name, pars.CT_C_name, pars.ctd_bin_variables]);
+
+for name = intersect(string(fieldnames(mat)), ctd_bin_variables)'
     val = mat.(name);
     sz = size(val);
     if isequal(sz, szSlow)
@@ -110,13 +112,16 @@ binned.pressure(binned.pressure < -10 | binned.pressure > 12000) = nan; % Physic
 
 binned.depth = gsw_depth_from_z(gsw_z_from_p(binned.pressure, lat));
 
-if all(ismember(["JAC_T", "JAC_C"], fieldnames(mat))) % We can calculate seawater properties
+TName = pars.CT_T_name;
+CName = pars.CT_C_name;
+
+if all(ismember([TName, CName], fieldnames(mat))) % We can calculate seawater properties
     lon = binned.lon;
     lon(isnan(lon)) = 0;
     try
-        binned.SP = gsw_SP_from_C(binned.JAC_C, binned.JAC_T, binned.pressure); % Practical salinity
+        binned.SP = gsw_SP_from_C(binned.(CName), binned.(TName), binned.pressure); % Practical salinity
         binned.SA = gsw_SA_from_SP(binned.SP, binned.pressure, lon, lat); % Absolute salinity
-        binned.theta = gsw_CT_from_t(binned.SA, binned.JAC_T, binned.pressure); % Conservation T
+        binned.theta = gsw_CT_from_t(binned.SA, binned.(TName), binned.pressure); % Conservation T
         binned.sigma = gsw_sigma0(binned.SA, binned.theta);
         binned.rho = gsw_rho(binned.SA, binned.theta, binned.pressure) - 1000; % density kg/m^3 - 1000
     catch ME
@@ -136,7 +141,7 @@ save(fnCTD, "binned", pars.matlab_file_format);
 fprintf("%s: wrote %s\n", row.name, fnCTD);
 
 retval = {fnCTD, binned};
-end % bin_CTD
+end % ctd2binned
 
 function binned = binTable(dtBin, t, pressure, tbl, binned, suffix)
 arguments (Input)

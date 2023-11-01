@@ -120,7 +120,7 @@ try
     if any(qBinned)
         profiles2combo(binned(qBinned), pars);
     end % if any qBinned
-    if any(qCTD)
+    if ~ismissing(pars.CT_T_name) && ~ismissing(pars.CT_C_name) && any(qCTD)
         ctd2combo(ctd(qCTD), pars);
     end % if any qCTD
 
@@ -149,16 +149,16 @@ end % arguments Input
 
 binned = {missing, []};
 ctd = {missing, []};
+gps = [];
 
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
 if ~row.qMatOkay, return; end % Failed going through odas_p2mat
 
-if pars.CT_has
+
+if ~ismissing(pars.CT_T_name) && ~ismissing(pars.CT_C_name)
     % We use the profiles information to get "tow-yo" estimates for GPS locations.
     [row, ctd, mat, gps] = ctd2binned(row, mat, pars); % we can bin up scalers with no profiles
-else % GPS may not be initialized
-    gps = []; % May be populated if needed
-end % if CT_has
+end % if
 
 if ~row.qProfileOkay, return; end % Failed in the past, so don't work on the profiles
 

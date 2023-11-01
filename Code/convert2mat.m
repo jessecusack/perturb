@@ -23,7 +23,8 @@ end % if ~row.qUse
 
 row.fnMat = fullfile(pars.mat_root, append(row.name, ".mat"));
 
-if isnewer(row.fnMat, row.fn)
+if isnewer(row.fnMat, row.fn) && ...
+        (ismissing(pars.p2mat_hotel_file) || isnewer(row.fnMat, pars.p2mat_hotel_file))
     a = [];
     fprintf("%s: %s is newer than %s\n", row.name, row.fnMat, row.fn);
     return;
@@ -61,6 +62,7 @@ for index = 1:numel(names)
     val = pars.(name);
     if ismissing(val), continue; end
     if isempty(val), continue; end
+    if isstring(val), val = char(val); end % odas does not like strings
     fprintf("Assigning %s\n", extractAfter(name, "p2mat_"));
     args{index,1} = extractAfter(name, "p2mat_");
     args{index,2} = val;

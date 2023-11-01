@@ -148,10 +148,10 @@ end % for
 dInfo.tbl = tbl;
 end % mk_diss_struct
 
-function [dissInfo, SH_HP, AA] = mk_diss_info(profile, info, pInfo, fftSec, fftFac, label)
+function [dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, fftSec, fftFac, label)
 arguments
     profile struct
-    info struct
+    pars struct % From get_info
     pInfo (1,:) table
     fftSec string
     fftFac string
@@ -159,12 +159,12 @@ arguments
 end % arguments
 
 fast = profile.fast; % fast variables for despiking
-fft_length_sec = info.(fftSec);
-fft_length_fac = info.(fftFac);
+fft_length_sec = pars.(fftSec);
+fft_length_fac = pars.(fftFac);
 
 AA = table();
 for name = ["Ax", "Ay"]
-    AA.(name) = my_despike(fast.(name), profile.fs_fast, info, "A", ...
+    AA.(name) = my_despike(fast.(name), profile.fs_fast, pars, "A", ...
         append(label, " ", name, " ", fftSec), pInfo);
 end
 AA = table2array(AA);
@@ -175,7 +175,7 @@ names = unique(names(~ismissing(names))); % Sorted shear probes, assumes <10 she
 
 SH = table(); % Space for all the shear probes
 for name = names
-    SH.(name) = my_despike(fast.(name), profile.fs_fast, info, "sh", ...
+    SH.(name) = my_despike(fast.(name), profile.fs_fast, pars, "sh", ...
         append(label, " ", name, " ", fftSec), pInfo);
 end % for
 SH = table2array(SH);
@@ -194,10 +194,29 @@ dissInfo.diss_length = fft_length_fac * dissInfo.fft_length;
 dissInfo.overlap = ceil(dissInfo.diss_length / 2);
 dissInfo.fs_fast = profile.fs_fast;
 dissInfo.fs_slow = profile.fs_slow;
-dissInfo.speed = fast.speed_fast;
-dissInfo.T = (info.diss_T1_norm * fast.T1_fast + info.diss_T2_norm * fast.T2_fast) / (info.diss_T1_norm + info.diss_T2_norm);
 dissInfo.t = fast.t_fast;
 dissInfo.P = fast.P_fast;
+
+if ~ismember(pars.diss_speed_source, string(fast.Properties.VariableNames))
+    error("diss_speed_source, %s, not in fast table", pars.diss_speed_source);
+end % if ~ismember
+
+dissInfo.speed = fast.(pars.diss_speed_source);
+
+if ismissing(pars.diss_T_source)
+    dissInfo.T = ...
+        (pars.diss_T1_norm * fast.T1_fast + pars.diss_T2_norm * fast.T2_fast) ./ ...
+        (pars.diss_T1_norm + pars.diss_T2_norm);
+else % if ismissing
+    TName = pars.diss_T_source; % column name for temperature source
+    if ismember(TName, string(fast.Properties.VariableNames)) % A fast variable
+        dissInfo.T = fast.(TName);
+    elseif ismember(TName, string(profile.slow.Properties.VariableNames)) % A slow variable
+        dissInfo.T = interp1(profile.slow.t, profile.slow.(TName), fast.t, "linear", "extrap");
+    else
+        error("diss_T_source, %s, not found in fast nor slow", TName);
+    end
+end % if ismissing
 end % mk_diss_info
 
 function b = my_despike(a, fs, info, codigo, tit, pInfo)
