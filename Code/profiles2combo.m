@@ -178,8 +178,6 @@ end % arguments
 cInfo = combo.info;
 tbl = combo.tbl;
 
-cInfo = removevars(cInfo, ["name", "index"]);
-
 [attrG, attrV, nameMap, compressionLevel] = nc_load_JSON(fnJSON, pars, cInfo);
 
 attrG.geospatial_vertical_min = min(tbl.bin);

@@ -36,7 +36,7 @@ for index = 1:numel(names)
     end % if isrow
 
     varID(index) = netcdf.defVar(ncid, nameNC, nc_mk_XType(val), dID);
-    if compressionLevel >= 0
+    if compressionLevel >= 0 && ~isstring(val)
         netcdf.defVarDeflate(ncid, varID(index), false, true, compressionLevel);
     end % if compressioinLevel
     if ~isfield(attrV, nameNC), attrV.(nameNC) = struct(); end
