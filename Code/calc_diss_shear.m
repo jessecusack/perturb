@@ -197,11 +197,13 @@ dissInfo.fs_slow = profile.fs_slow;
 dissInfo.t = fast.t_fast;
 dissInfo.P = fast.P_fast;
 
-if ~ismember(pars.diss_speed_source, string(fast.Properties.VariableNames))
+if ismember(pars.diss_speed_source, string(fast.Properties.VariableNames))
+    dissInfo.speed = fast.(pars.diss_speed_source);
+elseif ismember(pars.diss_speed_source, string(profile.slow.Properties.VariableNames))
+    dissInfo.speed = interp1(profile.slow.t, profile.slow.(pars.diss_speed_source), fast.t, "linear", "extrap");
+else
     error("diss_speed_source, %s, not in fast table", pars.diss_speed_source);
 end % if ~ismember
-
-dissInfo.speed = fast.(pars.diss_speed_source);
 
 if ismissing(pars.diss_T_source)
     dissInfo.T = ...
