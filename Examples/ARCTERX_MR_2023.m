@@ -21,7 +21,8 @@ addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 
 GPS_class = GPS_from_mat(GPS_filename, missing);
 
-% "p_file_pattern", "*01*.p"
+% "p_file_pattern", "*01*.p", ...
+% "diss_speed_source", "U_EM", ... % Axial flow speed source for dissipation estimates
 
 process_P_files( ...
     "p2mat_hotel", hotel_file, ...
@@ -37,7 +38,6 @@ process_P_files( ...
     "CT_T_name", "ctd_temp_slow", ... % temperature information from glider's CTD via hotel file
     "CT_C_name", "ctd_cond_slow", ... % conductivity information from glider's CTD via hotel file
     "diss_T_source", "ctd_temp_slow", ... % Temperature for kinematic viscosity
-    "diss_speed_source", "EMC_Cur", ... % Axial flow speed source for dissipation estimates
     "diss_forwards_fft_length_sec", 0.5, ... % 1 second FFT lengths (This is really forward in time)
     "diss_forwards_length_fac", 5, ... % 10 overlaps, so at 0.1m/s -> 1 m
     "diss_epsilon_minimum", 1e-13, ...   % Drop dissipation estimates smaller than this value
