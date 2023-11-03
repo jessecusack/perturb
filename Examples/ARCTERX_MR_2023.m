@@ -8,29 +8,36 @@ glider = "685";
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
 
-google_root = "~/Google Drive/Shared drives/GliderGroup/ARCTERX/IOP-2023-gliders/data/";
+data_root = "~/Desktop/ARCTERX/2023 IOP/tpw_MR"; % Root of data and output
+input_root = fullfile(data_root, "input"); % Where input files are located, P, GPS, hotel
 
-data_root = fullfile(google_root, "glider-offload", sprintf("OSU%s", glider), "MR");
+GPS_filename = fullfile(input_root, "glider", sprintf("OSU%s.gps.mat", glider));
+hotel_file = fullfile(input_root, "glider", sprintf("OSU%s.hotel.mat", glider));
 
-p_file_root = data_root;
-output_root = fullfile("~/Desktop/ARCTERX/2023 IOP/tpw_MR", glider);
+p_file_root = fullfile(input_root, glider); % Where the p files are located
+output_root = fullfile(data_root, glider); % Where to place output files
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 
-GPS_filename = fullfile(google_root, "tpw", sprintf("OSU%s.gps.mat", glider));
 GPS_class = GPS_from_mat(GPS_filename, missing);
 
+% "p_file_pattern", "*01*.p", ...
+% "diss_speed_source", "U_EM", ... % Axial flow speed source for dissipation estimates
+
 process_P_files( ...
+    "p2mat_hotel", hotel_file, ...
     "bin_width", 1, ...
     "debug", true, ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
     "output_root", output_root, ... % Where to write output to
     "gps_class", GPS_class, ... % Class to supply GPS data
-    "p_file_merge", false, ... % Don't attempt to merge p files for MR
+    "p_file_merge", true, ... % Attempt to merge p files for MR
     "profile_direction", "up", ... % Profiles going from bottom to top
     "profile_speed_min", 0.05, ... % Vertical speed cutoff
     "fp07_calibration", false, ... % Don't calibrate FP07s
-    "CT_has", false, ... % Doesn't have CT information
+    "CT_T_name", "ctd_temp_slow", ... % temperature information from glider's CTD via hotel file
+    "CT_C_name", "ctd_cond_slow", ... % conductivity information from glider's CTD via hotel file
+    "diss_T_source", "ctd_temp_slow", ... % Temperature for kinematic viscosity
     "diss_forwards_fft_length_sec", 0.5, ... % 1 second FFT lengths (This is really forward in time)
     "diss_forwards_length_fac", 5, ... % 10 overlaps, so at 0.1m/s -> 1 m
     "diss_epsilon_minimum", 1e-13, ...   % Drop dissipation estimates smaller than this value

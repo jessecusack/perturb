@@ -1,8 +1,9 @@
 % Add in seawater properties to slow
 
-function slow = add_seawater_properties(profile, latDefault, lonDefault)
+function slow = add_seawater_properties(profile, pars, latDefault, lonDefault)
 arguments (Input)
     profile struct % Structure being built by mat2profiles
+    pars struct % Structure from get_info
     latDefault double = 0
     lonDefault double = 0
 end % arguments Input
@@ -17,12 +18,16 @@ lat(isnan(lat)) = latDefault;
 lon(isnan(lon)) = lonDefault;
 
 slow = profile.slow;
-if ismember("JAC_T", slow.Properties.VariableNames)
-    slow.JAC_SP = gsw_SP_from_C(slow.JAC_C, slow.JAC_T, slow.P_slow); % Practical salinity
-    slow.JAC_SA = gsw_SA_from_SP(slow.JAC_SP, slow.P_slow, lon, lat); % Absolute salinity
-    slow.JAC_theta = gsw_CT_from_t(slow.JAC_SA, slow.JAC_T, slow.P_slow); % Conservation T
-    slow.JAC_sigma = gsw_sigma0(slow.JAC_SA, slow.JAC_theta);
-    slow.JAC_rho = gsw_rho(slow.JAC_SA, slow.JAC_theta, slow.P_slow) - 1000; % density kg/m^3 - 1000
+
+TName = pars.CT_T_name;
+CName = pars.CT_C_name;
+
+if all(ismember([TName, CName], slow.Properties.VariableNames))
+    slow.SP = gsw_SP_from_C(slow.(CName), slow.(TName), slow.P_slow); % Practical salinity
+    slow.SA = gsw_SA_from_SP(slow.SP, slow.P_slow, lon, lat); % Absolute salinity
+    slow.theta = gsw_CT_from_t(slow.SA, slow.(TName), slow.P_slow); % Conservation T
+    slow.sigma = gsw_sigma0(slow.SA, slow.theta);
+    slow.rho = gsw_rho(slow.SA, slow.theta, slow.P_slow) - 1000; % density kg/m^3 - 1000
 end % if ismember
 slow.depth = gsw_depth_from_z(gsw_z_from_p(slow.P_slow, lat));
 end % addSeawaterProperties

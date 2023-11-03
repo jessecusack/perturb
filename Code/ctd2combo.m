@@ -13,7 +13,7 @@ arguments (Output)
     tbl table % Binned CTD data
 end % arguments Output
 
-if ~pars.CT_has || isempty(ctd), return; end
+if ismissing(pars.CT_T_name) || ismissing(pars.CT_C_name) || isempty(ctd), return; end
 
 [tbl, fnCombo] = save2combo(ctd, pars);
 save2NetCDF(tbl, fnCombo, pars);

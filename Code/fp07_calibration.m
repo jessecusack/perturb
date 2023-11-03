@@ -1,35 +1,38 @@
 %
-% do an in-situ calibration of the FP07 probes against the JAC_T
+% do an in-situ calibration of the FP07 probes against the CT_T_name sensor
 %
 % This was derived from odas 4.5.1's cal_FP07_in_situ.m
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = fp07_calibration(a, indicesSlow, indicesFast, info, basename)
+function a = fp07_calibration(a, indicesSlow, indicesFast, pars, basename)
 arguments (Input)
     a struct % Output of odas_p2mat
     indicesSlow (2,:) int64 % Output of get_profile, indices into slow vectors for profiles
     indicesFast (2,:) int64 % Output of get_profile, indices into fast vectors for profiles
-    info struct % Parameters, defaults from get_info
+    pars struct % Parameters, defaults from get_info
     basename string % label for the file
 end % arguments Input
 arguments (Output)
     a struct % possibly modified version of odas_p2mat output
 end % arguments Output
 
-if ~info.fp07_calibration, return; end % Don't calibrate the FP07 sensors
+if ~pars.fp07_calibration, return; end % Don't calibrate the FP07 sensors
 
 cfgObj = setupstr(char(a.setupfilestr));
 
-[Treference, TNames] = extractNames(a, info.fp07_reference, basename);
+[Treference, TNames] = extractNames(a, pars.CT_T_name, basename);
 
+Treference
+TNames
+error("GotMe");
 if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s  found
 
 
 fp07Info = cell(size(TNames,1),1);
 for index = 1:size(TNames,1)
     row = TNames(index,:);
-    [a, row] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, row, info, cfgObj, basename);
+    [a, row] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, row, pars, cfgObj, basename);
     fp07Info{index} = row;
 end % for index
 TNames = vertcat(fp07Info{:});

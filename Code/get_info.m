@@ -11,6 +11,7 @@ function a = get_info(varargin)
 
 p = inputParser();
 validString = @(x) isstring(x) || ischar(x) || iscellstr(x);
+validMissingString = @(x) validString(x) || ismissing(x);
 validPositive = @(x) inRange(x, 0);
 validNotNegative = @(x) inRange(x, 0, inf, true);
 validLogical = @(x) ismember(x, [true, false]);
@@ -66,11 +67,11 @@ addParameter(p, "bbl_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which
 addParameter(p, "bbl_use", false, validLogical); % Should the bbl depth be used to trim the top of dives off
 addParameter(p, "bbl_extra_depth", 0, validNotNegative); % Extra depth to add to the bottom depth value when processing dissipation
 %% FP07 calibration
-addParameter(p, "fp07_calibration", true, validLogical); % Perform an in-situ calibration of the FP07 probes agains JAC_T
+addParameter(p, "fp07_calibration", true, validLogical); % Perform an in-situ calibration of the FP07 probes agains CT_T_name
 addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3)); % Steinhart-Hart equation order
-addParameter(p, "fp07_reference", "JAC_T", validString); % Which sensor is the reference sensor
-%% Does the instrument of CT information?
-addParameter(p, "CT_has", true, validLogical);
+%% CT sensor names, default to JAC_T and JAC_C
+addParameter(p, "CT_T_name", "JAC_T", validMissingString); % What is the slow T sensor name. If none, set to missing
+addParameter(p, "CT_C_name", "JAC_C", validMissingString); % What is the slow C sensor name. If none, set to missing
 %% Despike parameters for shear dissipation calculation
 % [thresh, smooth, and length] (in seconds) -> Rockland default value,
 addParameter(p, "despike_sh_thresh", 8, validPositive); % Shear probe
@@ -86,6 +87,9 @@ addParameter(p, "diss_forwards_fft_length_sec", 0.5, validPositive); % Disspatio
 addParameter(p, "diss_backwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for end of profile to start
 addParameter(p, "diss_forwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for start of profile to end
 addParameter(p, "diss_backwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for end of profile to start
+addParameter(p, "diss_speed_source", "speed_fast", validString); % Source of axial flow speed
+addParameter(p, "diss_T_source", missing, validMissingString); % Temperature source for kinematic viscosity estimate
+                                                               % If missing, then use T1*T1_norm+T2*T2_norm
 addParameter(p, "diss_T1_norm", 1, validPositive); % Value to multiple T1_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
