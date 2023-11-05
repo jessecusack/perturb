@@ -23,9 +23,6 @@ cfgObj = setupstr(char(a.setupfilestr));
 
 [Treference, TNames] = extractNames(a, pars.CT_T_name, basename);
 
-Treference
-TNames
-error("GotMe");
 if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s  found
 
 
