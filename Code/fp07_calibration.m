@@ -25,7 +25,6 @@ cfgObj = setupstr(char(a.setupfilestr));
 
 if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s  found
 
-
 fp07Info = cell(size(TNames,1),1);
 for index = 1:size(TNames,1)
     row = TNames(index,:);
