@@ -136,8 +136,8 @@ end % if all ismember
 fnCTD = fullfile(pars.ctd_root, append(row.name, ".mat"));
 row.fnCTD = fnCTD;
 my_mk_directory(fnCTD);
-
-save(fnCTD, "binned", pars.matlab_file_format);
+a = table2struct(binned, "ToScalar", true);
+save(fnCTD, "-struct", "a", pars.matlab_file_format);
 fprintf("%s: wrote %s\n", row.name, fnCTD);
 
 retval = {fnCTD, binned};
