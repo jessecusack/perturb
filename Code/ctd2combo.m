@@ -67,7 +67,7 @@ if any(cellfun(@isempty, data.data))
             items{index} = dd.Value.data{index};
         else
             fprintf("Loading %s\n", dd.Value.fn(index));
-            items{index} = load(dd.Value.fn(index)).binned;
+            items{index} = strct2table(load(dd.Value.fn(index)));
         end % if ~isempty
     end % parfor
     delete(dd);
@@ -113,7 +113,8 @@ tbl = tbl(ix,:);
 
 my_mk_directory(fnCombo, pars.debug);
 fprintf("Writing %s\n", fnCombo);
-save(fnCombo, "tbl", pars.matlab_file_format);
+a = table2struct(tbl, "ToScalar", true);
+save(fnCombo, "-struct", "a", pars.matlab_file_format);
 end % ctd2combo
 
 function save2NetCDF(tbl, fnCombo, pars)
