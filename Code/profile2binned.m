@@ -4,7 +4,7 @@
 
 function [row, retval] = profile2binned(row, a, pars)
 arguments (Input)
-    row table % row to work on
+    row (1,:) table % row to work on
     a struct % Output of mat2profile
     pars struct % Parameters, defaults from get_info
 end % arguments Input
@@ -13,13 +13,14 @@ arguments (Output)
     retval (2,1) cell % {filename or missing, empty or binned profiles}
 end % arguments Output
 
+retval = {missing, []};
+
 if ~row.qProfileOkay
-    retval = {missing, []};
     return;
 end % if ~row.qProfileOkay
 
 fnProf = row.fnProf;
-fnBin = fullfile(pars.binned_root, append(row.name, ".mat"));
+fnBin = fullfile(pars.prof_binned_root, append(row.name, ".mat"));
 row.fnBin = fnBin;
 
 if isnewer(fnBin, fnProf)
@@ -32,10 +33,6 @@ if isempty(a)
     fprintf("Loading %s\n", row.fnProf);
     a = load(row.fnProf);
 end % if isempty
-
-%% Bin the data into depth bins
-
-dz = pars.bin_width; % Bin stepsize (m)
 
 method = pars.bin_method; % Which method to aggregate the data together
 if ~isa(method, "function_handle")
@@ -52,22 +49,29 @@ pInfo = a.pInfo;
 profiles = a.profiles;
 
 fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
-casts = cell(numel(profiles,1),1);
+casts = cell(numel(profiles),1);
 
-minDepth = min(pInfo.min_depth, [], "omitnan"); % Minimum depth in casts
-maxDepth = max(pInfo.max_depth, [], "omitnan"); % Maximum depth in casts
+dz = pars.bin_width; % Bin stepsize (m) or (sec)
 
-if isnan(minDepth) || isnan(maxDepth)
-    retval = {missing, []};
-    row.qProfileOkay = false;
-    fprintf("%s: nan in min or max depth\n", row.name);
-    return;
-end % if
+if pars.profile_direction == "time" % Bin in time
+    dz = seconds(dz);
+    allBins = pInfo.t0:dz:(pInfo.t1 + dz / 2);
+    binName = "t";
+else % Bin in depth
+    minDepth = min(pInfo.min_depth, [], "omitnan"); % Minimum depth in casts
+    maxDepth = max(pInfo.max_depth, [], "omitnan"); % Maximum depth in casts
 
-allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
+    if isnan(minDepth) || isnan(maxDepth)
+        row.qProfileOkay = false;
+        fprintf("%s: nan in min or max depth\n", row.name);
+        return;
+    end % if
+
+    allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
+    binName = "depth";
+end % if profile_direction
 
 if numel(allBins) < 2
-    retval = {missing, []};
     row.qProfileOkay = false;
     fprintf("%s: Number of allBins, %d < 2\n", row.name, numel(allBins));
     return;
@@ -79,27 +83,16 @@ for index = 1:numel(profiles)
     fast = profile.fast;
     slow = profile.slow;
 
-    fast.bin = interp1(allBins-dz/2, allBins, fast.depth, "previous"); % -dz/2 to find bin centroid
-    slow.bin = interp1(allBins-dz/2, allBins, slow.depth, "previous");
+    fast.bin = interp1(allBins-dz/2, allBins, fast.(binName), "previous"); % -dz/2 to find bin centroid
+    slow.bin = interp1(allBins-dz/2, allBins, slow.(binName), "previous");
 
-    fast = fast(~isnan(fast.bin),:); % Take off values above the first bin
-    slow = slow(~isnan(slow.bin),:);
-
-    if isfield(profile, "diss") && isfield(profile.diss, "tbl") && ~isempty(profile.diss.tbl)
-        diss = profile.diss.tbl;
-        diss.bin = interp1(allBins-dz/2, allBins, diss.depth, "previous"); % Might be empty
-        diss = diss(~isnan(diss.bin),:);
+    if pars.profile_direction == "time"
+        fast = fast(~isnat(fast.bin),:);
+        slow = slow(~isnat(slow.bin),:);
     else
-        diss = table();
-    end % if
-
-    if isfield(profile, "bbl") && isfield(profile.bbl, "tbl") && ~isempty(profile.bbl.tbl)
-        bbl = profile.bbl.tbl;
-        bbl.bin = interp1(allBins-dz/2, allBins, bbl.depth, "previous"); % Might be empty
-        bbl = bbl(~isnan(bbl.bin),:);
-    else
-        bbl = table();
-    end % if
+        fast = fast(~isnan(fast.bin),:); % Take off values above the first bin
+        slow = slow(~isnan(slow.bin),:);
+    end
 
     if isempty(fast) || isempty(slow)
         fprintf("%s No bins found for profile %d in %s\n", row.name, index);
@@ -135,27 +128,6 @@ for index = 1:numel(profiles)
 
     tbl = outerjoin(tblF, tblS, "Keys", "bin", "MergeKeys", true);
 
-    %%
-    %
-    % Dissipation is special and we're only going to work with e
-    % and FM, figure of merit = mad*sqrt(dof_spec),
-    % mad = mean absolute deviation,
-    % dof_spec = degrees of freedom in each dissipation estimate
-    %
-    % e and FM are nxp matrices where
-    %   n is the number of probes and
-    %   p is the number of pressure bins
-
-    if ~isempty(diss) % Top downwards
-        tblD = bin_diss(diss, "diss", method);
-        tbl = outerjoin(tbl, tblD, "Keys", "bin", "MergeKeys", true);
-    end % if ~isempty diss
-
-    if ~isempty(bbl) % Bottom upwards
-        tblB = bin_diss(bbl, "bbl", method);
-        tbl = outerjoin(tbl, tblB, "Keys", "bin", "MergeKeys", true);
-    end % if ~isempty bbl
-    %%
     casts{index} = tbl;
 end % for index
 
@@ -166,7 +138,6 @@ if any(qDrop)
 end % any qDrop
 
 if isempty(casts)
-    retval = {missing, []};
     row.qProfileOkay = false;
     fprintf("%s: No usable casts found in %s\n", row.name, row.fnProf);
     return;
@@ -218,40 +189,4 @@ my_mk_directory(fnBin);
 save(fnBin, "-struct", "binned", pars.matlab_file_format);
 fprintf("%s: Saving %d profiles to %s\n", row.name, size(pInfo,1), fnBin);
 retval = {fnBin, binned};
-end % bin_data
-
-function tbl = bin_diss(diss, suffix, method)
-arguments
-    diss table
-    suffix string
-    method function_handle
-end
-
-suffix = append("_", suffix);
-
-names = string(diss.Properties.VariableNames);
-[~, ix] = sort(lower(names)); % Dictionary sort for humans
-names = names(ix);
-
-grp = findgroups(diss.bin);
-
-tbl = table();
-tbl.cnt = splitapply(@numel, diss.t, grp);
-
-for name = setdiff(names, "t")
-    tbl.(name) = splitapply(method, diss.(name), grp);
-end % for
-
-names = setdiff(string(tbl.Properties.VariableNames), "bin");
-names = names(~endsWith(names, suffix));
-tbl = renamevars(tbl, names, append(names, suffix));
-
-for name = string(tbl.Properties.VariableNames)
-    if size(tbl.(name),2) == 1, continue; end
-    for iCnt = 1:size(tbl.(name),2) % Create a new variable for each column
-        vName = append(extractBefore(name, "_"), string(iCnt), "_", extractAfter(name, "_"));
-        tbl.(vName) = tbl.(name)(:,iCnt);
-    end % for iCnt
-    tbl = removevars(tbl, name);
-end % for name
-end % bin_diss
+end % profile2binned
