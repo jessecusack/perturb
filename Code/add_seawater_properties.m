@@ -22,7 +22,7 @@ slow = profile.slow;
 TName = pars.CT_T_name;
 CName = pars.CT_C_name;
 
-if all(ismember([TName, CName], slow.Properties.VariableNames))
+if ~ismissing(TName) && ~ismissing(CName) && all(ismember([TName, CName], slow.Properties.VariableNames))
     slow.SP = gsw_SP_from_C(slow.(CName), slow.(TName), slow.P_slow); % Practical salinity
     slow.SA = gsw_SA_from_SP(slow.SP, slow.P_slow, lon, lat); % Absolute salinity
     slow.theta = gsw_CT_from_t(slow.SA, slow.(TName), slow.P_slow); % Conservation T
