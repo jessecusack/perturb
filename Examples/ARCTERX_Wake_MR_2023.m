@@ -22,7 +22,7 @@ GPS_class = GPS_from_vectors(datetime(["2023-04-01", "2023-06-01"]), 6.930167 + 
 pars = process_P_files( ...
     "debug", true, ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
-    "p_file_pattern", "palau2023_001*", ...   % Glob pattern appended to p_file_root to locate P files
+    "p_file_pattern", "*", ...   % Glob pattern appended to p_file_root to locate P files
     "output_root", output_root, ...  % Where to write output to
     "gps_class", GPS_class, ... % Class to supply GPS data
     "diss_fft_length_sec", 2, ... % 1 second FFTs
