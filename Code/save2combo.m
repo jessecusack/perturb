@@ -56,7 +56,6 @@ if any(cellfun(@isempty, data.data))
         if ~isempty(items{index}), continue; end
         fprintf("Loading %s\n", dd.Value(index));
         items{index} = load(dd.Value(index));
-        items{index}
     end % parfor
     data.data = items;
     delete(dd); % Cleanup after myself
