@@ -3,7 +3,7 @@
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
-glider = "685";
+glider = "684";
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
@@ -38,10 +38,10 @@ pars = process_P_files( ...
     "CT_T_name", "ctd_temp_slow", ... % temperature information from glider's CTD via hotel file
     "CT_C_name", "ctd_cond_slow", ... % conductivity information from glider's CTD via hotel file
     "diss_T_source", "ctd_temp_slow", ... % Temperature for kinematic viscosity
-    "diss_forwards_fft_length_sec", 0.5, ... % 1 second FFT lengths (This is really forward in time)
-    "diss_forwards_length_fac", 5, ... % 10 overlaps, so at 0.1m/s -> 1 m
+    "diss_fft_length_sec", 0.5, ... % 1 second FFT lengths (This is really forward in time)
+    "diss_length_fac", 5, ... % 10 overlaps, so at 0.1m/s -> 1 m
     "diss_epsilon_minimum", 1e-13, ...   % Drop dissipation estimates smaller than this value
-    "trim_use", false, ... % Don't trim at the top
+    "trim_calculate", false, ... % Don't trim at the top
     "netCDF_contributor_name", "Pat Welch", ...
     "netCDF_contributor_role", "researcher", ...
     "netCDF_creator_name", "Pat Welch", ...
