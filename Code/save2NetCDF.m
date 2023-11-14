@@ -44,10 +44,12 @@ tbl = combo.tbl;
 
 [attrG, attrV, nameMap, compressionLevel] = nc_load_JSON(fnJSON, pars, cInfo);
 
-attrG.geospatial_vertical_min = min(tbl.bin);
-attrG.geospatial_vertical_max = max(tbl.bin);
-attrG.geospatial_bounds_vertical = sprintf("%f,%f", ...
-    attrG.geospatial_vertical_min, attrG.geospatial_vertical_max);
+if isreal(tbl.bin)
+    attrG.geospatial_vertical_min = min(tbl.bin);
+    attrG.geospatial_vertical_max = max(tbl.bin);
+    attrG.geospatial_bounds_vertical = sprintf("%f,%f", ...
+        attrG.geospatial_vertical_min, attrG.geospatial_vertical_max);
+end % if isreal
 fmt = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'";
 tMin = min(cInfo.t0);
 tMax = max(cInfo.t1);
