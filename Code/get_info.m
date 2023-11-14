@@ -15,6 +15,7 @@ validMissingString = @(x) validString(x) || ismissing(x);
 validPositive = @(x) inRange(x, 0);
 validNotNegative = @(x) inRange(x, 0, inf, true);
 validLogical = @(x) ismember(x, [true, false]);
+validMethod = @(x) ismember(x, ["median", "mean"]);
 
 %% Debugging related parameters
 addParameter(p, "debug", false, validLogical); % Turn on debugging messages
@@ -98,14 +99,15 @@ addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast t
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
 addParameter(p, "diss_epsilon_minimum", 1e-13, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
 %% Binning parameters for profiles, non-dissipation
-addParameter(p, "bin_method", "mean", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
+addParameter(p, "bin_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
 %% Binning parameters for dissipation
-addParameter(p, "binDiss_method", "mean", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
+addParameter(p, "binDiss_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "binDiss_width", 1, validPositive); % Bin width in (m)
 %% CTD time binning parameters
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
-addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T"], validString); % Sensors to time bin
+addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T", "P_slow"], validString); % Sensors to time bin
+addParameter(p, "ctd_method", "mean", validMethod); % How to average
 %% NetCDF global attributes
 addParameter(p, "netCDF_acknowledgement", missing, validString);
 addParameter(p, "netCDF_contributor_name", missing, validString);
