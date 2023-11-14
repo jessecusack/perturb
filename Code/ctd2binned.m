@@ -3,18 +3,19 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, retval, mat, gps] = ctd2binned(row, mat, pars, latitude_default)
+function [row, retval, mat, gps] = ctd2binned(row, mat, pars, latitude_default, longitude_default)
 arguments (Input)
     row table % row to work on
     mat struct % Output of mat2profile
     pars struct % Parameters, defaults from get_info
     latitude_default double {mustBeInRange(latitude_default, -90, 90)} = 0
+    longitude_default double {mustBeInRange(longitude_default, -180, 180)} = 0
 end % arguments Input
 arguments (Output)
     row table % row worked on
-    retval (2,1) cell % (filename ormissing) and (binned or empty)
+    retval (2,1) cell % (filename or missing) and (binned or empty)
     mat struct % Output of mat2profile
-    gps % empty GPS_base_class
+    gps % empty or GPS_base_class
 end % arguments Output
 
 gps = []; % Maybe initialized, if needed
@@ -33,7 +34,7 @@ if isempty(mat)
     mat = load(row.fnMat);
 end % if isempty
 
-t0 = datetime(append(mat.date, " " , mat.time));
+t0 = row.t0;
 
 tblSlow = table();
 tblFast = table();
@@ -44,12 +45,11 @@ szFast = size(mat.t_fast);
 ctd_bin_variables = unique([pars.CT_T_name, pars.CT_C_name, pars.ctd_bin_variables]);
 
 for name = intersect(string(fieldnames(mat)), ctd_bin_variables)'
-    val = mat.(name);
-    sz = size(val);
+    sz = size(mat.(name));
     if isequal(sz, szSlow)
-        tblSlow.(name) = val;
+        tblSlow.(name) = mat.(name);
     elseif isequal(sz, szFast)
-        tblFast.(name) = val;
+        tblFast.(name) = mat.(name);
     else
         fprintf("%s: %s is not fast nor slow\n", row.name);
     end
@@ -60,24 +60,35 @@ if isempty(tblSlow) && isempty(tblFast)
     return;
 end
 
+method = pars.ctd_method; % Which method to aggregate the data together
+if ~isa(method, "function_handle")
+    if method == "median"
+        method = @(x) median(x, 1, "omitnan");
+    elseif method == "mean"
+        method = @(x) mean(x, 1, "omitnan");
+    else
+        error("Unrecognized binning method %s\n", method)
+    end % if
+end % if ~isa
+
 dtBin = pars.ctd_bin_dt;
 
-tMin = round(min(mat.t_slow(1), mat.t_fast(1)) / dtBin) * dtBin;
-tMax = round(max(mat.t_slow(end), mat.t_fast(end)) / dtBin) * dtBin;
-binned = table();
-binned.t = (tMin:dtBin:tMax)';
-binned.nSlow = zeros(size(binned.t));
-binned.nFast = zeros(size(binned.t));
+tbl = table();
+tbl.bin = (min(mat.t_slow(1):mat.t_fast(1)):dtBin:max(mat.t_slow(end), mat.t_fast(end)))';
 
 if ~isempty(tblSlow)
-    binned = binTable(dtBin, mat.t_slow, mat.P_slow, tblSlow, binned, "Slow");
+    tbl = binTable(mat.t_slow, tblSlow, tbl, "Slow", method);
+    tbl = removevars(tbl, "tSlow_std");
+    tbl = renamevars(tbl, "tSlow", "t");
 end % if ~isempty tblSlow
 
 if ~isempty(tblFast)
-    binned = binTable(dtBin, mat.t_fast, [], tblFast, binned, "Fast");
+    tbl = binTable(mat.t_fast, tblFast, tbl, "Fast", method);
+    tbl = removevars(tbl, ["tFast", "tFast_std"]);
 end % if ~isempty tblFast
 
-binned.t = t0 + seconds(binned.t);
+tbl.bin = t0 + seconds(tbl.bin);
+tbl.t = t0 + seconds(tbl.t);
 
 gps = pars.gps_class.initialize(); % initialize GPS
 
@@ -91,101 +102,107 @@ if isequal(pars.profile_direction, "down") % Check for profiles for tow-yo
         mat.fs_slow); % This will be redone in mat2profile, but this keeps it separate
 
     if isempty(indicesSlow) % No profiles
-        binned.lat = gps.lat(binned.t);
-        binned.lon = gps.lon(binned.t);
-        binned.dtGPS = gps.dt(binned.t);
+        tbl.lat = gps.lat(tbl.t);
+        tbl.lon = gps.lon(tbl.t);
+        tbl.dtGPS = gps.dt(tbl.t);
     else % Profiles
-        t0 = datetime(append(mat.date, " ", mat.time));
         tSlow = t0 + seconds(mat.t_slow(indicesSlow));
-        binned = addGPS(binned, tSlow, gps);
+        tbl = addGPS(tbl, tSlow, gps);
     end % profiles
 else % Not down
-    binned.lat = gps.lat(binned.t);
-    binned.lon = gps.lon(binned.t);
-    binned.dtGPS = gps.dt(binned.t);
+    tbl.lat = gps.lat(tbl.t);
+    tbl.lon = gps.lon(tbl.t);
+    tbl.dtGPS = gps.dt(tbl.t);
 end % if direction
 
-lat = binned.lat;
+lat = tbl.lat;
 lat(isnan(lat)) = latitude_default;
 
-binned.pressure(binned.pressure < -10 | binned.pressure > 12000) = nan; % Physical constraints for the pressure
+if ismember("P_slow", tbl.Properties.VariableNames)
+    tbl.P_slow(tbl.P_slow < -10 | tbl.P_slow > 12000) = nan; % Physical constraints for the pressure
 
-binned.depth = gsw_depth_from_z(gsw_z_from_p(binned.pressure, lat));
+    tbl.depth = gsw_depth_from_z(gsw_z_from_p(tbl.P_slow, lat));
 
-TName = pars.CT_T_name;
-CName = pars.CT_C_name;
+    TName = pars.CT_T_name;
+    CName = pars.CT_C_name;
 
-if all(ismember([TName, CName], fieldnames(mat))) % We can calculate seawater properties
-    lon = binned.lon;
-    lon(isnan(lon)) = 0;
-    try
-        binned.SP = gsw_SP_from_C(binned.(CName), binned.(TName), binned.pressure); % Practical salinity
-        binned.SA = gsw_SA_from_SP(binned.SP, binned.pressure, lon, lat); % Absolute salinity
-        binned.theta = gsw_CT_from_t(binned.SA, binned.(TName), binned.pressure); % Conservation T
-        binned.sigma = gsw_sigma0(binned.SA, binned.theta);
-        binned.rho = gsw_rho(binned.SA, binned.theta, binned.pressure) - 1000; % density kg/m^3 - 1000
-    catch ME
-        fprintf("Pressure range %f to %f nans %d\n", ...
-            min(binned.pressure, [], "omitmissing"), ...
-            max(binned.pressure, [], "omitmissing"), ...
-            sum(isnan(binned.pressure)));
-        rethrow(ME)
-    end % try
-end % if all ismember
+    if all(ismember([TName, CName], fieldnames(mat))) % We can calculate seawater properties
+        lon = tbl.lon;
+        lon(isnan(lon)) = longitude_default;
+        try
+            tbl.SP = gsw_SP_from_C(tbl.(CName), tbl.(TName), tbl.P_slow); % Practical salinity
+            tbl.SA = gsw_SA_from_SP(tbl.SP, tbl.P_slow, lon, lat); % Absolute salinity
+            tbl.theta = gsw_CT_from_t(tbl.SA, tbl.(TName), tbl.P_slow); % Conservation T
+            tbl.sigma = gsw_sigma0(tbl.SA, tbl.theta);
+            tbl.rho = gsw_rho(tbl.SA, tbl.theta, tbl.P_slow) - 1000; % density kg/m^3 - 1000
+        catch ME
+            fprintf("Pressure range %f to %f nans %d\n", ...
+                min(tbl.P_slow, [], "omitmissing"), ...
+                max(tbl.P_slow, [], "omitmissing"), ...
+                sum(isnan(tlb.P_slow)));
+            rethrow(ME)
+        end % try
+    end % if all ismember
+end % if ismember P_slow
 
 fnCTD = fullfile(pars.ctd_root, append(row.name, ".mat"));
 row.fnCTD = fnCTD;
 my_mk_directory(fnCTD);
-a = table2struct(binned, "ToScalar", true);
-save(fnCTD, "-struct", "a", pars.matlab_file_format);
+binned = struct("tbl", tbl, "info", row(:,["name", "t0", "tEnd"]));
+save(fnCTD, "-struct", "binned", pars.matlab_file_format);
 fprintf("%s: wrote %s\n", row.name, fnCTD);
 
 retval = {fnCTD, binned};
 end % ctd2binned
 
-function binned = binTable(dtBin, t, pressure, tbl, binned, suffix)
+function binned = binTable(t, tbl, binned, suffix, method)
 arguments (Input)
-    dtBin double {mustBePositive}
     t (:,1) double
-    pressure (:,1) double
     tbl table
     binned table
     suffix string
+    method function_handle
 end % arguments Input
 arguments (Output)
     binned table
 end % arguments Output
 
-if ~isempty(pressure)
-    tbl.pressure = pressure;
-end % if ~isempty
+tName = append("t", suffix);
+tbl.(tName) = t;
+tbl.bin = interp1(binned.bin, binned.bin, t, "nearest", "extrap");
+tbl.grp = findgroups(tbl.bin);
 
-names = string(tbl.Properties.VariableNames);
-iNames = ["t", names];
-oNames = [iNames, append(names, "_std")];
-cNames = setdiff(oNames, "t");
+rows = table();
+a = rowfun(@(x) x(1), tbl, "InputVariables", "bin", "GroupingVariables", "grp", "OutputVariableNames", "bin");
+rows.bin = a.bin;
+[~, iLHS, iRHS] = innerjoin(binned, rows, "Keys", "bin");
 
-tbl.t = round(t / dtBin) * dtBin;
-tbl.grp = findgroups(tbl.t);
-a = rowfun(@myMean, tbl, ...
-    "InputVariables", iNames, ...
-    "GroupingVariables", "grp", ...
-    "OutputVariableNames", oNames);
-[~, iLHS, iRHS] = innerjoin(binned, a, "Keys", "t");
+names = [tName, setdiff(string(tbl.Properties.VariableNames), ["bin", "grp"])];
+for index = 1:numel(names)
+    name = names(index);
+    nameSigma = append(name, "_std");
 
-if size(binned,1) ~= numel(iLHS) % There are more binned rows than iLHS
-    binned(:, cNames) = array2table(nan(size(binned,1), numel(cNames)));
-end % if
+    a = rowfun(method, tbl, ...
+        "InputVariables", name, ...
+        "GroupingVariables", "grp", ...
+        "OutputVariableNames", name);
+    b = rowfun(@(x) std(x, "omitnan"), tbl, ...
+        "InputVariables", name, ...
+        "GroupingVariables", "grp", ...
+        "OutputVariableNames", name);
+    if index == 1
+        nName = append("n", suffix);
+        binned.(nName) = uint32(zeros(size(binned.bin)));
+        binned.(nName)(iLHS) = a.GroupCount(iRHS);
+    end
 
-binned.(append("n", suffix))(iLHS) = a.GroupCount(iRHS);
-binned(iLHS, cNames) = a(iRHS, cNames);
+    binned.(name) = nan(size(binned.bin));
+    binned.(nameSigma) = nan(size(binned.bin));
+
+    binned.(name)(iLHS)      = a.(name)(iRHS);
+    binned.(nameSigma)(iLHS) = b.(name)(iRHS);
+end
 end % binTable
-
-function varargout = myMean(varargin)
-mu = cellfun(@(x) mean(x, "omitnan"), varargin, "UniformOutput", false);
-sigma = cellfun(@(x) std(x, "omitnan"), varargin(2:end), "UniformOutput", false);
-varargout = [mu, sigma];
-end % myMean
 
 function ctd = addGPS(ctd, tSlow, gps)
 arguments (Input)
@@ -197,14 +214,14 @@ arguments (Output)
     ctd table
 end % arguments Output
 
-ctd.lon = nan(size(ctd.t)); % Preallocate
-ctd.lat = nan(size(ctd.t));
-ctd.dtGPS = nan(size(ctd.t));
+ctd.lon = nan(size(ctd.bin)); % Preallocate
+ctd.lat = nan(size(ctd.bin));
+ctd.dtGPS = nan(size(ctd.bin));
 
-% Before the first cast, assume the fix is at ctd.t
-q = ctd.t < tSlow(1,1); % Before first profile
+% Before the first cast, assume the fix is at ctd.bin
+q = ctd.bin < tSlow(1,1); % Before first profile
 if any(q)
-    t = ctd.t(q);
+    t = ctd.bin(q);
     ctd.lon(q) = gps.lon(t);
     ctd.lat(q) = gps.lat(t);
     ctd.dtGPS(q) = gps.dt(t);
@@ -215,7 +232,7 @@ nProfiles = size(tSlow,2);
 
 for index = 1:nProfiles % Walk through each cast
     t = tSlow(1, index); % Start of the cast
-    q = ctd.t >= t & ctd.t <= tSlow(2,index);
+    q = ctd.bin >= t & ctd.bin <= tSlow(2,index);
     ctd.lon(q) = gps.lon(t);
     ctd.lat(q) = gps.lat(t);
     ctd.dtGPS(q) = gps.dt(t);
@@ -224,12 +241,12 @@ end % for
 for index = 1:nProfiles % Gaps between casts
     t0 = tSlow(2,index); % Start of the gap
     if index == nProfiles % All the way to the end
-        t1 = ctd.t(end);
+        t1 = ctd.bin(end);
     else % between casts
         t1 = tSlow(1,index+1);
     end % if index
 
-    q = ctd.t > t0 & ctd.t < t1; % Points in the gap between casts
+    q = ctd.bin > t0 & ctd.bin < t1; % Points in the gap between casts
     if ~any(q), continue; end % Nothing to be done here
     ii = find(q); % Get indices
 
@@ -241,7 +258,7 @@ for index = 1:nProfiles % Gaps between casts
     dLondt = dLon / dt; % Rate of change cast
     dLatdt = dLat / dt;
 
-    t = ctd.t(q);
+    t = ctd.bin(q);
     dt = seconds(t1 - t);
     ctd.lon(q) = gps.lon(t) - dLondt .* dt;
     ctd.lat(q) = gps.lat(t) - dLatdt .* dt;
