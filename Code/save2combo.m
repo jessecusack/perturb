@@ -43,7 +43,10 @@ if isfile(fnCombo)
         fprintf("No need to rebuild Profile combo, %s is newer than inputs\n", fnCombo);
         return;
     end
-    fprintf("Rebuilding %s due to %d files\n", fnCombo, sum(data.datenum >= item.datenum));
+    fprintf("Rebuilding %s due to %d files, %s %s\n", fnCombo, sum(data.datenum >= item.datenum), ...
+        datetime(mtime, "ConvertFrom", "datenum"), ...
+        datetime(item.datenum, "ConvertFrom", "datenum"));
+    disp(data.fn(data.datenum >= item.datenum))
 end % if isfile
 
 if any(cellfun(@isempty, data.data))
@@ -53,6 +56,7 @@ if any(cellfun(@isempty, data.data))
         if ~isempty(items{index}), continue; end
         fprintf("Loading %s\n", dd.Value(index));
         items{index} = load(dd.Value(index));
+        items{index}
     end % parfor
     data.data = items;
     delete(dd); % Cleanup after myself
@@ -94,6 +98,7 @@ nBins = numel(bins); % Number of depth bins
 tbl = table();
 tbl.bin = bins;
 tbl.t = NaT(nBins, nCasts);
+
 for name = names(3:end)
     tbl.(name) = nan(nBins, nCasts);
 end % for name
@@ -112,6 +117,9 @@ for index = 1:numel(binned)
 
     for name = string(a.Properties.VariableNames)
         if name == "bin", continue; end
+        if isdatetime(a.(name)) && ~isdatetime(tbl.(name))
+            tbl.(name) = NaT(size(tbl.(name)));
+        end % if
         tbl.(name)(iLHS,ii) = a.(name);
     end % for name
 end % for index
