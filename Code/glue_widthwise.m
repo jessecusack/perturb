@@ -19,7 +19,6 @@ end % arguments Output
 [items, bins] = glue_extract_information(key, profiles, vNames, tblName, true);
 
 binned = glue_build_empty_table(key, bins, items, true);
-head(binned)
 
 offset = 0; % Column offset
 
