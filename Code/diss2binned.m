@@ -2,10 +2,10 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, retval] = diss2binned(row, profile, pars)
+function [row, retval] = diss2binned(row, a, pars)
 arguments (Input)
     row (1,:) table % row to work on
-    profile struct % Output of profile2diss, struct or empty
+    a struct % Output of profile2diss, struct or empty
     pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
@@ -29,138 +29,74 @@ if isnewer(fnBin, fnDiss)
     return;
 end % if isnewer
 
-if isempty(profile)
+if isempty(a)
     fprintf("Loading %s\n", row.fnDiss);
-    profile = load(row.fnDiss);
+    a = load(row.fnDiss);
 end % if isempty
 
 %% Bin the data into depth bins
 
-method = pars.binDiss_method; % Which method to aggregate the data together
-if ~isa(method, "function_handle")
-    if method == "median"
-        method = @(x) median(x, 1, "omitnan");
-    elseif method == "mean"
-        method = @(x) mean(x, 1, "omitnan");
-    else
-        error("Unrecognized binning method %s\n", method)
-    end % if
-end % if ~isa
+pInfo = a.info;
+profiles = a.profiles;
 
-dInfo = profile.info;
-profiles = profile.profiles;
-
-dz = pars.binDiss_width; % Bin stepsize (m) or (sec)
+fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
 
 if pars.profile_direction == "time" % Bin in time
-    dz = seconds(dz);
-    allBins = dInfo.t0:dz:(dInfo.t1 + dz / 2);
-    binName = "t";
-else % Bin in depth
-    minDepth = min(dInfo.min_depth, [], "omitnan"); % Minimum depth in casts
-    maxDepth = max(dInfo.max_depth, [], "omitnan"); % Maximum depth in casts
-
-    if isnan(minDepth) || isnan(maxDepth)
-        row.qProfileOkay = false;
-        fprintf("%s: nan in min or max depth\n", row.name);
-        return;
-    end % if
-
-    allBins = (floor(minDepth*dz)/dz):dz:(maxDepth + dz/2); % Bin centroids
-    binName = "depth";
+    binSize = seconds(pars.bin_width); % Bin stepsize in (sec)
+    keyName = "t";
+    binFunc = @bin_by_time;
+    glueFunc = @glue_lengthwise;
+else % Bin by depth
+    binSize = pars.bin_width; % Bin stepsize (m)
+    keyName = "depth";
+    binFunc = @bin_by_real;
+    glueFunc = @glue_widthwise;
 end % if profile_direction
 
-if numel(allBins) < 2
-    fprintf("%s: Number of allBins, %d < 2\n", row.name, numel(allBins));
+casts = cell(numel(profiles),1);
+for index = 1:numel(profiles)
+    profile = profiles{index};
+    nE = size(profile.e, 2);
+    prof2 = table();
+    for name = string(profile.Properties.VariableNames)
+        sz = size(profile.(name),2);
+        if ~ismatrix(profile.(name)), continue; end
+        if sz == 1
+            prof2.(name) = profile.(name);
+        elseif sz == nE
+            for j = 1:sz
+                prof2.(append(name, "_", string(j))) = profile.(name)(:,j);
+            end % for j;
+        end % if sz
+    end % for name
+
+    casts{index} = binFunc(binSize, keyName, prof2, pars.binDiss_method);
+end % for index
+
+qDrop = cellfun(@isempty, casts); % This shouldn't happend
+
+if any(qDrop)
+    casts = casts(~qDrop);
+    pInfo = pInfo(~qDrop,:);
+end % any qDrop
+
+if isempty(casts)
+    row.qProfileOkay = false;
+    fprintf("%s: No usable casts found in %s\n", row.name, row.fnProf);
     return;
 end
 
-fprintf("%s: Binning %d diss profiles\n", row.name, size(dInfo,1));
-casts = cell(size(dInfo,1),1);
-names = dictionary();
-
-% Build a pre-allocated table
-nCasts = numel(casts);
-nBins = numel(allBins);
-tbl = table();
-tbl.bin = allBins';
-tbl.n = uint32(zeros(nBins, nCasts));
-tbl.t = NaT(nBins, nCasts);
-
-for index = 1:numel(profiles)
-    profile = profiles{index};
-    if isempty(profile), continue; end
-    nE = size(profile.e,2);
-    for name = setdiff(string(profile.Properties.VariableNames), "t")
-        if ndims(profile.(name)) ~= 2, continue; end
-        sz = size(profile.(name),2);
-        if sz == 1
-            tbl.(name) = nan(nBins, nCasts);
-        elseif sz == nE
-            for j = 1:sz
-                tbl.(append(name, "_", string(j))) = nan(nBins, nCasts);
-            end % for j
-        end % if sz
-    end % for name
-end % for index
-
-% Bin profiles into tbl
-for index = 1:numel(profiles)
-    st = tic();
-    profile = profiles{index};
-    profile.bin = interp1(allBins-dz/2, tbl.bin, profile.(binName), "previous"); % Might be empty
-    if isdatetime(profile.bin)
-        profile = profile(~isnat(profile.bin),:);
-    else
-        profile = profile(~isnan(profile.bin),:); % Drop nan bins (I don't think this should happen)
-    end
-
-    if isempty(profile)
-        fprintf("%s No bins found for diss profile %d in %s\n", row.name, index);
-        continue;
-    end % No diss data to work with
-
-    profile.grp = findgroups(profile.bin); % Bin group
-    grp2bin = rowfun(@(x) x(1), profile, ...
-        "InputVariables", "bin", ...
-        "GroupingVariables", "grp", ...
-        "OutputVariableNames", "bin");
-
-    [~, iLHS, iRHS] = innerjoin(tbl, grp2bin, "Keys", "bin"); % Match bin to bin
-    tbl.n(iLHS,index) = grp2bin.GroupCount(iRHS);
-
-    vNames = setdiff(string(profile.Properties.VariableNames), ["bin", "grp"]);
-    nE = size(profile.e, 2);
-
-    for j = 1:numel(vNames)
-        vName = vNames(j);
-        if ndims(profile.(vName)) ~= 2, continue; end
-        sz = size(profile.(vName),2);
-        if ~ismember(sz, [1, nE]), continue; end
-
-        rhs = rowfun(method, profile, ...
-            "InputVariables", vName, ...
-            "GroupingVariables", "grp", ...
-            "OutputVariableNames", vName);
-
-        if sz == 1
-            tbl.(vName)(iLHS,index) = rhs.(vName)(iRHS);
-        elseif sz == nE
-            for k = 1:sz
-                tbl.(append(vName, "_", string(k)))(iLHS,index) = rhs.(vName)(iRHS,k);
-            end % for k
-        end % if sz
-    end % for j
-end % for index
-
-tbl = tbl(any(tbl.n ~= 0, 2),:);
+tbl = glueFunc("bin", casts);
 
 binned = struct ( ...
     "tbl", tbl, ...
-    "info", dInfo);
+    "info", pInfo);
+if isfield(a, "fp07")
+    binned.fp07 = a.fp07;
+end % if isfield
 
 my_mk_directory(fnBin);
 save(fnBin, "-struct", "binned", pars.matlab_file_format);
-fprintf("%s: Saving %d profiles to %s\n", row.name, size(dInfo,1), fnBin);
+fprintf("%s: Saving %d profiles to %s\n", row.name, size(binned.info,1), fnBin);
 retval = {fnBin, binned};
 end % bin_data

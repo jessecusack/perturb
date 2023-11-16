@@ -61,73 +61,15 @@ if any(cellfun(@isempty, data.data))
     delete(dd); % Cleanup after myself
 end % if any
 
-data.t0 = rowfun(@(x) x.info.t0(1), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "uniform" ...
-    );
+tbl = glue_widthwise("bin", data.data);
+head(tbl)
 
-[~, ix] = sort(data.t0);
-data = data(ix,:); % Time sort the files
-
-nCasts = sum(rowfun(@(x) size(x.tbl.t,2), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "uniform" ...
-    )); % How many profiles are there in total
-
-names = rowfun(@(x) string(x.tbl.Properties.VariableNames), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "cell" ...
-    ); % Names in all the profiles
-names = unique(horzcat(names{:}));
-[~, ix] = sort(lower(names));
-names = names(ix);
-names = ["bin", "t", setdiff(names, ["bin", "t"])];
-
-bins = rowfun(@(x) x.tbl.bin, data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "Outputformat", "cell" ...
-    ); % The depth bins
-bins = unique(vertcat(bins{:})); % Unique and sorted depth bins
-nBins = numel(bins); % Number of depth bins
-
-tbl = table();
-tbl.bin = bins;
-tbl.t = NaT(nBins, nCasts);
-
-for name = names(3:end)
-    tbl.(name) = nan(nBins, nCasts);
-end % for name
-
-offset = 0; % Cast offset
-items = cell(size(data.data));
-
-for index = 1:numel(binned)
-    a = data.data{index}.tbl;
-    items{index} = data.data{index}.info;
-    [~, iLHS, iRHS] = innerjoin(tbl, a, "Keys", "bin");
-    a = a(iRHS,:);
-    width = size(a.t,2);
-    ii = (1:width) + offset;
-    offset = offset + width;
-
-    for name = string(a.Properties.VariableNames)
-        if name == "bin", continue; end
-        if isdatetime(a.(name)) && ~isdatetime(tbl.(name))
-            tbl.(name) = NaT(size(tbl.(name)));
-        end % if
-        tbl.(name)(iLHS,ii) = a.(name);
-    end % for name
-end % for index
-
-items = vertcat(items{:});
+pInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
+pInfo = vertcat(pInfo{:});
 
 a = struct();
 a.tbl = tbl;
-a.info = items;
+a.info = pInfo;
 
 my_mk_directory(fnCombo, pars.debug);
 fprintf("Writing %s\n", fnCombo);

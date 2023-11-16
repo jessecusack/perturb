@@ -30,7 +30,7 @@ arguments (Output)
 end % arguments Output
 
 tbl = table(); % In case we return early
-fnCombo = fullfile(pars.ctd_combo_root, "ctd.combo.mat");
+fnCombo = fullfile(pars.ctd_combo_root, "combo.mat");
 
 data = table();
 data.fn = cellfun(@(x) x{1}, ctd);
@@ -74,50 +74,9 @@ if any(cellfun(@isempty, data.data))
     data.data = items;
 end % if any
 
-data.t0 = rowfun(@(x) x.info.t0, data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "uniform");
-data = sortrows(data, "t0");
+tbl = glue_lengthwise("bin", data.data, strings(0), "tbl");
 
-names = rowfun(@(x) string(x.tbl.Properties.VariableNames), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "cell" ...
-    ); % Names in all the profiles
-names = unique(horzcat(names{:}));
-
-[~, ix] = sort(lower(names));
-names = names(ix);
-names = ["bin", setdiff(names, "bin")];
-
-allBins = rowfun(@(x) x.tbl.bin, data, ...
-    "InputVariables", "data", ...
-    "OutputVariableNames", "bins", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "cell");
-
-allBins = unique(vertcat(allBins{:}));
-tbl = table();
-tbl.bin = allBins;
-
-for name = names(2:end)
-    tbl.(name) = nan(size(tbl.bin));
-end % for name
-
-cInfo = cell(numel(ctd),1);
-for index = 1:numel(ctd)
-    a = data.data{index};
-    cInfo{index} = a.info;
-    [~, iLHS, iRHS] = innerjoin(tbl, a.tbl, "Keys", "bin");
-    for name = setdiff(string(a.tbl.Properties.VariableNames), "bin")
-        if isdatetime(a.tbl.(name)) && ~isdatetime(tbl.(name))
-            tbl.(name) = NaT(size(tbl.(name)));
-        end % if isdatetime
-        tbl.(name)(iLHS) = a.tbl.(name)(iRHS);
-    end % for name
-end % for index
-
+cInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
 cInfo = vertcat(cInfo{:});
 
 my_mk_directory(fnCombo, pars.debug);

@@ -61,34 +61,28 @@ if isempty(tblSlow) && isempty(tblFast)
 end
 
 method = pars.ctd_method; % Which method to aggregate the data together
-if ~isa(method, "function_handle")
-    if method == "median"
-        method = @(x) median(x, 1, "omitnan");
-    elseif method == "mean"
-        method = @(x) mean(x, 1, "omitnan");
-    else
-        error("Unrecognized binning method %s\n", method)
-    end % if
-end % if ~isa
 
-dtBin = pars.ctd_bin_dt;
-
-tbl = table();
-tbl.bin = (min(mat.t_slow(1):mat.t_fast(1)):dtBin:max(mat.t_slow(end), mat.t_fast(end)))';
+dtBin = seconds(pars.ctd_bin_dt);
 
 if ~isempty(tblSlow)
-    tbl = binTable(mat.t_slow, tblSlow, tbl, "Slow", method);
-    tbl = removevars(tbl, "tSlow_std");
-    tbl = renamevars(tbl, "tSlow", "t");
+    tblSlow.t = t0 + seconds(mat.t_slow);
+    tbl = bin_by_time(dtBin, "t", tblSlow, method);
+    tbl = renamevars(tbl, "n", "nSlow");
+else
+    tbl = table();
 end % if ~isempty tblSlow
 
 if ~isempty(tblFast)
-    tbl = binTable(mat.t_fast, tblFast, tbl, "Fast", method);
-    tbl = removevars(tbl, ["tFast", "tFast_std"]);
+    tblFast.t = t0 + seconds(mat.t_fast);
+    tFast = bin_by_time(dtBin, "t", tblFast, method);
+    tFast = renamevars(tFast, "n", "nFast");
+    if isempty(tbl)
+        tbl = tFast;
+    else
+        tFast = renamevars(tFast, "t", "tFast");
+        tbl = outerjoin(tbl, tFast, "Keys", "bin", "MergeKeys", true);
+    end % isempty tbl
 end % if ~isempty tblFast
-
-tbl.bin = t0 + seconds(tbl.bin);
-tbl.t = t0 + seconds(tbl.t);
 
 gps = pars.gps_class.initialize(); % initialize GPS
 
@@ -102,17 +96,17 @@ if isequal(pars.profile_direction, "down") % Check for profiles for tow-yo
         mat.fs_slow); % This will be redone in mat2profile, but this keeps it separate
 
     if isempty(indicesSlow) % No profiles
-        tbl.lat = gps.lat(tbl.t);
-        tbl.lon = gps.lon(tbl.t);
-        tbl.dtGPS = gps.dt(tbl.t);
+        tbl.lat = gps.lat(tbl.bin);
+        tbl.lon = gps.lon(tbl.bin);
+        tbl.dtGPS = gps.dt(tbl.bin);
     else % Profiles
         tSlow = t0 + seconds(mat.t_slow(indicesSlow));
         tbl = addGPS(tbl, tSlow, gps);
     end % profiles
 else % Not down
-    tbl.lat = gps.lat(tbl.t);
-    tbl.lon = gps.lon(tbl.t);
-    tbl.dtGPS = gps.dt(tbl.t);
+    tbl.lat = gps.lat(tbl.bin);
+    tbl.lon = gps.lon(tbl.bin);
+    tbl.dtGPS = gps.dt(tbl.bin);
 end % if direction
 
 lat = tbl.lat;
@@ -154,55 +148,6 @@ fprintf("%s: wrote %s\n", row.name, fnCTD);
 
 retval = {fnCTD, binned};
 end % ctd2binned
-
-function binned = binTable(t, tbl, binned, suffix, method)
-arguments (Input)
-    t (:,1) double
-    tbl table
-    binned table
-    suffix string
-    method function_handle
-end % arguments Input
-arguments (Output)
-    binned table
-end % arguments Output
-
-tName = append("t", suffix);
-tbl.(tName) = t;
-tbl.bin = interp1(binned.bin, binned.bin, t, "nearest", "extrap");
-tbl.grp = findgroups(tbl.bin);
-
-rows = table();
-a = rowfun(@(x) x(1), tbl, "InputVariables", "bin", "GroupingVariables", "grp", "OutputVariableNames", "bin");
-rows.bin = a.bin;
-[~, iLHS, iRHS] = innerjoin(binned, rows, "Keys", "bin");
-
-names = [tName, setdiff(string(tbl.Properties.VariableNames), ["bin", "grp"])];
-for index = 1:numel(names)
-    name = names(index);
-    nameSigma = append(name, "_std");
-
-    a = rowfun(method, tbl, ...
-        "InputVariables", name, ...
-        "GroupingVariables", "grp", ...
-        "OutputVariableNames", name);
-    b = rowfun(@(x) std(x, "omitnan"), tbl, ...
-        "InputVariables", name, ...
-        "GroupingVariables", "grp", ...
-        "OutputVariableNames", name);
-    if index == 1
-        nName = append("n", suffix);
-        binned.(nName) = uint32(zeros(size(binned.bin)));
-        binned.(nName)(iLHS) = a.GroupCount(iRHS);
-    end
-
-    binned.(name) = nan(size(binned.bin));
-    binned.(nameSigma) = nan(size(binned.bin));
-
-    binned.(name)(iLHS)      = a.(name)(iRHS);
-    binned.(nameSigma)(iLHS) = b.(name)(iRHS);
-end
-end % binTable
 
 function ctd = addGPS(ctd, tSlow, gps)
 arguments (Input)
