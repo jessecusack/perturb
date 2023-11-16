@@ -42,12 +42,12 @@ profiles = a.profiles;
 fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
 
 if pars.profile_direction == "time" % Bin in time
-    binSize = seconds(pars.bin_width); % Bin stepsize in (sec)
+    binSize = seconds(pars.binDiss_width); % Bin stepsize in (sec)
     keyName = "t";
     binFunc = @bin_by_time;
     glueFunc = @glue_lengthwise;
 else % Bin by depth
-    binSize = pars.bin_width; % Bin stepsize (m)
+    binSize = pars.binDiss_width; % Bin stepsize (m)
     keyName = "depth";
     binFunc = @bin_by_real;
     glueFunc = @glue_widthwise;
