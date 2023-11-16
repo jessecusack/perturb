@@ -61,7 +61,11 @@ if any(cellfun(@isempty, data.data))
     delete(dd); % Cleanup after myself
 end % if any
 
-tbl = glue_widthwise("bin", data.data);
+if pars.profile_direction == "time"
+    tbl = glue_lengthwise("bin", data.data);
+else
+    tbl = glue_widthwise("bin", data.data);
+end % if direction
 
 pInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
 pInfo = vertcat(pInfo{:});
