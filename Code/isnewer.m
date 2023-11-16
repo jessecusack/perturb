@@ -12,7 +12,7 @@ arguments (Output)
     q logical % Does lhs exist and is it newer than rhs?
 end % arguments Output
 
-q = exist(lhs, "file");
+q = isfile(lhs);
 if ~q, return; end
 lhs_info = dir(lhs);
 
