@@ -61,7 +61,7 @@ fnNC = abspath(fnNC); % Matlab's netcdf does not like ~ in filenames, so get rid
 
 if exist(fnNC, "file"), delete(fnNC); end % We say to clobber, but it still fails sometimes
 
-fprintf("Creating %s\n", fnNC);
+fprintf("Writing %s\n", fnNC);
 ncid = netcdf.create(fnNC, ... % Create a fresh copy
     bitor(netcdf.getConstant("CLOBBER"), netcdf.getConstant("NETCDF4")));
 
