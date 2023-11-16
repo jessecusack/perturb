@@ -62,7 +62,6 @@ if any(cellfun(@isempty, data.data))
 end % if any
 
 tbl = glue_widthwise("bin", data.data);
-head(tbl)
 
 pInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
 pInfo = vertcat(pInfo{:});
