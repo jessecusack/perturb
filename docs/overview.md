@@ -3,6 +3,8 @@
 The input data is `.P` files from Rockland device(s).
 <br>
 The outputs include:
+* Trimmed `.P` files when the final buffers are corrupt.
+* Combined `.P` files for files what were ended due a file size constraint.
 * The output of `odas_p2mat` for each `.P` file.
 * For the profiles, either in depth or time:
   - The profiles within each `.P` file.
