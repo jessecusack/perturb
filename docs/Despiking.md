@@ -1,6 +1,6 @@
 # The despike parameters are used when calculating dissipation
 
-See [calcDissShear](calcDissShear.m) for the code that uses these parameters.
+See [calc_diss_shear](../Code/calc_diss_shear.m) for the code that uses these parameters.
 
 The *despike_sh_*  are used for the shear probes, *sh1* and *sh2*.
 
