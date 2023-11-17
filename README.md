@@ -28,6 +28,7 @@
 ### References:
 - [Rockland Scientific](https://rocklandscientific.com)
 - [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
+- Rolf's 2022 papers [Part1](Papers/Rolf.2022.part1.pdf) and [Part2](Papers/Rolf.2022.part2.pdf)
 
 # TODO:
 - Add chi
