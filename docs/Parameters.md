@@ -1,12 +1,55 @@
-# Description of input parameters to [processVMPfiles](processVMPfiles.m)`
+# Description of input parameters to [process_p_files](../Code/process_p_files.m)`
 
-- `data_root` a string defining the root level of where data files are stored `(default: ../Data)`
-- `p_file_root` is a string defining where the `.p` files are located relative to `dataRoot` `(default: VMP)`
-- `mat_root` is a string defining where the output of `odas_p2mat` files go relative to `dataRoot` `(default: VMP/Matfiles)`
-- `profile_root` is a string defining where the profile directory is stored relative to `dataRoot` `(default: VMP)` 
-- `binned_root` is a string defining where the binned directory is stored relative to `dataRoot` `(default: VMP)` 
-- `log_root` is a string defining where the logfile is stored relative to `dataRoot` `(default: VMP)` 
+For examples of calling [process_P_files](../Code/process_P_files.m), please see [Examples](../Examples).
 
+To see all the current parameters, please execute `process_P_files` for the names and defaults.
+
+The parameter functionality is grouped by the parameter prefix:
+- `p_file_` control where the P files are located, and how they are selected.
+- `gps_` control how GPS locations are selected.
+- `p2mat_` control the conversion from `.P` files to `.mat` files via ***odas_p2mat***.
+- `profile_` control how profiles are extracted from the data.
+- `trim_` For downcast VMP data, how to calculate the where good data starts.
+- `bbl_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.)
+- `fp07_` How the FP07 sensors are adjusted in time and the in-situ calibration is done.
+- `CT_` What is the name of the refereence temperature and conductivity. For VMPs, this is commonly JAC_T and JAC_C.
+- `despike_` Despiking parameters used in dissipation estimates.
+- `diss_` Dissipation estimation parameters.
+- `bin_` How profile bins are constructed.
+- `binDiss_` How dissipation bins are constructed.
+- `ctd_` How to calculate CTD bins
+- `netCDF_` NetCDF global metadata parameters
+
+- `p_file_` control where the P files are located, and how they are selected.
+  * `p_file_root` is the parent directory that `p_file_pattern` is append to to locate the `.P` files.
+  * `p_file_pattern` is a glob pattern appended to `p_file_root` to locate the `.P` files. If one stores their P files in directories like SN555 and SN1038, representing the instrument's serial number, the `p_file_pattern` would be ***SN*/**** **Please note, you don't need a `.P` suffix on your pattern, that is handled by [find_P_filenames](../Code/find_P_filenames.m).
+- `gps_` control how GPS locations are selected.
+  * `gps_class` is a class handle derived from [GPS_base_class.m](../Code/GPS_base_class.m). Please see [Examples](../Examples) for how to set `gps_class`.
+  * `gps_max_time_diff` controls if a warning is generated for a GPS fix which is a long time from the current time.
+- `p2mat_` control the conversion from `.P` files to `.mat` files via ***odas_p2mat***. Please see ***odas*** documentation for the following parameters.
+  * `p2mat_aoa` Angle of attack.
+  * `p2mat_constant_speed` Axial speed of the instrument in m/s.
+  * `p2mat_constant_temp` Water temperature in Celsius.
+  * `p2mat_gradC_method` Gradient method for micro-conductivity.
+  * `p2mat_gradT_method` Gradient method for micro-conductivity.
+  * `p2mat_hotel_file` Hotel filename.
+  * `p2mat_speed_cutout` Speeds are floored at this value.
+  * `p2mat_speed_tau` Speed smoothing parameter.
+  * `p2mat_time_offset` Time skew of the instrument in seconds.
+  * `p2mat_vehicle` Vehicle's processing name.
+- `profile_` control how profiles are extracted from the data.
+- `trim_` For downcast VMP data, how to calculate the where good data starts.
+- `bbl_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.)
+- `fp07_` How the FP07 sensors are adjusted in time and the in-situ calibration is done.
+- `CT_` What is the name of the refereence temperature and conductivity. For VMPs, this is commonly JAC_T and JAC_C.
+- `despike_` Despiking parameters used in dissipation estimates.
+- `diss_` Dissipation estimation parameters.
+- `bin_` How profile bins are constructed.
+- `binDiss_` How dissipation bins are constructed.
+- `ctd_` How to calculate CTD bins
+- `netCDF_` NetCDF global metadata parameters
+
+- 
 - *P file* related parameters
 - `p_file_pattern` A glob pattern defining how to find `.P` files relative to `p_file_root`
 
