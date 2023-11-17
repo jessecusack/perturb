@@ -20,6 +20,8 @@ The parameter functionality is grouped by the parameter prefix:
 - `ctd_` How to calculate CTD bins
 - `netCDF_` NetCDF global metadata parameters
 
+## Individual parameters
+
 - `p_file_` control where the P files are located, and how they are selected.
   * `p_file_root` is the parent directory that `p_file_pattern` is append to to locate the `.P` files.
   * `p_file_pattern` is a glob pattern appended to `p_file_root` to locate the `.P` files. If one stores their P files in directories like SN555 and SN1038, representing the instrument's serial number, the `p_file_pattern` would be ***SN*/**** **Please note, you don't need a `.P` suffix on your pattern, that is handled by [find_P_filenames](../Code/find_P_filenames.m).
