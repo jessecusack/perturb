@@ -1,1 +1,4 @@
-# Placeholder for a quickstart guide for processing MicroRider data
+# Example scripts for processing a [Rockland MicroRider](https://rocklandscientific.com/products/modular-systems/microrider)
+
+- [ARCTERX_MR_2023.m](../Examples/ARCTERX_MR_2023.m) for data collected from a [Rockland MicroRider](https://rocklandscientific.com/products/modular-systems/microrider) attached to a [TWR Slocum G3 Glider](https://www.teledynemarine.com/brands/webb-research/slocum-glider) as part of the ARCTERX 2023 IOP. The data is not contained in this repository.
+- [ARCTERX_Wake_MR_2023.m](../Examples/ARCTERX_Wake_MR_2023.m) for data collected from a [Rockland MicroRider](https://rocklandscientific.com/products/modular-systems/microrider) as part of the ARCTERX 2023 IOP. The data is not contained in this repository. **This script is an example of time binning the data instead of depth binning**
