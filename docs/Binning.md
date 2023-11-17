@@ -1,15 +1,11 @@
-# Bin the samples by depth bins.
+# Bin the observations by depth or time bins.
 
-See [binData](binData.m) for the code that uses these parameters.
+- [bin_by_time](../Code/bin_by_time.m) bins data by time. [bin_by_time](../Code/bin_by_time.m) calls [bin_by_real](../Code/bin_by_real.m) using posixtime.
+- [bin_by_real](../Code/bin_by_real.m) bins data by a real value, such as depth or posixtime.
 
-The depth bins are integral multiples of *bin_method* and are the centroid of the bin.
-
-*bin_method* specifies the method of aggregating data within a bin.
-
-**Dissipations** 
-
-Are assumed to be log normal, and the aggregation is done in log space, then unwound to linear space.
-
-Aggregation across shear probes is also done in log space. For each fast sample, the mean of all the log dissipation estimates is found. If any of the log dissipation estimates are within log(*bin_dissRatio*)/2, then the *bin_method* is applied to them. Otherwise the minimum is taken.
+For use of these functions see:
+- [ctd2binned](../Code/ctd2binned.m)
+- [profile2binned](../Code/profile2binned.m)
+- [diss2binned](../Code/diss2binned.m)
 
 
