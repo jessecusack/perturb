@@ -1,7 +1,7 @@
 # Data flow for [software suite](https://github.com/jessecusack/perturb/tree/main)
 
 - A list of potential `.P` files that exist in the *p_file_root* directory is created.
-- The original `.P` file is checked to see if the final buffer is corrupted. If so, the original `.P` file is trimmed and written to a `trim_p_files` directory.
+- The original `.P` file is checked to see if the final buffer is corrupted. If so, the original `.P` file is trimmed and written to a `trimed_p_files` directory.
 - All the `.P` file headers are examined to see if they were created by the previous file "sizing" out. If so, then the previous and this file are appended to create a single `.P` file and written to the `merged_p_files` directory. [p_file_merger.m](../Code/p_file_merger.m)
 - For each good `.P` file:
   * Using `odas_p2mat` convert the good `.P` file to an odas_p2mat `.mat` file in a directory like `Matfiles_0000`. See [convert2mat.m](../Code/convert2mat.m)
