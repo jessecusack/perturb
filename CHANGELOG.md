@@ -1,3 +1,9 @@
+# 17-Nov-2023: Pat Welch, pat@mousebrains.com
+
+- Split up profile and dissipation calculations.
+- Add support for binning profiles by time for use in analyzing AUV data.
+- Documenation updates. 
+
 # 19-Oct-2023: Pat Welch, pat@mousebrains.com
 
 ## Refactor the code to handle the following:
