@@ -58,14 +58,15 @@ addParameter(p, "trim_dz", 0.5, validPositive); % depth bin size for calculating
 addParameter(p, "trim_min_depth", 1, validPositive); % Minimum depth to look at for variances
 addParameter(p, "trim_max_depth", 50, validPositive); % maximum depth to look down to for variances
 addParameter(p, "trim_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "trim_extra_depth", 0, validNotNegative); % Extra depth to add to the trim depth value when processing dissipation
 %% Cast trimming from the bottom up, think bottom crashing to go after BBL
-addParameter(p, "bbl_calculate", false, validLogical); % Calculate bottom trimming stuff
-addParameter(p, "bbl_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
-addParameter(p, "bbl_min_depth", 10, validPositive); % Minimum depth to look at for variances
-addParameter(p, "bbl_max_depth", 50, validPositive); % Maximum depth to look down to for variances
-addParameter(p, "bbl_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "bbl_extra_depth", 0, validNotNegative); % Extra depth to add to the bottom depth value when processing dissipation
+addParameter(p, "bottom_calculate", false, validLogical); % Calculate bottom trimming stuff
+addParameter(p, "bottom_depth_window", 4, validPositive); % Meters above maximum deacceleration to look in
+addParameter(p, "bottom_depth_minimum", 10, validPositive); % Minimum depth to look at for variances
+addParameter(p, "bottom_depth_maximum", 50, validPositive); % Maximum depth to look down to for variances
+addParameter(p, "bottom_median_factor", 1, validPositive); % Acceleration standard deviation filter factor
+addParameter(p, "bottom_speed_factor", 0.3, validPositive); % Required fractional dP/dt reduction
+addParameter(p, "bottom_vibration_frequency", 16, validPositive); % To get number of bins to calculated standard deviation over
+addParameter(p, "bottom_vibration_factor", 4, validPositive); % Number of vibration standard deviations to accept
 %% FP07 calibration
 addParameter(p, "fp07_calibration", true, validLogical); % Perform an in-situ calibration of the FP07 probes agains CT_T_name
 addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3, true, true)); % Steinhart-Hart equation order
@@ -88,6 +89,8 @@ addParameter(p, "despike_A_warning_fraction", 0.02, validPositive); % Warning fr
 %% Dissipation parameters
 addParameter(p, "diss_trim_top", false, validLogical); % Trim the top of profiles
 addParameter(p, "diss_trim_bottom", false, validLogical); % Trim the bottom of profiles
+addParameter(p, "diss_trim_top_offset", 0, @isreal); % Meters added to top trim before dissipation calc
+addParameter(p, "diss_trim_bottom_offset", 0, @isreal); % Meters added to bottom trim before dissipation calc
 addParameter(p, "diss_reverse", false, validLogical); % Calculate dissipation backwards in time, for BBL on downcast
 addParameter(p, "diss_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds
 addParameter(p, "diss_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length
@@ -101,9 +104,11 @@ addParameter(p, "diss_epsilon_minimum", 1e-13, validPositive); % Dissipation est
 %% Binning parameters for profiles, non-dissipation
 addParameter(p, "bin_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
+addParameter(p, "bin_variable", "depth", validString); % Which variable to bin by, unless direction==time
 %% Binning parameters for dissipation
 addParameter(p, "binDiss_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "binDiss_width", 1, validPositive); % Bin width in (m)
+addParameter(p, "binDiss_variable", "depth", validString); % Which variable to bin by, unless direction==time
 %% CTD time binning parameters
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
 addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T", "P_slow"], validString); % Sensors to time bin
