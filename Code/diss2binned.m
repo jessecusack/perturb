@@ -48,7 +48,7 @@ if pars.profile_direction == "time" % Bin in time
     glueFunc = @glue_lengthwise;
 else % Bin by depth
     binSize = pars.binDiss_width; % Bin stepsize (m)
-    keyName = "depth";
+    keyName = pars.binDiss_variable; % Variable to bin by
     binFunc = @bin_by_real;
     glueFunc = @glue_widthwise;
 end % if profile_direction
