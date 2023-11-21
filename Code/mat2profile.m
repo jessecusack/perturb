@@ -138,6 +138,7 @@ for j = 1:nProfiles
     profileInfo.t1(j) = profile.slow.t(end);
     profileInfo.n_slow(j) = numel(ii);
     profileInfo.n_fast(j) = numel(jj);
+    [profileInfo(j,:), profile] = bottom_crash_profile(j, profileInfo(j,:), profile, pars);
     profile = pruneProfile(profile); % Remove some fields
     profiles{j} = profile;
     if profileInfo.dtGPS(j) > pars.gps_max_time_diff
@@ -147,8 +148,11 @@ for j = 1:nProfiles
     end % if profile
 end % for j
 
-profileInfo = trim_profiles(profiles, profileInfo, pars);
-profileInfo = bottom_crash_profiles(profiles, profileInfo, pars);
+if ~pars.bottom_calculate
+    profileInfo = removevars(profileInfo, "bottom_depth");
+end % Drop bottom_depth if not calculated
+
+profileInfo = trim_top_profiles(profiles, profileInfo, pars);
 
 profilesInfo = struct();
 profilesInfo.profiles = profiles;
@@ -182,9 +186,9 @@ tbl.n_slow = nan(nProfiles,1);
 tbl.n_fast = nan(nProfiles,1);
 tbl.min_depth = nan(nProfiles,1);
 tbl.max_depth = nan(nProfiles,1);
-tbl.trim_depth = nan(nProfiles,1);
 tbl.lat = nan(nProfiles,1);
 tbl.lon = nan(nProfiles,1);
+tbl.bottom_depth = nan(nProfiles, 1);
 
 for name = ["fullPath", "fs_fast", "fs_slow", "odas_version"]
     tbl.(name) = repmat(mat.(name), nProfiles, 1);
