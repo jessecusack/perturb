@@ -19,6 +19,8 @@ addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 
 GPS_class = GPS_from_vectors(datetime(["2023-04-01", "2023-06-01"]), 6.930167 + [0, 0], 134.199417 + [0,0]);
 
+% "p2mat_speed_cutout", 0.01, ... % Don't floor the speed at 0.05, the default
+
 pars = process_P_files( ...
     "debug", true, ...
     "p_file_root", p_file_root, ... % Where the input .P files are located
@@ -39,7 +41,8 @@ pars = process_P_files( ...
     "fp07_maximum_lag_seconds", 180, ... % CTD to MR time skew
     "fp07_must_be_negative", false, ... % From CTD can be in either direction
     "fp07_warn_range", false, ... % Our temperature range is very small, but I want to do quadratic
-    "bin_width", 8, ... % 8 second bin width
+    "bin_width", 1, ... % bin width for profile scalar data
+    "binDiss_width", 60, ... % bin width for dissipation data
     "trim_calculate", false, ... % No need to trim
     "netCDF_contributor_name", "Pat Welch", ...
     "netCDF_contributor_role", "researcher", ...
