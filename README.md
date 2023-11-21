@@ -1,4 +1,4 @@
-# perturb - a microstructure processing toolbox for Rockland Scientific instruments
+# perturb - a microstructure processing toolbox for [Rockland Scientific](https://rocklandscientific.com) instruments
 
 ***Required external softwware:***
 - [Matlab](https://www.mathworks.com/products/matlab.html) (Tested with R2023a)
@@ -28,6 +28,7 @@
 ### References:
 - [Rockland Scientific](https://rocklandscientific.com)
 - [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
+- Rolf's 2022 papers [Part1](Papers/Rolf.2022.part1.pdf) and [Part2](Papers/Rolf.2022.part2.pdf)
 
 # TODO:
 - Add chi

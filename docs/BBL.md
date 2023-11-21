@@ -1,3 +1,3 @@
 # The bottom crash detection code is not currently implemented!
 
-See [bottomCrashProfiles](bottomCrashProfiles.m) for the code.
+See [bottom_crash_profiles](../Code/bottom_crash_profiles.m) for the code.

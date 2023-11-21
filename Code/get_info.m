@@ -15,6 +15,7 @@ validMissingString = @(x) validString(x) || ismissing(x);
 validPositive = @(x) inRange(x, 0);
 validNotNegative = @(x) inRange(x, 0, inf, true);
 validLogical = @(x) ismember(x, [true, false]);
+validMethod = @(x) ismember(x, ["median", "mean"]);
 
 %% Debugging related parameters
 addParameter(p, "debug", false, validLogical); % Turn on debugging messages
@@ -52,23 +53,25 @@ addParameter(p, "profile_speed_min", 0.3, validPositive); % Minimum vertical spe
 addParameter(p, "profile_min_duration", 7, validPositive); % Minimum cast length in seconds for a profile
 addParameter(p, "profile_direction", "down", @(x) ismember(x, ["up", "down", "time"])); % profile direction, up, down, or time
 %% Cast trimming for shear dissipation estimates to drop initial instabilities
+addParameter(p, "trim_calculate", true, validLogical); % Calculate top trimming stuff
 addParameter(p, "trim_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "trim_min_depth", 1, validPositive); % Minimum depth to look at for variances
 addParameter(p, "trim_max_depth", 50, validPositive); % maximum depth to look down to for variances
 addParameter(p, "trim_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "trim_use", true, validLogical); % Should the trim depth be used to trim the top of dives off
 addParameter(p, "trim_extra_depth", 0, validNotNegative); % Extra depth to add to the trim depth value when processing dissipation
 %% Cast trimming from the bottom up, think bottom crashing to go after BBL
-addParameter(p, "bbl_calculate", false, validLogical); % Calculate BBL stuff
+addParameter(p, "bbl_calculate", false, validLogical); % Calculate bottom trimming stuff
 addParameter(p, "bbl_dz", 0.5, validPositive); % depth bin size for calculating variances (0.5 gives enough samples on the slow side at 1m/s and )
 addParameter(p, "bbl_min_depth", 10, validPositive); % Minimum depth to look at for variances
 addParameter(p, "bbl_max_depth", 50, validPositive); % Maximum depth to look down to for variances
 addParameter(p, "bbl_quantile", 0.6, @(x) inRange(x, 0, 1, true, true)); % Which quantile to choose as the minimum depth
-addParameter(p, "bbl_use", false, validLogical); % Should the bbl depth be used to trim the top of dives off
 addParameter(p, "bbl_extra_depth", 0, validNotNegative); % Extra depth to add to the bottom depth value when processing dissipation
 %% FP07 calibration
 addParameter(p, "fp07_calibration", true, validLogical); % Perform an in-situ calibration of the FP07 probes agains CT_T_name
-addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3)); % Steinhart-Hart equation order
+addParameter(p, "fp07_order", 2, @(x) inRange(x, 1, 3, true, true)); % Steinhart-Hart equation order
+addParameter(p, "fp07_maximum_lag_seconds", 10, @(x) inRange(x, 0, 3600)); % Lag range in seconds
+addParameter(p, "fp07_must_be_negative", true, validLogical); % For falling VMPs, the lag should be negative
+addParameter(p, "fp07_warn_range", true, validLogical); % Warn if the temperature range is too small and order high
 %% CT sensor names, default to JAC_T and JAC_C
 addParameter(p, "CT_T_name", "JAC_T", validMissingString); % What is the slow T sensor name. If none, set to missing
 addParameter(p, "CT_C_name", "JAC_C", validMissingString); % What is the slow C sensor name. If none, set to missing
@@ -83,10 +86,11 @@ addParameter(p, "despike_A_smooth", 0.5, validPositive);
 addParameter(p, "despike_A_N_FS", 0.05, validPositive);
 addParameter(p, "despike_A_warning_fraction", 0.02, validPositive); % Warning fraction
 %% Dissipation parameters
-addParameter(p, "diss_forwards_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds for start of profile to end
-addParameter(p, "diss_backwards_fft_length_sec", 0.25, validPositive); % Disspation FFT length in seconds for end of profile to start
-addParameter(p, "diss_forwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for start of profile to end
-addParameter(p, "diss_backwards_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length for end of profile to start
+addParameter(p, "diss_trim_top", false, validLogical); % Trim the top of profiles
+addParameter(p, "diss_trim_bottom", false, validLogical); % Trim the bottom of profiles
+addParameter(p, "diss_reverse", false, validLogical); % Calculate dissipation backwards in time, for BBL on downcast
+addParameter(p, "diss_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds
+addParameter(p, "diss_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length
 addParameter(p, "diss_speed_source", "speed_fast", validString); % Source of axial flow speed
 addParameter(p, "diss_T_source", missing, validMissingString); % Temperature source for kinematic viscosity estimate
                                                                % If missing, then use T1*T1_norm+T2*T2_norm
@@ -94,12 +98,16 @@ addParameter(p, "diss_T1_norm", 1, validPositive); % Value to multiple T1_fast t
 addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
 addParameter(p, "diss_epsilon_minimum", 1e-13, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
-%% Binning parameters
-addParameter(p, "bin_method", "mean", @(x) ismember(x, ["median", "mean"])); % Which method to use to combine bins together
+%% Binning parameters for profiles, non-dissipation
+addParameter(p, "bin_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
+%% Binning parameters for dissipation
+addParameter(p, "binDiss_method", "mean", validMethod); % Which method to use to combine bins together
+addParameter(p, "binDiss_width", 1, validPositive); % Bin width in (m)
 %% CTD time binning parameters
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
-addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T"], validString); % Sensors to time bin
+addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T", "P_slow"], validString); % Sensors to time bin
+addParameter(p, "ctd_method", "mean", validMethod); % How to average
 %% NetCDF global attributes
 addParameter(p, "netCDF_acknowledgement", missing, validString);
 addParameter(p, "netCDF_contributor_name", missing, validString);

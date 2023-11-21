@@ -1,43 +1,47 @@
-# Transform *VMP* `.P` files into binned data
+# Process [Rockland Scientific](https://rocklandscientific.com) `.P` files.
 
-## You will need the ODAS library which can be obtained directly from Rockland
+## You will need the [ODAS](https://rocklandscientific.com/support/tools/software-versions/) library which can be obtained directly from [Rockland Scientific](https://rocklandscientific.com).
 
-For a simple example to run on your code see [ASTRAL.m](ASTRAL.m)
+For a simple example to run on your code see [`example0.m`](../Examples/example0.m)
 
-Hopefully, everything is parameterized and one just needs to call `processVMPfiles` 
+Hopefully, everything is parameterized and one just needs to call [`process_p_files`](../Code/process_p_files.m)
 with the appropriate [parameters](Parameters.md)
 
----
+***Required external softwware:***
+- [Matlab](https://www.mathworks.com/products/matlab.html) (Tested with R2023a)
+- [ODAS Library](https://rocklandscientific.com/support/tools/software-versions) (Tested with ODAS-4.5.1)
 
-The data flow for
-[https://rocklandscientific.com/products/profilers/vmp-250/](VMP) `.P` files
-is:
-- New/updated `.P` files are transformed into .mat files using `odas_p2mat`
-- New/updated `.mat` files
-  - The file is split into profiles.
-  - The cross correlation peak is found between the FP07 and JAC_T thermistors for each profile.
-  - The JAC_T and JAC_C are shifted by the weighted median lag found from the cross correlations.
-  - A fit with all the profiles FP07 and JAC_T is done.
-  - The FP07 temperatures are recomputed using the fit and overwrite the T?_(fast|slow) data.
-  - Using all the JAC_T and JAC_C data for all the profiles, a weighted median lag is computed from all the cross correlations.
-  - JAC_C is shifted.
-  - A GPS fix is assigned to each profile.
-  - Seawater properties are computed for each profile.
-  - The profiles are saved into a single `.mat` file.
-- New/updated profile `.mat` files are binned and saved into binned `.mat` files
-- New/updated binned `.mat` files are combined togeter into a `combo.mat` file.
-- `combo.mat` is output in *NetCDF* format to `combo.nc`
+[VMP250 Quickstart](docs/VMP250.md)
+<br>
+[MicroRider Quickstart](docs/MicroRider.md)
+<br>
+[Overview of the system.](docs/overview.md)
+<br>
+[How data flows through the system.](docs/data_flow.md)
+<br>
+[The data file structure.](docs/data_organization.md)
+<br>
+[MatLab files variable names and definitions.](docs/matlab_variables.md)
+<br>
+[NetCDF files variable names and definitions.](docs/netCDF.md)
+<br>
+[How to execute unit tests.](docs/unit_tests.md)
 
-See [combo description](Combo.md) for information about the contents of `combo.mat`
+## Authors
+* Jesse Cusack, [Oregon State University](https://ceoas.oregonstate.edu)
+* Fucent Wei, [Oregon State University](https://ceoas.oregonstate.edu)
+* Pat Welch, [Oregon State University](https://ceoas.oregonstate.edu)
 
-The `.P` files are located by joining `p_file_root` and `p_file_pattern`
-The outputs are saved into a similar structure as the original `.P` files.
-
-The profiles and binned directories have a hash attached to their name which is unique to the input parameters. If you change any parameter, a new directory try will probably be generated.
+### References:
+- [Rockland Scientific](https://rocklandscientific.com)
+- [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
+- Rolf's 2022 papers [Part1](Papers/Rolf.2022.part1.pdf) and [Part2](Papers/Rolf.2022.part2.pdf)
 
 # TODO:
 - Add chi
 - Bottom crash detection
 - BBL stress
-- dissipation combining smarter
 - CTD salinity spikes/thermal mass/...
+- documentation within the code
+- camel cast to snake case
+- unit tests

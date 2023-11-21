@@ -2,10 +2,10 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function [row, retval] = profile2binned(row, a, pars)
+function [row, retval] = diss2binned(row, a, pars)
 arguments (Input)
     row (1,:) table % row to work on
-    a struct % Output of mat2profile
+    a struct % Output of profile2diss, struct or empty
     pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
@@ -19,35 +19,35 @@ if ~row.qProfileOkay
     return;
 end % if ~row.qProfileOkay
 
-fnProf = row.fnProf;
-fnBin = fullfile(pars.prof_binned_root, append(row.name, ".mat"));
-row.fnBin = fnBin;
+fnDiss = row.fnDiss;
+fnBin = fullfile(pars.diss_binned_root, append(row.name, ".mat"));
+row.fnDissBin = fnBin;
 
-if isnewer(fnBin, fnProf)
+if isnewer(fnBin, fnDiss)
     retval = {fnBin, []}; % We want this for combining
-    fprintf("%s: %s is newer than %s\n", row.name, row.fnBin, row.fnProf);
+    fprintf("%s: %s is newer than %s\n", row.name, row.fnBin, row.fnDiss);
     return;
 end % if isnewer
 
 if isempty(a)
-    fprintf("Loading %s\n", row.fnProf);
-    a = load(row.fnProf);
+    fprintf("Loading %s\n", row.fnDiss);
+    a = load(row.fnDiss);
 end % if isempty
 
-method = pars.bin_method; % Which method to aggregate the data together
+%% Bin the data into depth bins
 
-pInfo = a.pInfo;
+pInfo = a.info;
 profiles = a.profiles;
 
 fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
 
 if pars.profile_direction == "time" % Bin in time
-    binSize = seconds(pars.bin_width); % Bin stepsize in (sec)
+    binSize = seconds(pars.binDiss_width); % Bin stepsize in (sec)
     keyName = "t";
     binFunc = @bin_by_time;
     glueFunc = @glue_lengthwise;
 else % Bin by depth
-    binSize = pars.bin_width; % Bin stepsize (m)
+    binSize = pars.binDiss_width; % Bin stepsize (m)
     keyName = "depth";
     binFunc = @bin_by_real;
     glueFunc = @glue_widthwise;
@@ -56,12 +56,21 @@ end % if profile_direction
 casts = cell(numel(profiles),1);
 for index = 1:numel(profiles)
     profile = profiles{index};
+    nE = size(profile.e, 2);
+    prof2 = table();
+    for name = string(profile.Properties.VariableNames)
+        sz = size(profile.(name),2);
+        if ~ismatrix(profile.(name)), continue; end
+        if sz == 1
+            prof2.(name) = profile.(name);
+        elseif sz == nE
+            for j = 1:sz
+                prof2.(append(name, "_", string(j))) = profile.(name)(:,j);
+            end % for j;
+        end % if sz
+    end % for name
 
-    tFast = binFunc(binSize, keyName, profile.fast, method);
-    tSlow = binFunc(binSize, keyName, profile.slow, method);
-    tFast = renamevars(tFast, ["n", "t", "depth"], ["n_fast", "time_fast", "depth_fast"]);
-    tSlow = renamevars(tSlow, ["n", "depth"], ["n_slow", "depth_slow"]);
-    casts{index} = outerjoin(tSlow, tFast, "Keys", "bin", "MergeKeys", true);
+    casts{index} = binFunc(binSize, keyName, prof2, pars.binDiss_method);
 end % for index
 
 qDrop = cellfun(@isempty, casts); % This shouldn't happend
@@ -82,9 +91,12 @@ tbl = glueFunc("bin", casts);
 binned = struct ( ...
     "tbl", tbl, ...
     "info", pInfo);
+if isfield(a, "fp07")
+    binned.fp07 = a.fp07;
+end % if isfield
 
 my_mk_directory(fnBin);
 save(fnBin, "-struct", "binned", pars.matlab_file_format);
-fprintf("%s: Saving %d profiles to %s\n", row.name, size(pInfo,1), fnBin);
+fprintf("%s: Saving %d profiles to %s\n", row.name, size(binned.info,1), fnBin);
 retval = {fnBin, binned};
-end % profile2binned
+end % bin_data

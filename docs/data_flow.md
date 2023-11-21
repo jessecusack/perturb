@@ -1,29 +1,36 @@
 # Data flow for [software suite](https://github.com/jessecusack/perturb/tree/main)
 
-- A list of potential `.P` files that exist in the *vmp_root* directory is created.
-- All the `.P` file headers are examined to see if they were created by the previous file "sizing" out. If so, then the previous and this file are appended to create a single `.P` file. [p_file_merger.m](../Code/p_file_merger.m)
-- A list of potential `.P` files that exist in the *vmp_root* directory is created, after the previous step.
-- For each of the `.P` files: [mat2profiles.m](../Code/mat2profiles.m)
-  * If a corresponding `.mat` file from ***odas_p2mat*** exists and is newer than the `.P` file, nothing new is done.
-  * A new `.mat` file is created by processing the `.P` file with ***odas_p2mat***.
-- For each of the ***odas_p2mat*** files:
-  * If a corresponding `profiles.mat` file exist and is newer than the ***odas_p2mat*** `.mat` file, nothing new is done.
-  * The ***odas_p2mat*** `.mat` file is loaded
-  * The file is split into profiles using ***get_profile***
-  * [FP07 thermistor](FP07.md) is calibrated against the reference temperature, *JAC_T*, and the slow and fast temperatures from the FP07 thermistors is recomputed.  [FP07_calibration.m](../Code/fp07_calibration.m)
-  * For each profile the conductivity/temperature lag is estimated. A median weighted lag is estimated from all the profiles. This median weighted lag is used to adjust the timing of the conductivity sensor for the entire file. [CT_align.m](../Code/CT_align.m)
-  * The non-turbulence sensors, CTD, DO, Chlorophyll, Turbidity, ... are collected and a not-insane Geo-reference is assigned for each observation through out the file. [mkCTD.m](../Code/mkCTD.m)
-  * For each profile found by ***get_profile:***
-    - A Geo-reference is assigned as of the start of the profile.
-    - A table of all the *slow* variables is created
-    - A table of all the *fast* variables is created
-    - Seawater properties are computed for each slow observation in the profile.
-  * All the profiles are used to determine the expected variances to determine when the instrument is stable and able to provide "good" dissipation estimates. [trim_profiles.m](../Code/trim_profiles.m)
-  * All the profiles are used to determine the expected variances to determine when the instrument crashed into the bottom. [bottom_crash_profiles.m](../Code/bottom_crash_profiles.m)
-  * For each profile, dissipation estimates are computed. [calc_diss_shear.m](../Code/calc_diss_shear.m)
-  * The collection of profiles and associated ancillary data is written to a `profiles.mat` file.
-- For each of the `profiles.mat` file:
-  * The profiles are binned in depth and written to a `binned.mat` file. [bin_data.m](../Code/bin_data.m) 
-  * The non-turbulence sensors for the entire file are binned in time and written to a `CTD.mat` file. [bin_CTD.m](../Code/bin_CTD.m) 
-- For each of the `binned.mat` files, the binned profiles are collected and written to a `combo.mat` file. [mk_combo.m](../Code/mk_combo.m)
+- A list of potential `.P` files that exist in the *p_file_root* directory is created.
+- The original `.P` file is checked to see if the final buffer is corrupted. If so, the original `.P` file is trimmed and written to a `trimed_p_files` directory.
+- All the `.P` file headers are examined to see if they were created by the previous file "sizing" out. If so, then the previous and this file are appended to create a single `.P` file and written to the `merged_p_files` directory. [p_file_merger.m](../Code/p_file_merger.m)
+- For each good `.P` file:
+  * Using `odas_p2mat` convert the good `.P` file to an odas_p2mat `.mat` file in a directory like `Matfiles_0000`. See [convert2mat.m](../Code/convert2mat.m)
+  * Create the profiles `.mat` file:
+    - Split the odas_p2mat `.mat` file into profiles.
+    - Assign a GPS fix to for each profile. See [GPS details](GPS.details.md) for how this is done.
+    - Adjust FP07 sensors in time to match shear sensors using cross correlation.
+    - If a temperature reference exists, using all the profiles in this file:
+      * Adjust temperature reference in time to match the adjusted FP07 sensors using cross correlation.
+      * Do an in-situ calibration of the FP07 sensors agains the temperature reference.
+    - If a conductivity value exists, adjust it in time to match thea adjusted temperature reference using cross correlation.
+    - If CT information is available, calculate seawater properties, like salinity, density, ...
+    - The profiles `.mat` file is saved in a directory like `profiles_0000`.
+  * Create a binned profiles `.mat` file:
+    - Bin the profiles by depth or time and merge into a single table.
+    - Save the binned profiles to a directory like `profiles_binned_0000`.
+  * Create a dissipation `.mat` file:
+    - Calculate dissipations for each of the profiles.
+    - Calculate the expected dissipation variance, and merge multiple dissipation estimates together appropriately.
+    - Save the dissipation estimates in a directory like `diss_0000`.
+  * Create a binned dissipation `.mat` file:
+    - Bin the disspation estimates by depth or time and merge into a single table.
+    - Save the binned dissipations to a directory like `diss_binned_0000`.
+  * Create a time binned scalar `.mat` file:
+    - Time bin the scalar data for the whole odas_p2mat `.mat` file.
+    - Assign a GPS fix to for each profile. See [GPS details](GPS.details.md) for how this is done.
+    - Save the binned scalar data to a directory like `CTD_0000`.
+- For all the `.P` files:
+  * Create a profiles combo `.mat` file by merging together all the binned profiles to directory like `profiles_combo_0000`.
+  * Create a dissipation combo `.mat` file by merging together all the binned dissipation estimates to a directory like `diss_combo_0000`.
+  * Create a binned scalar combo `.mat` file by merging together all the time binned scalar estimates to a directory like `CTD_combo_0000`.
 

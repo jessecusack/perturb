@@ -11,9 +11,9 @@ arguments (Output)
 end % arguments Output
 %%
 
-if ~info.bbl_use, return; end % Don't do any BBL stuff
+if ~info.bbl_calculate, return; end % Don't do any BBL stuff
 
 warning("Bottom Crash Detection not implemented!");
-
+disp(profiles); % To avoid syntax warning
 pInfo.bottomDepth = pInfo.max_depth + 1; % Past the deepest part of each profile
 end % trimProfiles

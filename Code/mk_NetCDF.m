@@ -24,7 +24,7 @@ if exist(fn, "file"), delete(fn); end
 
 dimNames = string(fieldnames(dimensions));
 
-fprintf("Creating %s\n", fn);
+fprintf("Writing %s\n", fn);
 ncid = netcdf.create(fn, ... % Create a fresh copy
     bitor(netcdf.getConstant("CLOBBER"), netcdf.getConstant("NETCDF4")));
 

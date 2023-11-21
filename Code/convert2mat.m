@@ -62,13 +62,12 @@ for index = 1:numel(names)
     val = pars.(name);
     if ismissing(val), continue; end
     if isempty(val), continue; end
-    if isstring(val), val = char(val); end % odas does not like strings
-    fprintf("Assigning %s\n", extractAfter(name, "p2mat_"));
-    args{index,1} = extractAfter(name, "p2mat_");
+    if isstring(val) || ischar(val), val = char(val); end % odas does not like strings
+    args{index,1} = char(extractAfter(name, "p2mat_"));
     args{index,2} = val;
 end % for name
 
 q = ~cellfun(@isempty, args(:,1));
-args = args(q,:);
+args = args(q,:)';
 args = args(:);
 end % mkP2MatArgs

@@ -4,71 +4,98 @@
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
-function a = update_paths(a)
+function pars = update_paths(pars)
 arguments (Input)
-    a struct % parameters, defaults from get_info
+    pars struct % parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
-    a struct % Modified version of input with paths set/updated
+    pars struct % Modified version of input pars with paths set/updated
 end % arguments
 
-names = string(fieldnames(a))'; % All the fields in info
+names = string(fieldnames(pars))'; % All the fields in info
 
-qPfiles = startsWith(names, "p_file_");
+qPfiles = startsWith(names, "p_file_"); % Which files will be in the combo file
 qPfilesTrim = qPfiles & endsWith(names, "_trim");
 qPfilesMerge = qPfiles & endsWith(names, "_merge");
-qP2Mat = startsWith(names, "p2mat_");
-qCTD = startsWith(names, "ctd_bin_") | startsWith(names, "profile_"); % ctd binning parameters
-qCombo = startsWith(names, "netCDF_"); % Used in combined phase
-qBinning = startsWith(names, "bin_") & ~qCombo; % Parameters for binning
-qProfile = ~qCTD & ~qCombo & ~qBinning; % Parameters used in profile generation
+qP2Mat = startsWith(names, "p2mat_") | qPfilesTrim | qPfilesMerge; % How to go from P file to mat via odas_p2mat
+qNetCDF = startsWith(names, "netCDF_"); % NetCDF global parameters for combined files
+qProfileGen = startsWith(names, "profile_"); % How profiles are extracted
+qCT = startsWith(names, "CT_");
+qGPS = startsWith(names, "gps_");
+qProf = qP2Mat ...
+    | qProfileGen ...
+    | qCT ...
+    | qGPS ...
+    | startsWith(names, "trim_") ...
+    | startsWith(names, "bbl_") ...
+    | startsWith(names, "fp07_");
+qProfBin = qProf | startsWith(names, "bin_");
+qDiss = qProf ...
+    | startsWith(names, "diss_"); % Dissipation parameters
+qDissBin = qDiss ...
+    | startsWith(names, "binDiss_"); % how to bin dissipation
+qCTD = qP2Mat ...
+    | (qProfileGen & (pars.profile_direction == "down")) ...
+    | qCT ...
+    | qGPS ...
+    | startsWith(names, "ctd_bin_"); % ctd binning parameters
 
-[hashPtrimmed,   jsonPtrimmed] = mk_hash_json(a, names(qPfilesTrim));
-[hashPmerged,   jsonPmerged] = mk_hash_json(a, names(qPfilesMerge));
-[hashP2Mat,   jsonP2Mat]     = mk_hash_json(a, names(qP2Mat));
-[hashCTD,     jsonCTD]       = mk_hash_json(a, names(qCTD | qP2Mat));
-[hashCTDcombo, jsonCTDcombo] = mk_hash_json(a, names(qCTD | qP2Mat | qPfiles | qCombo));
-[hashCombo,   jsonCombo]     = mk_hash_json(a, names(qCombo | qProfile | qBinning | qP2Mat | qPfiles));
-[hashProfile, jsonProfile]   = mk_hash_json(a, names(qProfile | qP2Mat));
-[hashBinning, jsonBinning]   = mk_hash_json(a, names(qBinning | qP2Mat));
+[hashPtrimmed,  jsonPtrimmed]  = mk_hash_json(pars, names(qPfilesTrim));
+[hashPmerged,   jsonPmerged]   = mk_hash_json(pars, names(qPfilesMerge));
+[hashP2Mat,     jsonP2Mat]     = mk_hash_json(pars, names(qP2Mat));
+[hashCTD,       jsonCTD]       = mk_hash_json(pars, names(qCTD));
+[hashCTDcombo,  jsonCTDcombo]  = mk_hash_json(pars, names(qCTD | qPfiles | qNetCDF));
+[hashProf,      jsonProf]      = mk_hash_json(pars, names(qProf));
+[hashProfBin,   jsonProfBin]   = mk_hash_json(pars, names(qProfBin));
+[hashProfCombo, jsonProfCombo] = mk_hash_json(pars, names(qProfBin | qPfiles | qNetCDF));
+[hashDiss,      jsonDiss]      = mk_hash_json(pars, names(qDiss));
+[hashDissBin,   jsonDissBin]   = mk_hash_json(pars, names(qDissBin));
+[hashDissCombo, jsonDissCombo] = mk_hash_json(pars, names(qDissBin | qPfiles | qNetCDF));
 
-a.output_root = abspath(a.output_root); % Get rid of ~ or relative paths
-my_mk_directory(a.output_root); % Make sure the root path exists
+pars.output_root = abspath(pars.output_root); % Get rid of ~ or relative paths
+my_mk_directory(pars.output_root); % Make sure the root path exists
 
-if a.p_file_trim
-    a.p_trim_root    = mkRootDir(a.output_root, "trimed_p_files", hashPtrimmed, jsonPtrimmed); % Trimmed P files
-end % if a.p_file_trim
-if a.p_file_merge
-    a.p_merge_root   = mkRootDir(a.output_root, "merged_p_files", hashPmerged, jsonPmerged); % Merged P files
-end % if a.p_file_merge
-a.mat_root       = mkRootDir(a.output_root, "Matfiles", hashP2Mat, jsonP2Mat);
-a.ctd_root       = mkRootDir(a.output_root, "CTD", hashCTD, jsonCTD);
-a.ctd_combo_root = mkRootDir(a.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
-a.combo_root     = mkRootDir(a.output_root, "combo", hashCombo, jsonCombo);
-a.profile_root   = mkRootDir(a.output_root, "profiles", hashProfile, jsonProfile);
-a.binned_root    = mkRootDir(a.output_root, "binned", hashBinning, jsonBinning);
+pars.p_trim_root      = mkRootDir(pars.output_root, "trimed_p_files", hashPtrimmed, jsonPtrimmed, pars.p_file_trim); % Trimmed P files
+pars.p_merge_root     = mkRootDir(pars.output_root, "merged_p_files", hashPmerged, jsonPmerged, pars.p_file_merge); % Merged P files
+pars.mat_root         = mkRootDir(pars.output_root, "Matfiles", hashP2Mat, jsonP2Mat);
+pars.ctd_root         = mkRootDir(pars.output_root, "CTD", hashCTD, jsonCTD);
+pars.ctd_combo_root   = mkRootDir(pars.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
+pars.profile_root     = mkRootDir(pars.output_root, "profiles", hashProf, jsonProf);
+pars.prof_binned_root = mkRootDir(pars.output_root, "profiles_binned", hashProfBin, jsonProfBin);
+pars.prof_combo_root  = mkRootDir(pars.output_root, "profiles_combo", hashProfCombo, jsonProfCombo);
+pars.diss_root        = mkRootDir(pars.output_root, "diss", hashDiss, jsonDiss);
+pars.diss_binned_root = mkRootDir(pars.output_root, "diss_binned", hashDissBin, jsonDissBin);
+pars.diss_combo_root  = mkRootDir(pars.output_root, "diss_combo", hashDissCombo, jsonDissCombo);
 
-a.log_root = fullfile(a.output_root, "logs"); % Where to write log files to
-a.database_root = fullfile(a.output_root, "database"); % Where to store various databases
+pars.log_root = fullfile(pars.output_root, "logs"); % Where to write log files to
+pars.database_root = fullfile(pars.output_root, "database"); % Where to store various databases
 
-a.log_filename = fullfile(a.log_root, "master.log"); % output of diary
+pars.log_filename = fullfile(pars.log_root, "master.log"); % output of diary
 
-names = string(fieldnames(a));
+names = string(fieldnames(pars));
 for name = names(endsWith(names, "_root") | endsWith(names, "_filename"))'
-    a.(name) = abspath(a.(name));
+    if ~ismissing(pars.(name))
+        pars.(name) = abspath(pars.(name));
+    end % if ~ismissing
 end % for
 end % update_paths
 
-function directory = mkRootDir(root, prefix, hash, json)
+function directory = mkRootDir(root, prefix, hash, json, qMake)
 arguments (Input)
     root string
     prefix string
     hash string
     json string
+    qMake logical = true
 end % arguments Input
 arguments (Output)
     directory string
 end % arguments Output
+
+if ~qMake
+    directory = missing;
+    return;
+end
 
 fn = append(prefix, ".", hash, ".json");
 items = dir(fullfile(root, append(prefix, "_*"), fn));

@@ -56,14 +56,14 @@ end % fp07Calibrationa
 
 %%
 function [a, TNames] = calibrateProfiles(a, indicesSlow, indicesFast, ...
-    Treference, TNames, info, cfgObj, basename)
+    Treference, TNames, pars, cfgObj, basename)
 arguments
     a struct
     indicesSlow (2,:) int64
     indicesFast (2,:) int64
     Treference string
     TNames table
-    info struct
+    pars struct
     cfgObj (1,:) struct
     basename string
 end % arguments
@@ -75,11 +75,11 @@ Tref = a.(Treference);
 Tfp07 = getFP07Temperature(a, TNames, fs_slow, fs_fast);
 TT = lowPassFilter(Tfp07, Treference, fs_slow, a.W_slow, indicesSlow); % Lowpass filter Tfp07
 
-% Get all the lags
+% Get the lags for each profile
 lag = cell(size(indicesSlow,2),1);
 for index = 1:numel(lag)
     ii = indicesSlow(1,index):indicesSlow(2,index);
-    [vLag, maxCorr] = calcLag(Tref(ii), TT(ii), fs_slow);
+    [vLag, maxCorr] = calcLag(Tref(ii), TT(ii), fs_slow, pars);
     lag{index} = struct( ...
         "lag", vLag, ...
         "maxCorr", maxCorr, ...
@@ -115,9 +115,9 @@ tbl = vertcat(tbl{:});
 
 tbl.Tref_regress = 1 ./ (tbl.Tref + 273.15); % C -> 1/K
 
-order = info.fp07_order; % Polynomial order
+order = pars.fp07_order; % Polynomial order
 TrefMinRange = 8;
-if range(tbl.Tref) <= TrefMinRange && order > 1
+if pars.fp07_warn_range && order > 1 && range(tbl.Tref) <= TrefMinRange
     warning("Temperature range, %g, is less than %g degrees and order(%g) > 1\nRecommend using order 1", ...
         range(tbl.Tref), TrefMinRange, order);
 end % if range
@@ -205,24 +205,33 @@ Tfp07 = filter(b,a,Tfp07); % Low pass filter the FP07 thermistor to make it more
 end % lowPassFilter
 
 %%
-function [lag, maxCorr] = calcLag(Tref, Tfp07, fs_slow)
+function [lag, maxCorr] = calcLag(Tref, Tfp07, fs_slow, pars)
 arguments
     Tref (:,1) double
     Tfp07 (:,1) double
     fs_slow double
+    pars struct % From get_info with modifications
 end % arguments
-maxLag = round(10 * fs_slow); % A 10 second maximum lag
+
+maxSeconds = pars.fp07_maximum_lag_seconds;
+maxLag = round(maxSeconds * fs_slow); % maximum lag in bins
 [bb, aa] = butter(2, 4/(fs_slow/2)); % 4 Hz smoother to supress high-frequency noise
 [correlation, lags] = xcorr( ...
     filter(bb, aa, detrend(diff(Tfp07))), ...
     filter(bb, aa, detrend(diff(Tref))), ...
     maxLag, "coeff");
 
-[~, iZero] = min(abs(lags)); % index for dt zero
-% Lag should be less than zero since Tref is behind FP07 in motion
-% The correlation should be positive, unless the response is inverted
-% One expects the lag to be ~physical distance / fall speed
-[maxCorr, iLag] = max(correlation(1:iZero)); % Only consider <= 0 lags
+if pars.fp07_must_be_negative
+    % Lag should be less than zero for a VMP with a CT sensor
+    % since Tref is behind FP07 in motion
+    % The correlation should be positive, unless the response is inverted
+    % One expects the lag to be ~physical distance / fall speed
+    [~, iZero] = min(abs(lags)); % index for dt zero
+    [maxCorr, iLag] = max(correlation(1:iZero)); % Only consider <= 0 lags
+else
+    [maxCorr, iLag] = max(correlation); % Can be positive or negative lag
+end % if fp07 must be negative
+
 lag = lags(iLag) / fs_slow; % Lag in seconds
 end % calcLag
 
@@ -280,7 +289,7 @@ end % if
 end % extractNames
 
 %%
-function info = extractVariables(name, a, exp)
+function tbl = extractVariables(name, a, exp)
 arguments
     name string
     a struct
@@ -291,11 +300,11 @@ end % arguments
 q = ~ismissing(varNames);
 
 if any(q)
-    info = table();
-    info.channel = string(tokens(q));
-    info.(name) = varNames(q);
+    tbl = table();
+    tbl.channel = string(tokens(q));
+    tbl.(name) = varNames(q);
 else
-    info = table('Size', [0,2], ...
+    tbl = table('Size', [0,2], ...
         'VariableTypes', {'string', 'string'}, ...
         'VariableNames', {'channel', char(name)});
 end % if any

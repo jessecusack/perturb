@@ -24,7 +24,7 @@ classdef GPS_from_vectors <GPS_base_class
 
             obj = obj@GPS_base_class(method);
 
-            if size(time) ~= size(latitude) || size(time) ~= size(longitude)
+            if ~isequal(size(time), size(latitude)) || ~isequal(size(time), size(longitude))
                 error("Time, latitude, and longitude must all have the same size!");
             end % if size
 

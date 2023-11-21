@@ -15,11 +15,11 @@ end % arguments Output
 
 if ismissing(pars.CT_T_name) || ismissing(pars.CT_C_name) || isempty(ctd), return; end
 
-[tbl, fnCombo] = save2combo(ctd, pars);
-save2NetCDF(tbl, fnCombo, pars);
+[tbl, fnCombo] = CTDsave2combo(ctd, pars);
+CTDsave2NetCDF(tbl, fnCombo, pars);
 end % ctd2combo
 
-function [tbl, fnCombo] = save2combo(ctd, pars)
+function [tbl, fnCombo] = CTDsave2combo(ctd, pars)
 arguments (Input)
     ctd (:,1) cell
     pars struct
@@ -30,7 +30,7 @@ arguments (Output)
 end % arguments Output
 
 tbl = table(); % In case we return early
-fnCombo = fullfile(pars.ctd_combo_root, "ctd.combo.mat");
+fnCombo = fullfile(pars.ctd_combo_root, "combo.mat");
 
 data = table();
 data.fn = cellfun(@(x) x{1}, ctd);
@@ -67,56 +67,25 @@ if any(cellfun(@isempty, data.data))
             items{index} = dd.Value.data{index};
         else
             fprintf("Loading %s\n", dd.Value.fn(index));
-            items{index} = load(dd.Value.fn(index)).binned;
+            items{index} = load(dd.Value.fn(index));
         end % if ~isempty
     end % parfor
     delete(dd);
     data.data = items;
 end % if any
 
-nTimes = sum(rowfun(@(x) size(x, 1), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "uniform" ...
-    )); % How many profiles are there in total
+tbl = glue_lengthwise("bin", data.data, strings(0), "tbl");
 
-names = rowfun(@(x) string(x.Properties.VariableNames), data, ...
-    "InputVariables", "data", ...
-    "ExtractCellContents", true, ...
-    "OutputFormat", "cell" ...
-    ); % Names in all the profiles
-names = unique(horzcat(names{:}));
-
-[~, ix] = sort(lower(names));
-names = names(ix);
-names = ["t", setdiff(names, "t")];
-
-tbl = table();
-tbl.t = NaT(nTimes,1);
-
-for name = names(2:end)
-    tbl.(name) = nan(nTimes,1);
-end % for name
-
-offset = 0;
-for index = 1:numel(ctd)
-    a = data.data{index};
-    ii = offset + (1:size(a,1));
-    offset = offset + size(a,1);
-    for name = string(a.Properties.VariableNames)
-        tbl.(name)(ii) = a.(name);
-    end % for name
-end % for index
-
-[~, ix] = unique(tbl.t); % Should be sorted, but who knows
-tbl = tbl(ix,:);
+cInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
+cInfo = vertcat(cInfo{:});
 
 my_mk_directory(fnCombo, pars.debug);
 fprintf("Writing %s\n", fnCombo);
-save(fnCombo, "tbl", pars.matlab_file_format);
+a = struct("info", cInfo, "tbl", tbl);
+save(fnCombo, "-struct", "a", pars.matlab_file_format);
 end % ctd2combo
 
-function save2NetCDF(tbl, fnCombo, pars)
+function CTDsave2NetCDF(tbl, fnCombo, pars)
 arguments (Input)
     tbl table
     fnCombo string {mustBeFile}
@@ -133,7 +102,7 @@ end % if isnewer
 
 if isempty(tbl)
     fprintf("Loading %s\n", fnCombo);
-    tbl = load(fnCombo).tbl;
+    tbl = struct2table(load(fnCombo));
 end % if isempty
 
 fnCDL = fullfile(fileparts(mfilename("fullpath")), "CTD.json");
