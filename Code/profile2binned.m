@@ -48,7 +48,7 @@ if pars.profile_direction == "time" % Bin in time
     glueFunc = @glue_lengthwise;
 else % Bin by depth
     binSize = pars.bin_width; % Bin stepsize (m)
-    keyName = "depth";
+    keyName = pars.bin_variable;
     binFunc = @bin_by_real;
     glueFunc = @glue_widthwise;
 end % if profile_direction
@@ -59,8 +59,7 @@ for index = 1:numel(profiles)
 
     tFast = binFunc(binSize, keyName, profile.fast, method);
     tSlow = binFunc(binSize, keyName, profile.slow, method);
-    tFast = renamevars(tFast, ["n", "t", "depth"], ["n_fast", "time_fast", "depth_fast"]);
-    tSlow = renamevars(tSlow, ["n", "depth"], ["n_slow", "depth_slow"]);
+    [tFast, tSlow] = adjustNames(tFast, tSlow);
     casts{index} = outerjoin(tSlow, tFast, "Keys", "bin", "MergeKeys", true);
 end % for index
 
@@ -88,3 +87,28 @@ save(fnBin, "-struct", "binned", pars.matlab_file_format);
 fprintf("%s: Saving %d profiles to %s\n", row.name, size(pInfo,1), fnBin);
 retval = {fnBin, binned};
 end % profile2binned
+
+%%
+% adjust names so tFast and tSlow can be outer joined cleanly
+%
+function [tFast, tSlow] = adjustNames(tFast, tSlow)
+arguments (Input)
+    tFast table; % Binned fast variables
+    tSlow table; % Binned slow variables
+end % arguments Input
+arguments (Output)
+    tFast table;
+    tSlow table;
+end % arguments Output
+
+fNames = string(tFast.Properties.VariableNames); % Fast names
+sNames = string(tSlow.Properties.VariableNames); % Slow names
+
+cNames = setdiff(intersect(fNames, sNames), "bin"); % Common names in both tables, sans bin
+
+tgtNames = append(cNames, "_fast");
+tgtNames(tgtNames == "t_fast") = "time_fast";
+tFast = renamevars(tFast, cNames, tgtNames);
+cNames = setdiff(cNames, "t"); % Don't rename t in the slow table
+tSlow = renamevars(tSlow, cNames, append(cNames, "_slow"));
+end % adjustNames
