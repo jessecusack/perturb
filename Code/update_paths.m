@@ -16,8 +16,8 @@ names = string(fieldnames(pars))'; % All the fields in info
 
 qPfiles = startsWith(names, "p_file_"); % Which files will be in the combo file
 qPfilesTrim = qPfiles & endsWith(names, "_trim");
-qPfilesMerge = qPfiles & endsWith(names, "_merge");
-qP2Mat = startsWith(names, "p2mat_") | qPfilesTrim | qPfilesMerge; % How to go from P file to mat via odas_p2mat
+qPfilesMerge = (qPfiles & endsWith(names, "_merge")) | qPfilesTrim;
+qP2Mat = startsWith(names, "p2mat_") | qPfilesMerge; % How to go from P file to mat via odas_p2mat
 qNetCDF = startsWith(names, "netCDF_"); % NetCDF global parameters for combined files
 qProfileGen = startsWith(names, "profile_"); % How profiles are extracted
 qCT = startsWith(names, "CT_");
