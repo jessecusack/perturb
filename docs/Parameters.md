@@ -10,7 +10,7 @@ The parameter functionality is grouped by the parameter prefix:
 - `p2mat_` control the conversion from `.P` files to `.mat` files via ***odas_p2mat***.
 - `profile_` control how profiles are extracted from the data.
 - `trim_` For downcast VMP data, how to calculate the where good data starts.
-- `bbl_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.)
+- `bottom_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.)
 - `fp07_` How the FP07 sensors are adjusted in time and the in-situ calibration is done.
 - `CT_` What is the name of the refereence temperature and conductivity. For VMPs, this is commonly JAC_T and JAC_C.
 - `despike_` Despiking parameters used in dissipation estimates.
@@ -50,14 +50,15 @@ The parameter functionality is grouped by the parameter prefix:
   * `trim_min_depth` Minimum depth to start calculating variances.
   * `trim_max_depth` Maximum depth to calculate variances to.
   * `trim_quantile` How many of the variance estimates have to be satisfied.
-  * `trim_extra_depth` Additional depth to add to the calculated trim depth.
-- `bbl_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.) See [bottom_crash_profiles](../Code/bottom_crash_profiles.m)
-  * `bbl_calculate` Should the bottom trim level for a down casting instrument be calculated?
-  * `bbl_dz` Depth bin size for cacluating variances over.
-  * `bbl_min_depth` Minimum depth to start calculating variances.
-  * `bbl_max_depth` Maximum depth to calculate variances to.
-  * `bbl_quantile` How many of the variance estimates have to be satisfied.
-  * `bbl_extra_depth` Additional depth to add to the calculated bottom depth.
+- `bottom_` For bottom crashing VMP data, how the bottom depth is calculated, i.e. where the good data ends. (Not currently implemented.) See [bottom_crash_profile](../Code/bottom_crash_profile.m)
+  * `bottom_calculate` Should the bottom trim level for a down casting instrument be calculated?
+  * `bottom_depth_window` Depth bin size for cacluating variances over.
+  * `bottom_depth_minimum` Minimum depth to start calculating variances.
+  * `bottom_depth_maximum` Maximum depth to calculate variances to.
+  * `bottom_median_factor` Multiply median acceleration standard deviation to find acceptable in range value
+  * `bottom_speed_factor` Speed must reduce by this amount below maximum deacceleration to be considered bottom
+  * `bottom_vibration_frequency` Divide fs_fast by this value to get number of bins for AxAy moving standard deviation
+  * `bottom_vibration_factor` Multiply vibration standarad deviation to get threshold
 - `fp07_` How the FP07 sensors are adjusted in time and the in-situ calibration is done. See [fp07_calibration](../Code/fp07_calibration.m)
   * `fp07_calibration` Should an in-situ calibration of the FP07 sensors be done, if a CT_T_name value is set?
   * `fp07_order` Polynomial order for calibration.
@@ -76,7 +77,9 @@ The parameter functionality is grouped by the parameter prefix:
   * `despike_A_N_FS` Vibration/accelerometer sensors' spike removal scale in fs units.
 - `diss_` Dissipation estimation parameters. See ***get_diss_odas*** for some explanation. See [profile2diss](../Code/profile2diss.m)
   * `diss_trim_top` Should the shallowest depths be trimmed by trim_depth prior to calculating the dissipation?
+  * `diss_trim_top_offset` Amount to add to trim_depth for dissipation estimate triming.
   * `diss_trim_bottom` Should the deepest depths be trimmed by bbl_depth prior to calculating the dissipation?
+  * `diss_trim_bottom_offset` Amount to add to bottom crsh depth for dissipation estimate triming.
   * `diss_reverse` Should the dissipations estimates be calculated from latest to earliest? For a downcast VMP, this is from the bottom up.
   * `diss_fft_length_sec` FFT window size in seconds.
   * `diss_length_fac` Multiply `diss_fft_length_sec` by this parameter to the the dissipation length in seconds.
