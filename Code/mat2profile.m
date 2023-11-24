@@ -60,8 +60,8 @@ indicesFast = interp1(mat.t_fast, 1:numel(mat.t_fast), mat.t_slow(indicesSlow), 
 % First change values in a for calibration and time shifts
 % Adjust T?_(slow|fast) and shift CT_T_name and CT_C_name
 
-mat = fp07_calibration(mat, indicesSlow, indicesFast, pars, row.name);
-qFP07 = isfield(mat, "TNames"); % FP07 lags calculated
+mat = fp07_calibration(mat, indicesSlow, pars, row.name);
+qFP07 = isfield(mat, "fp07Info"); % FP07 lags calculated
 
 mat = CT_align(mat, indicesSlow, pars, row.name); % Shift CT_C_name to match CT_T_name
 
@@ -73,7 +73,7 @@ profiles = cell(nProfiles, 1);
 profileInfo = mk_profile_info(row, nProfiles, mat);
 
 if qFP07 % fp07 lags calculated
-    fp07_lags = mat.TNames;
+    fp07_lags = mat.fp07Info;
     fp07_lags.name = repmat(row.name, size(fp07_lags, 1), 1);
 end % if qFP07
 
