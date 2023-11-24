@@ -30,7 +30,7 @@ pInfo.bottom_depth = nan;
 
 if pInfo.max_depth < pars.bottom_depth_minimum % Too shallow to try and find the bottom
     fprintf("%s: profile %d maximum depth, %f, less than depth minimum, %f\n", ...
-        pInfo.name, iProfile, pInfo.maxDepth, pars.bottom_depth_minimum);
+        pInfo.name, iProfile, pInfo.max_depth, pars.bottom_depth_minimum);
     return;
 end % maxDepth
 
