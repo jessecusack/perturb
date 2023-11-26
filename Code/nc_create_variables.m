@@ -52,7 +52,7 @@ for index = 1:numel(names)
             attr.valid_min = min(val(:), [], "omitnan");
             attr.valid_max = max(val(:), [], "omitnan");
         case {"char", "string"}
-            % Nothing to o here
+            % Nothing to do here
         otherwise
             attr.valid_min = min(val(:), [], "omitnan");
             attr.valid_max = max(val(:), [], "omitnan");
