@@ -115,6 +115,7 @@ addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO
 addParameter(p, "ctd_method", "mean", validMethod); % How to average
 %% NetCDF global attributes
 addParameter(p, "netCDF_acknowledgement", missing, validString);
+addParameter(p, "netCDF_comment", missing, validString);
 addParameter(p, "netCDF_contributor_name", missing, validString);
 addParameter(p, "netCDF_contributor_role", missing, validString);
 addParameter(p, "netCDF_creator_email", missing, validString);
@@ -122,9 +123,13 @@ addParameter(p, "netCDF_creator_institution", missing, validString);
 addParameter(p, "netCDF_creator_name", missing, validString);
 addParameter(p, "netCDF_creator_type", missing, validString);
 addParameter(p, "netCDF_creator_url", missing, validString);
+addParameter(p, "netCDF_history", missing, validString);
 addParameter(p, "netCDF_id", missing, validString);
 addParameter(p, "netCDF_institution", missing, validString);
+addParameter(p, "netCDF_instrument", missing, validString);
 addParameter(p, "netCDF_instrument_vocabulary", missing, validString);
+addParameter(p, "netCDF_keywords", missing, validString);
+addParameter(p, "netCDF_keywords_vocabulary", missing, validString);
 addParameter(p, "netCDF_license", missing, validString);
 addParameter(p, "netCDF_metadata_link", missing, validString);
 addParameter(p, "netCDF_platform", missing, validString);
@@ -137,6 +142,9 @@ addParameter(p, "netCDF_publisher_institution", missing, validString);
 addParameter(p, "netCDF_publisher_name", missing, validString);
 addParameter(p, "netCDF_publisher_type", missing, validString);
 addParameter(p, "netCDF_publisher_url", missing, validString);
+addParameter(p, "netCDF_references", missing, validString);
+addParameter(p, "netCDF_source", missing, validString);
+addParameter(p, "netCDF_summary", missing, validString);
 addParameter(p, "netCDF_title", missing, validString);
 %%
 parse(p, varargin{:});

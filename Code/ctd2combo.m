@@ -4,32 +4,34 @@
 %
 % Oct-2023, Pat Welch, pat@mousebrains.com
 
-function tbl = ctd2combo(ctd, pars)
+function a = ctd2combo(ctd, pars)
 arguments (Input)
     ctd (:,1) cell
     pars struct
 end % arguments Input
 arguments (Output)
-    tbl table % Binned CTD data
+    a struct % Binned CTD data
 end % arguments Output
 
 if ismissing(pars.CT_T_name) || ismissing(pars.CT_C_name) || isempty(ctd), return; end
 
-[tbl, fnCombo] = CTDsave2combo(ctd, pars);
-CTDsave2NetCDF(tbl, fnCombo, pars);
+[a, fnCombo] = CTDsave2combo(ctd, pars);
+
+fnCDL = fullfile(fileparts(mfilename("fullpath")), "CTD.json");
+save2NetCDF(a, fnCombo, pars, fnCDL)
 end % ctd2combo
 
-function [tbl, fnCombo] = CTDsave2combo(ctd, pars)
+function [a, fnCombo] = CTDsave2combo(ctd, pars)
 arguments (Input)
-    ctd (:,1) cell
-    pars struct
+    ctd (:,1) cell % Cell array of time binned CTD information, possibly empty
+    pars struct    % Modified version of get_info's output
 end % arguments Input
 arguments (Output)
-    tbl table % Binned CTD data
+    a  struct % info and tbl as a struct
     fnCombo string % Filename of combined CTD information
 end % arguments Output
 
-tbl = table(); % In case we return early
+a = struct();
 fnCombo = fullfile(pars.ctd_combo_root, "combo.mat");
 
 data = table();
@@ -62,7 +64,7 @@ end % if isfile
 if any(cellfun(@isempty, data.data))
     items = cell(size(data.data));
     dd = parallel.pool.Constant(data); % Doesn't change from here on
-    parfor index = 1:size(data,1)
+    parfor index = 1:size(data,1)      % Load in parallel
         if ~isempty(dd.Value.data{index})
             items{index} = dd.Value.data{index};
         else
@@ -84,27 +86,3 @@ fprintf("Writing %s\n", fnCombo);
 a = struct("info", cInfo, "tbl", tbl);
 save(fnCombo, "-struct", "a", pars.matlab_file_format);
 end % ctd2combo
-
-function CTDsave2NetCDF(tbl, fnCombo, pars)
-arguments (Input)
-    tbl table
-    fnCombo string {mustBeFile}
-    pars struct
-end % arguments Input
-
-[dirname, basename] = fileparts(fnCombo);
-fnNC = fullfile(dirname, append(basename, ".nc"));
-
-if isnewer(fnNC, fnCombo)
-    fprintf("No need to rebuild %s\n", fnNC);
-    return;
-end % if isnewer
-
-if isempty(tbl)
-    fprintf("Loading %s\n", fnCombo);
-    tbl = struct2table(load(fnCombo));
-end % if isempty
-
-fnCDL = fullfile(fileparts(mfilename("fullpath")), "CTD.json");
-mk_NetCDF(fnNC, tbl, pars, fnCDL);
-end % save2NetCDF
