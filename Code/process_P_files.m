@@ -34,13 +34,7 @@ try
         return;
     end
 
-    % Sort out if the Parallel Computing Toolbox is installed or not
-    toolboxes = matlab.addons.installedAddons;
-    if ~ismember("Parallel Computing Toolbox", toolboxes.Name)
-        fprintf("\nThis software is capabe of using Matlab's parallel computing toolbox!\n\n");
-    elseif isempty(gcp("nocreate"))
-        parpool("Processes"); % Since save is not thread safe, we have to use Processes
-    end % isempty gcp
+    startProcessPool(pars);
 
     p_filenames = load_P_file_headers(p_filenames, pars); % Get the header record for each P file
     p_filenames = trim_P_files(p_filenames, pars); % Trim fractional records in P files
@@ -82,7 +76,9 @@ try
         diary(logFN);
         diary on;
         fprintf("\n\n********* Started %s at %s *********\n", row.name, datetime());
+        prevWarningState = warning();
         try
+            warning("off", "MATLAB:dispatcher:nameConflict");
             if row.qMatOkay
                 [row, binnedProfile{index}, binnedDiss{index}, binnedCTD{index}] = P_to_binned_profile(row, params.Value);
                 qMatOkay(index) = row.qMatOkay;
@@ -98,6 +94,7 @@ try
             qMatOkay(index) = false;
         end
         diary off;
+        warning(prevWarningState); % Restore the warning status
     end % parfor
 
     p_filenames.qMatOkay = p_filenames.qMatOkay & qMatOkay;
@@ -179,3 +176,29 @@ if ~row.qProfileOkay, return; end % Nothing more to do
 [row, diss] = profile2diss(row, profiles, pars); % Calculate dissipations
 [row, binnedDiss] = diss2binned(row, diss, pars); % Bin the dissipation
 end %s process_P_to_binned_profile
+
+function startProcessPool(pars)
+arguments (Input)
+    pars struct % get_info, possibly modified
+end % arguments Input
+
+% Sort out if the Parallel Computing Toolbox is installed or not
+toolboxes = matlab.addons.installedAddons;
+if ~ismember("Parallel Computing Toolbox", toolboxes.Name(toolboxes.Enabled))
+    fprintf("\nThis software is capable of using Matlab's parallel computing toolbox!\n\n");
+    return;
+end % if ~ismember
+
+ppool = gcp("nocreate"); % Get an existing pool
+if isa(ppool, "parallel.ProcessPool"), return; end % Already running a process pool
+
+if ~isempty(ppool)
+    if pars.debug
+        fprintf("Shutting down a non-process parallel pool, since I need a process pool\n");
+    end % if debug
+    delete(ppool);
+end
+
+% Think about how to handle cluster pools!
+parpool("Processes"); % Since save is not thread safe, we have to use Processes
+end % startProcessPool
