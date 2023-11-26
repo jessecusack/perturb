@@ -1,13 +1,14 @@
 %
-% Convert test .P files to binned data
+% Convert ASTRAL 2023 VMP .P files to binned data
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = "~/Desktop/ASTRAL/Data";
+parent_root = fullfile(my_root, "../../ASTRAL");
+data_root = fullfile(parent_root, "Data");
 p_file_root = fullfile(data_root, "VMP");
-output_root = fullfile(data_root, "Temp");
+output_root = fullfile(parent_root, "Processed");
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 

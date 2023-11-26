@@ -11,7 +11,7 @@ suffix = fullfile(string(year), ship);
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = fullfile("~/Desktop", project);
+data_root = fullfile(my_root, "../..", project);
 p_file_root = fullfile(data_root, "Data", suffix, "VMP");
 output_root = fullfile(data_root, "Processed", suffix);
 

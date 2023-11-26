@@ -5,9 +5,11 @@
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = "~/Desktop/Wake2023/Data";
+
+parent_root = fullfile(my_root, "../../ARCTERX/Wake2023");
+data_root = fullfile(parent_root, "Data");
 p_file_root = fullfile(data_root, "VMP");
-output_root = fullfile(data_root, "Temp");
+output_root = fullfile(parent_root, "Processed");
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 

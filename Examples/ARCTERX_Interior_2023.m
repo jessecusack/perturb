@@ -5,9 +5,10 @@
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = "~/Google Drive/Shared drives/ARCTERX/Cruise_2023/interior/cruiseshare/data";
-p_file_root = fullfile(data_root, "vmp/VMP/RAW_P_File/done");
-output_root = "~/Desktop/ARCTERX/2023 IOP/tpw_MR/VMP";
+parent_root = fullfile(my_root, "../../ARCTERX/Interior2023");
+data_root = fullfile(parent_root, "Data");
+p_file_root = fullfile(data_root, "VMP");
+output_root = fullfile(parent_root, "Processed/VMP");
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 

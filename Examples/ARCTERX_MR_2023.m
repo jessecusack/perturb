@@ -3,19 +3,19 @@
 %
 % August-2023, Pat Welch, pat@mousebrains.com
 
-glider = "684";
+glider = "685";
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
 
-data_root = "~/Desktop/ARCTERX/2023 IOP/tpw_MR"; % Root of data and output
-input_root = fullfile(data_root, "input"); % Where input files are located, P, GPS, hotel
+parent_root = fullfile(my_root, "../../ARCTERX/Interior2023");
+data_root = fullfile(parent_root, "Data"); % Root of data
 
-GPS_filename = fullfile(input_root, "glider", sprintf("OSU%s.gps.mat", glider));
-hotel_file = fullfile(input_root, "glider", sprintf("OSU%s.hotel.mat", glider));
+GPS_filename = fullfile(data_root, "glider", sprintf("OSU%s.gps.mat", glider));
+hotel_file = fullfile(data_root, "glider", sprintf("OSU%s.hotel.mat", glider));
 
-p_file_root = fullfile(input_root, glider); % Where the p files are located
-output_root = fullfile(data_root, glider); % Where to place output files
+p_file_root = fullfile(data_root, glider); % Where the p files are located
+output_root = fullfile(parent_root, "Processed", glider); % Where to place output files
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_mat
 
