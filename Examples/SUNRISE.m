@@ -4,8 +4,31 @@
 % Nov-2023, Pat Welch, pat@mousebrains.com
 
 project = "SUNRISE";
-year = 2021;
-ship = "Pelican";
+year = 2022;
+% ship = "Pelican";
+% ship = "WaltonSmith";
+ship = "PointSur";
+
+bbl = true; % Trim at bottom and bin in elevation or not
+% bbl = false; % Don't trim bottom and bin in depth
+
+if bbl
+    diss_trim_top = true;
+    diss_trim_bottom = true;
+    diss_reverse = true;
+    diss_fft_length = 0.25; % 1/4 second FFT length
+    diss_length_fac = 2;    % 2*1/4 second for dissipation length, ~0.5m
+    binDiss_width = 0.5;    % ~0.5m bins
+    bin_variable = "elevation";
+else
+    diss_trim_top = true;
+    diss_trim_bottom = true;
+    diss_reverse = false;
+    diss_fft_length = 0.5; % 1/2 second FFT length
+    diss_length_fac = 2;    % 2*1/2 second for dissipation length, ~1m
+    binDiss_width = 1;    % ~1m bins
+    bin_variable = "depth";
+end
 
 suffix = fullfile(string(year), ship);
 
@@ -17,10 +40,8 @@ output_root = fullfile(data_root, "Processed", suffix);
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_...
 
-GPS_filename = fullfile(data_root, "Data", suffix, "Ship", "gps.mat");
-GPS_class = GPS_from_mat(GPS_filename, missing);
-
-%    "p_file_pattern", "SR1P2_002*", ...
+GPS_filename = fullfile(data_root, "Data", suffix, "GPS", "gps.mat");
+GPS_class = GPS_from_mat(GPS_filename, missing, "linear", "time");
 
 pars = process_P_files( ...
     "debug", true, ...
@@ -32,12 +53,14 @@ pars = process_P_files( ...
     "trim_calculate", true, ... % Calculate when the VMP is in stable descent below prop wash
     "bottom_calculate", true, ... % Calculate the bottom depth from VMP crashing into the bottom
     "bin_width", 0.25, ... % Bin size for scalar variables
-    "bin_variable", "elevation", ... % Bin by height above bottom
-    "diss_trim_top", false, ... % Trim top to drop prop wash
-    "diss_trim_bottom", false, ... % Trim off bottom
-    "diss_fft_length", 0.5, ... % 1/2 second FFT lengths
-    "diss_length_fac", 2, ... % 1 second dissipation calculations, ~1 meter
-    "binDiss_width", 1, ... % 1 meter dissipation estimates
+    "bin_variable", bin_variable, ... % which variable to bin scalar quantities by
+    "diss_trim_top", diss_trim_top, ... % Trim top to drop prop wash
+    "diss_trim_bottom", diss_trim_bottom, ... % Trim off bottom
+    "diss_fft_length", diss_fft_length, ... % FFT length in seconds
+    "diss_length_fac", diss_length_fac, ... % dissipation length factor, diss_fft_lenght * diss_length_fac
+    "diss_reverse", diss_reverse, ... % FFTs from top to bottom or reversed?
+    "binDiss_width", binDiss_width, ... % dissipation estimate bin size in meters
+    "binDiss_variable", bin_variable, ... % Which variable to bin dissipation estimates by
     "netCDF_contributor_name", "Pat Welch", ...
     "netCDF_contributor_role", "researcher", ...
     "netCDF_creator_name", "Pat Welch", ...
