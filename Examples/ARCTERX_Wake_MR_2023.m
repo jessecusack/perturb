@@ -3,17 +3,22 @@
 %
 % Nov-2023, Pat Welch, pat@mousebrains.com
 
-% SN = 330;
-SN = 429;
+SN = 330;
+% SN = 429;
+year = "2023";
+project = "ARCTERX";
+subproj = "Wake";
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-data_root = "~/Desktop/Wake2023/Data";
+
+parent_root = fullfile(my_root, sprintf("../../%s/%s%s", project, subproj, year));
+data_root = fullfile(parent_root, "Data");
 bank_root = fullfile(data_root, "Bank Seaspider");
 hotel_file = fullfile(bank_root, "hotel.mat");
 MR_dir = sprintf("MR%d", SN);
 p_file_root = fullfile(bank_root, MR_dir);
-output_root = fullfile(data_root, "Temp_SeaSpider", MR_dir);
+output_root = fullfile(parent_root, "Processed", MR_dir);
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 
@@ -55,8 +60,8 @@ pars = process_P_files( ...
     "netCDF_institution", "CEOAS, Oregon State University", ...
     "netCDF_platform", "Rockland MR1000", ...
     "netCDF_product_version", "0.1", ...
-    "netCDF_program", "Wake ARCTERX 2023", ...
-    "netCDF_project", "Wake ARCTERX 2023" ...
+    "netCDF_program", sprintf("%s %s %s", project, subproj, year), ...
+    "netCDF_project", sprintf("%s %s %s", project, subproj, year) ...
     );
 
 rmpath(code_root);
