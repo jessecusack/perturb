@@ -28,3 +28,11 @@
   core system reduces the execution time to roughly 20% of the single process
   execution time.
   * Changed all the `example` scripts for the refactored code.
+
+# 27-Nov-2023: Pat Welch, pat@mousebrains.com
+  * Implement bottom crash detection for downcast VMPs. This was tested using data from 15-40m casts into the bottom of the Gulf of Mexico off Lousiana/Texas. i.e. a nice soft bottom.
+  * Implement bottom trimming and bottom upwards dissipation estimates for VMP downcasts with bottom detection.
+  * Implement binning by elevation above the bottom.
+
+# 28-Nov-2023: Pat Welch, pat@mousebrains.com
+  * Fix timezone issue with date_created... for NetCDF files
