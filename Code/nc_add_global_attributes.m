@@ -9,7 +9,7 @@ arguments
     info struct % Parameters, defaults from get_info
 end % arguments
 
-now = string(datetime(), "yyyy-MM-dd'T'HH:mm:ss'Z'");
+now = string(datetime("now", "TimeZone", "UTC"), "yyyy-MM-dd'T'HH:mm:ss'Z'");
 for name = ["date_created", "date_modified", "date_issued", "date_metadata_modified"]
     attr.(name) = now;
 end
