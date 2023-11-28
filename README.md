@@ -30,6 +30,12 @@
 - [ATOMIX Shear Probe Wiki](https://wiki.app.uib.no/atomix/index.php?title=Shear_probes)
 - Rolf's 2022 papers [Part1](Papers/Rolf.2022.part1.pdf) and [Part2](Papers/Rolf.2022.part2.pdf)
 
+# NetCDF Compliance:
+- [CF Metadata Conventions](http://cfconventions.org)
+- [CF Conventions](http://cfconventions.org/cf-conventions/cf-conventions.html)
+- [ACDD Conventions](https://wiki.esipfed.org/Attribute_Convention_for_Data_Discovery_1-3)
+- [NetCDF Compliance Checker](https://compliance.ioos.us/index.html)
+
 # TODO:
 - Add chi
 - Bottom crash detection

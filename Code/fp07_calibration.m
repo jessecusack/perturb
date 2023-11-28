@@ -5,11 +5,10 @@
 %
 % July-2023, Pat Welch, pat@mousebrains.com
 
-function a = fp07_calibration(a, indicesSlow, indicesFast, pars, basename)
+function a = fp07_calibration(a, indicesSlow, pars, basename)
 arguments (Input)
     a struct % Output of odas_p2mat
     indicesSlow (2,:) int64 % Output of get_profile, indices into slow vectors for profiles
-    indicesFast (2,:) int64 % Output of get_profile, indices into fast vectors for profiles
     pars struct % Parameters, defaults from get_info
     basename string % label for the file
 end % arguments Input
@@ -19,131 +18,128 @@ end % arguments Output
 
 if ~pars.fp07_calibration, return; end % Don't calibrate the FP07 sensors
 
-cfgObj = setupstr(char(a.setupfilestr));
-
-[Treference, TNames] = extractNames(a, pars.CT_T_name, basename);
+[Treference, TNames] = extractNames(a, pars.CT_T_name, basename); % Get the sensor channels and variable names
 
 if isempty(Treference) || isempty(TNames), return; end % no reference nor fp07s  found
 
-fp07Info = cell(size(TNames,1),1);
-for index = 1:size(TNames,1)
-    row = TNames(index,:);
-    [a, row] = calibrateProfiles(a, indicesSlow, indicesFast, Treference, row, pars, cfgObj, basename);
-    fp07Info{index} = row;
-end % for index
-TNames = vertcat(fp07Info{:});
-lag = median(TNames.lag);
-iBack = round(lag * a.fs_slow);
+TNames.fp = append(TNames.channel, "_counts"); % FP07 sensor converted to counts
+TNames.lp = append(TNames.channel, "_lp");     % FP07 counts low pass filtered to drop pre-emphasis
+TNames.RT_R0 = append(TNames.channel, "_RT_R0"); % ln(R_T / R_0)
+TNames.Ref = append(TNames.channel, "_Ref");   % Reference thermistor
+TNames.pred = append(TNames.channel, "_pred"); % Prediction variable name
 
-if contains(Treference, "_") % Something like JAC_T
-    parts = split(Treference, "_");
-    prefix = parts(1);
-else
-    prefix = "JAC_"; % Take a guess
+slow = table(); % Slow variables we'll use
+slow.TRef = a.(Treference);
+
+for i = 1:size(TNames,1)
+    row = TNames(i,:);
+    % Convert to counts/resistance
+    slow.(row.fp) = getFP07Temperature(a, row, a.fs_slow, a.fs_fast);
+    % Lowpass filter counts
+    slow.(row.lp) = lowPassFilter(slow.(row.fp), a.(Treference), a.fs_slow, a.W_slow, indicesSlow);
+    slow.(row.RT_R0) = compute_RT_R0(slow.(row.fp), a.cfgobj, row.channel); % ln(R_T / R_0) for fp07
 end
 
-names = string(fieldnames(a)); % All variable names
-names = names(startsWith(names, prefix)); % Ones that start with prefix
+% For each profile and channel find the sensor lag between the channel and reference temperature
+fp07Info = table();
+fp07Info.channel = strings(size(indicesSlow,2) * size(TNames, 1), 1); % n channels per profile
+fp07Info.lag = nan(size(fp07Info.channel));
+fp07Info.maxCorr = nan(size(fp07Info.channel));
 
-fprintf("%s shifting %s by %f seconds to match FP07(s)\n", basename, strjoin(names, ", "), lag);
+slow.qInProfile = false(size(slow.TRef));
 
-for name = names'
-    a.(name) = circshift(a.(name), iBack);
-end % for name
+for i = 1:size(indicesSlow,2) % Walk through each profile
+    ii = indicesSlow(1,i):indicesSlow(2,i); % Indices in this profile
+    slow.qInProfile(ii) = true; % These rows in slow are in a profile
+    sProf = slow(ii,:); % Just this profile
+    for j = 1:size(TNames,1) % Walk through each channel
+        index = size(TNames,1) * (i-1) + j;
+        fp07Info.channel(index) = TNames.channel(j);
+        [fp07Info.lag(index), fp07Info.maxCorr(index)] = ...
+            calcLag(sProf.TRef, sProf.(TNames.lp(j)), a.fs_slow, pars);
+    end % for j
+end % for i
 
-a.TNames = TNames;
+% For each channel summarize the lags for all the casts
+fp07Info.grp = findgroups(fp07Info.channel);
+fp07Info = rowfun(@mkFP07Stats, fp07Info, ...
+    "InputVariables", ["channel", "lag", "maxCorr"], ...
+    "GroupingVariables", "grp", ...
+    "OutputVariableNames", ...
+    ["channel", ...
+    "lag", "lagMin", "lagMax", "lagSigma", ...
+    "corr", "corrMin", "corrMax", "corrSigma"]);
+fp07Info = removevars(fp07Info, "grp");
+fp07Info = renamevars(fp07Info, "GroupCount", "n");
+fp07Info.name = repmat(basename, size(fp07Info.n));
+fp07Info.iShift = round(fp07Info.lag * a.fs_slow); % Bins to shift
+
+% Create lagged version of TRef for each sensor
+for i = 1:size(TNames,1)
+    slow.(TNames.Ref(i)) = circshift(slow.TRef, fp07Info.iShift(i));
+end
+
+slow.TRef_shifted = circshift(slow.TRef, round(mean(fp07Info.iShift)));
+
+% Add columns for the fit
+fp07Info.T0 = nan(size(fp07Info.name));
+fp07Info.T0_std = nan(size(fp07Info.name));
+fp07Info.beta = nan(size(fp07Info,1), pars.fp07_order);
+fp07Info.beta_std = nan(size(fp07Info,1), pars.fp07_order);
+
+fitTo = slow(slow.qInProfile,:); % All the samples in profiles
+
+% Fit to Stein-Hart for each sensor
+
+eqn = strings(pars.fp07_order,1);
+
+for i = 1:pars.fp07_order
+    if i == 1
+        eqn(i) = "RT_R0";
+    else
+        eqn(i) = sprintf("RT_R0^%d", i);
+    end
+end
+
+eqn = append("tgt ~ ", strjoin(eqn, "+"));
+
+fast = table();
+
+for i = 1:size(TNames,1) % Walk through the sensor pairs
+    row = TNames(i,:);
+    channel = row.channel;
+
+    tbl = table();
+    tbl.tgt = 1 ./ (fitTo.(row.Ref) + 273.15); % 1/K of lagged reference sensor
+    tbl.RT_R0 = fitTo.(row.RT_R0); % ln(R_T/R_0)
+
+    mdl = fitlm(tbl,eqn);
+    sigma = 1 ./ mdl.Coefficients.Estimate ./ mdl.Coefficients.tStat;
+
+    fp07Info.T0(i) = 1 ./ mdl.Coefficients.Estimate(1);
+    fp07Info.T0_std(i) = sigma(1);
+    fp07Info.beta(i,:) = 1 ./ mdl.Coefficients.Estimate(2:end);
+    fp07Info.beta_std(i,:) = sigma(2:end);
+
+    slow.(row.RT_R0) = compute_RT_R0(slow.(row.fp), a.cfgobj, channel); % Not low passed
+    slow.(row.pred) = 1 ./ predict(mdl, slow.(row.RT_R0)) - 273.15;
+
+    fast.(row.fp) = getFP07Temperature(a, row, a.fs_fast, a.fs_fast);
+    fast.(row.RT_R0) = compute_RT_R0(fast.(row.fp), a.cfgobj, channel); 
+    fast.(row.pred) = 1 ./ predict(mdl, fast.(row.RT_R0)) - 273.15;
+end % for i
+
+%% Replace values in a
+
+for i = 1:size(TNames,1)
+    row = TNames(i,:);
+    a.(append(row.channel, "_slow")) = slow.(row.pred);
+    a.(append(row.channel, "_fast")) = fast.(row.pred);
+end
+
+a.(Treference) = slow.TRef_shifted;
+a.fp07Info = fp07Info;
 end % fp07Calibrationa 
-
-%%
-function [a, TNames] = calibrateProfiles(a, indicesSlow, indicesFast, ...
-    Treference, TNames, pars, cfgObj, basename)
-arguments
-    a struct
-    indicesSlow (2,:) int64
-    indicesFast (2,:) int64
-    Treference string
-    TNames table
-    pars struct
-    cfgObj (1,:) struct
-    basename string
-end % arguments
-
-fs_slow = a.fs_slow;
-fs_fast = a.fs_fast;
-
-Tref = a.(Treference);
-Tfp07 = getFP07Temperature(a, TNames, fs_slow, fs_fast);
-TT = lowPassFilter(Tfp07, Treference, fs_slow, a.W_slow, indicesSlow); % Lowpass filter Tfp07
-
-% Get the lags for each profile
-lag = cell(size(indicesSlow,2),1);
-for index = 1:numel(lag)
-    ii = indicesSlow(1,index):indicesSlow(2,index);
-    [vLag, maxCorr] = calcLag(Tref(ii), TT(ii), fs_slow, pars);
-    lag{index} = struct( ...
-        "lag", vLag, ...
-        "maxCorr", maxCorr, ...
-        "n", numel(ii));
-end % for index
-lag = struct2table(vertcat(lag{:}));
-a.(append("fp07_lags_", TNames.channel)) = lag;
-TNames.minCorr = min(lag.maxCorr);
-TNames.medianCorr = median(lag.maxCorr);
-TNames.maxCorr = max(lag.maxCorr);
-
-lag = sortrows(lag, "lag"); % Order by lag
-lag.cumsum = cumsum(lag.n .* lag.maxCorr); % weighting to find "median"
-[~, ix] = min(abs(lag.cumsum - max(lag.cumsum)/2)); % argmin of midpoint
-TNames.lag = lag.lag(ix); % psuedo median
-iBack = round(TNames.lag * fs_slow); % Index to shift
-
-Tref = circshift(Tref, iBack); % Shift JACT to when FP07 has the highest correlation
-
-% Prepare data set to look at using all the profile
-% odas only uses one.
-
-tbl = cell(size(indicesSlow,2),1); % To hold FP07 mined information
-
-for index = 1:size(tbl,1)
-    ii = indicesSlow(1,index):indicesSlow(2,index);
-    item = table();
-    item.Tref = Tref(ii);
-    item.T = TT(ii);
-    tbl{index} = item;
-end % for index
-tbl = vertcat(tbl{:});
-
-tbl.Tref_regress = 1 ./ (tbl.Tref + 273.15); % C -> 1/K
-
-order = pars.fp07_order; % Polynomial order
-TrefMinRange = 8;
-if pars.fp07_warn_range && order > 1 && range(tbl.Tref) <= TrefMinRange
-    warning("Temperature range, %g, is less than %g degrees and order(%g) > 1\nRecommend using order 1", ...
-        range(tbl.Tref), TrefMinRange, order);
-end % if range
-
-tbl.RT_R0 = compute_RT_R0(tbl.T, cfgObj, TNames.channel);
-
-% Generate the coefficients for this thermistor
-pFit = polyfit(tbl.RT_R0, tbl.Tref_regress, order);
-TNames.T_0 = 1 ./ pFit(end); % Constant term
-TNames.beta = 1 ./ pFit(end-1:-1:1);
-
-fprintf("%s %s lag %f T_0 %g beta %s\n", ...
-    basename, TNames.channel, TNames.lag, TNames.T_0, num2str(TNames.beta));
-
-% The slow predicted temperature for the whole series
-RT_R0 = compute_RT_R0(TT, cfgObj, TNames.channel);
-Tslow = 1 ./ polyval(pFit, RT_R0) - 273.15;
-a.(append(TNames.channel, "_slow")) = Tslow;
-
-if ~ismissing(TNames.fast)
-    TT = lowPassFilter(a.(TNames.fast), Treference, fs_fast, a.W_fast, indicesFast);
-    RT_R0 = compute_RT_R0(TT, cfgObj, TNames.channel);
-    Tfast = 1 ./ polyval(pFit, RT_R0) - 273.15;
-    a.(append(TNames.channel, "_fast")) = Tfast;
-end % if
-end % calibrateProfiles
 
 %%
 function RT_R0 = compute_RT_R0(T, cfgObj, channel)
@@ -197,7 +193,7 @@ if isequal(Treference, "JAC_T")
     end
     W_mean = abs(Wsum / cnt);
     fc = 0.73 * sqrt(W_mean / 0.62); % in Hz from odas
-else % Sea-Bird Thermistor
+else % Sea-Bird Thermistor or hotel
     fc = fs_slow/3;
 end % if isequal
 [b,a] = butter(1, fc/(fs_slow/2)); % Low-pass filter parameters
@@ -236,18 +232,26 @@ lag = lags(iLag) / fs_slow; % Lag in seconds
 end % calcLag
 
 %%
+% Convert from physical units to counts which is linear in resistance
+%
 function Tfp07 = getFP07Temperature(a, TNames, fs_slow, fs_fast)
-arguments
-    a struct
-    TNames table
-    fs_slow double
-    fs_fast double
-end % arguments
+arguments (Input)
+    a struct           % Output of odas_p2mat
+    TNames (1,:) table % variable to convert
+    fs_slow double     % Slow sampling frequency in Hertz
+    fs_fast double     % Fast sampling frequency in Hertz
+end % arguments Input
+arguments (Output)
+    Tfp07 (:,1) double % FP07 converted to counts
+end % arguments Output
 
 % Get the FP07 temperature to use from the entire file
 
 if ismissing(TNames.fast) % No data with pre-emphasis, i.e. T1_dT1
     Tfp07 = a.(TNames.slow);
+    if fs_slow >= fs_fast % Upsample slow to fast
+        Tfp07 = interp1(a.t_slow, Tfp07, a.t_fast, "linear", "extrap");
+    end % if fs_slow
 else % Data with pre-emphasis, so downsample
     fp07Name = TNames.fast;
     if ismissing(TNames.slow)
@@ -256,13 +260,17 @@ else % Data with pre-emphasis, so downsample
         Tslow = a.(TNames.slow);
     end % if
     Tfp07 = deconvolve(char(fp07Name), Tslow, a.(fp07Name), fs_fast, a.setupfilestr);
-    ratio = round(fs_fast / fs_slow);
-    Tfp07 = reshape(Tfp07, ratio, []);
-    Tfp07 = mean(Tfp07)';
+    if fs_slow < fs_fast % Only downsample fast to slow
+        ratio = round(fs_fast / fs_slow); % Number of samples to downsample by
+        Tfp07 = reshape(Tfp07, ratio, []); % Reshape by number to downsample
+        Tfp07 = mean(Tfp07)'; % Down sample
+    end % if fs_slow
 end % ismissing
 end % getTemperatures
 
 %%
+% Get thermistor names
+%
 function [Treference, tbl] = extractNames(a, Treference, basename)
 arguments
     a struct
@@ -309,3 +317,38 @@ else
         'VariableNames', {'channel', char(name)});
 end % if any
 end % extractVariables
+
+%%
+% Calculate summary statistics for the lags from each cast
+
+function [channel, lag, lagMin, lagMax, lagSigma, corr, corrMin, corrMax, corrSigma] = mkFP07Stats( ...
+    channel, lags, maxCorr)
+arguments (Input)
+    channel (:,1) string
+    lags (:,1) double
+    maxCorr (:,1) double
+end % arguments Input
+arguments (Output)
+    channel string
+    lag double
+    lagMin double
+    lagMax double
+    lagSigma double
+    corr double
+    corrMin double
+    corrMax double
+    corrSigma double
+end % arguments Output
+
+channel = channel(1);
+
+lag = median(lags, "omitnan");
+lagMin = min(lags, [], "omitnan");
+lagMax = max(lags, [], "omitnan");
+lagSigma = std(lags, "omitnan");
+
+corr = median(maxCorr, "omitnan");
+corrMin = min(maxCorr, [], "omitnan");
+corrMax = max(maxCorr, [], "omitnan");
+corrSigma = std(maxCorr, "omitnan");
+end % mkFP07Stats

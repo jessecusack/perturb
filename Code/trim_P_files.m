@@ -96,4 +96,5 @@ status = fclose(ifp);
 if status ~= 0
     fprintf("Problem closing %s, %s\n", ifn, ferror(ifp));
 end
+fprintf("Trimmed %s\n", ifn);
 end % trim_p_file

@@ -8,6 +8,11 @@ arguments (Output)
 end % arguments Output
 
 tbl = struct2table(dir(fullfile(p_file_root, p_file_pattern)));
+
+if isempty(tbl)
+    error("No files found for %s", fullfile(p_file_root, p_file_pattern));
+end % if isempty
+
 tbl = tbl( ...
     ~tbl.isdir ...
     & endsWith(tbl.name, ".p", "IgnoreCase", true) ...

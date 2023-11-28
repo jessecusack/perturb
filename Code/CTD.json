@@ -3,9 +3,9 @@
 	
 	"nameMap": {
 		"comment": "Table column name to NetCDF variable name",
-		"t": "time",
+		"bin": "time",
 		"T": "temp",
-		"P": "pressure",
+		"P_slow": "pressure",
 		"C": "cond",
 		"JAC_T": "temp",
 		"JAC_T_std": "temp_std",
@@ -27,10 +27,36 @@
 
 	"vars": {
 		"time": {
-			"units": "seconds since 1970-01-01 00:00:00",
-			"calendar": "proleptic_gregorian",
 			"long_name": "Time",
 			"standard_name": "time"
+		},
+		"t": {
+			"long_name": "Median slow time in bin",
+			"standard_name": "time"
+		},
+		"t0": {
+			"long_name": "Start time of profile",
+			"standard_name": "time"
+		},
+		"t1": {
+			"long_name": "End time of profile",
+			"standard_name": "time"
+		},
+		"tFast": {
+			"long_name": "Median fast time in bin",
+			"standard_name": "time"
+		},
+		"nFast": {
+			"units": "counts",
+			"long_name": "Number of fast samples",
+			"standard_name": "number_of_observations",
+			"coverage_content_type": "qualityInformation"
+		},
+		"nSlow": {
+			"units": "counts",
+			"long_name": "Number of slow samples",
+			"standard_name": "number_of_observations",
+			"coverage_content_type": "qualityInformation"
 		},
 		"temp": {
 			"units": "degree_C",
@@ -83,6 +109,22 @@
 			"long_name": "latitude",
 			"standard_name": "latitude"
 		},
+		"lon_min": {
+			"units": "degree_east",
+			"long_name": "Minimum longitude"
+		},
+		"lon_maximum": {
+			"units": "degree_east",
+			"long_name": "Maximum longitude"
+		},
+		"lat_min": {
+			"units": "degree_north",
+			"long_name": "Minimum latitude"
+		},
+		"lat_max": {
+			"units": "degree_north",
+			"long_name": "Maximum latitude"
+		},
 		"dtGPS": {
 			"units": "s",
 			"long_name": "Time difference",
@@ -133,7 +175,8 @@
 		},
 		"DO_T": {
 			"units": "degree_C",
-			"long_name": "dissolved oxygen temperature",
+			"long_name": "dissolved oxygen sensor temperature",
+			"standard_name": "temperature_of_sensor_for_oxygen_in_sea_water",
 			"coverage_content_type": "physicalMeasurement"
 		},
 		"DO_T_std": {
@@ -163,7 +206,7 @@
 	"global": {
 		"processing_level": 1,
 		"naming_authority": "org.cfconventions",
-		"standard_name_vocabulary": "CF Standard Name Table v72",
+		"standard_name_vocabulary": "CF Standard Name Table v83",
 		"Conventions": "CF-1.8, ACDD-1.3"
 	}
 }

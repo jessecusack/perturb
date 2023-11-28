@@ -124,6 +124,8 @@ if ismember("P_slow", tbl.Properties.VariableNames)
         lon = tbl.lon;
         lon(isnan(lon)) = longitude_default;
         try
+            P_slow = tbl.P_slow;
+            P_slow(P_slow < -1 | P_slow > 12000) = nan;
             tbl.SP = gsw_SP_from_C(tbl.(CName), tbl.(TName), tbl.P_slow); % Practical salinity
             tbl.SA = gsw_SA_from_SP(tbl.SP, tbl.P_slow, lon, lat); % Absolute salinity
             tbl.theta = gsw_CT_from_t(tbl.SA, tbl.(TName), tbl.P_slow); % Conservation T
@@ -141,8 +143,14 @@ end % if ismember P_slow
 
 fnCTD = fullfile(pars.ctd_root, append(row.name, ".mat"));
 row.fnCTD = fnCTD;
+
+cInfo = row(:,["name", "t0", "tEnd"]);
+cInfo = renamevars(cInfo, "tEnd", "t1"); % For NetCDF time range
+
+binned = struct("tbl", tbl, "info", cInfo);
+
 my_mk_directory(fnCTD);
-binned = struct("tbl", tbl, "info", row(:,["name", "t0", "tEnd"]));
+
 save(fnCTD, "-struct", "binned", pars.matlab_file_format);
 fprintf("%s: wrote %s\n", row.name, fnCTD);
 

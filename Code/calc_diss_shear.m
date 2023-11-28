@@ -21,24 +21,26 @@ arguments (Output)
     tbl table % Tabular form of diss struct
 end % arguments Output
 
-label = sprintf("%s cast %d", pInfo.name, pInfo.index);
+label = sprintf("%s(%d)", pInfo.name, pInfo.index);
 
-[dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo,label);
+[dissInfo, SH_HP, AA] = mk_diss_info(profile, pars, pInfo, label);
+
+dNames = ["speed", "T", "t", "P"]; % Names that might need trimmed
 
 if pars.diss_trim_top && pars.trim_calculate % Trim the top of the profile
-    q = dissInfo.P >= (pInfo.trim_depth + pars.trim_extra_depth);
+    q = dissInfo.P >= (pInfo.trim_depth + pars.diss_trim_top_offset);
     SH_HP = SH_HP(q,:);
     AA  = AA(q,:);
-    for name = ["speed", "T", "t", "P"]
+    for name = dNames
         dissInfo.(name) = dissInfo.(name)(q);
     end % for name
 end % if trim_use
 
-if pars.diss_trim_bottom && pars.bbl_calculate % Trim the bottom of the profile
-    q = dissInfo.P <= (pInfo.bottomDepth + pars.bbl_extraDepth);
+if pars.diss_trim_bottom && pars.bottom_calculate % Trim the bottom of the profile
+    q = dissInfo.P <= (pInfo.bottom_depth + pars.diss_trim_bottom_offset);
     SH_HP = SH_HP(q,:);
     AA  = AA(q,:);
-    for name = ["speed", "T", "t", "P"]
+    for name = dNames
         dissInfo.(name) = dissInfo.(name)(q);
     end % for name
 end % if trim_use
@@ -53,7 +55,7 @@ if size(SH_HP,1) < dissInfo.diss_length % Not enough data to work with
 end % if size <
 
 if pars.diss_reverse
-    % flip upside down so the dissipation is calculated later to earlier in time (think BBL)
+    % flip upside down so the dissipation is calculated end to start in time (think BBL)
     SH_HP = flipud(SH_HP);
     AA = flipud(AA);
     for name = ["speed", "T", "t", "P"]
@@ -65,7 +67,13 @@ try % dissipation estimates
     diss = get_diss_odas(SH_HP, AA, dissInfo); % ODAS library dissipation estimate
     diss = mk_epsilon_mean(diss, pars.diss_epsilon_minimum, pars.diss_warning_fraction, label);
     diss.depth = interp1(profile.slow.t_slow, profile.slow.depth, diss.t, "linear", "extrap");
+
+    if ismember("elevation", profile.fast.Properties.VariableNames)
+        diss.elevation = interp1(profile.fast.t_fast, profile.fast.elevation, diss.t, "linear", "extrap");
+    end % if elevation
+
     diss.t = pInfo.t0 + seconds(diss.t - diss.t(1));
+
     [dInfo, tbl] = mk_diss_struct(pInfo, diss);
 catch ME
     rethrow(ME)
@@ -88,7 +96,7 @@ arguments(Output)
 end % arguments Output
 
 % I don't like hardcoding names, but for a single dissipation estimate, size fails
-pNames = ["speed", "nu", "P", "T", "t", "AOA", "epsilonMean", "epsilonLnSigma", "depth"];
+pNames = ["speed", "nu", "P", "T", "t", "AOA", "epsilonMean", "epsilonLnSigma", "depth", "elevation"];
 npNames = ["e", "K_max", "method", "dof_e", "mad", "FM"];
 mnpNames = "Nasmyth_spec";
 mnnpNames = ["sh_clean", "sh", "AA", "UA"];

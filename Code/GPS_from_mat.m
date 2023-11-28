@@ -46,7 +46,27 @@ classdef GPS_from_mat <GPS_base_class
 
             if ~ismissing(obj.variableName)
                 a = a.(obj.variableName);
-            end % ~ isempty
+            end % ~ ismissing
+
+            if isstruct(a)
+                names = string(fieldnames(a));
+            elseif istable(a)
+                names = string(a.Properties.VariableNames);
+            else
+                error("Unknown object, %s, in %s", class(a), obj.filename);
+            end
+
+            if ~ismember(obj.timeName, names)
+                error("Time variable name, %s, is not in %s", obj.timeName, obj.filename);
+            end
+
+            if ~ismember(obj.latName, names)
+                error("Latitude variable name, %s, is not in %s", obj.latName, obj.filename);
+            end
+
+            if ~ismember(obj.lonName, names)
+                error("Longitude variable name, %s, is not in %s", obj.lonName, obj.filename);
+            end
 
             obj = obj.addTimeLatLon(a.(obj.timeName), a.(obj.latName), a.(obj.lonName));
         end % initialize

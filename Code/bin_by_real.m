@@ -31,7 +31,7 @@ end % if ~isa
 tblNames = string(tbl.Properties.VariableNames);
 
 if ~ismember(sName, tblNames)
-    error("%s is not in table, %s", sName, tblNames);
+    error("%s is not in table, %s", sName, strjoin(tblNames, ","));
 end % if ~ismember
 
 if isempty(vNames) || numel(vNames) == 0 || ismissing(vNames) % No names specified, so use all columns
@@ -49,6 +49,14 @@ end % ~isreal
 
 d0 = floor(min(tbl.(sName)) / binSize) * binSize; % Find a smaller starting value rounded to binSize
 d1 = ceil(max(tbl.(sName)) / binSize) * binSize; % Find a larger ending value rounded to binSize
+
+if isnan(d0) % We can't interpolate
+    binned = table();
+    binned.n = uint32(zeros(0,1));
+    binned.bin = nan(0,1);
+
+    return;
+end % if isnan
 
 dBin = d0:binSize:(d1 + binSize/2); % All the bins
 

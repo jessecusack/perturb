@@ -3,7 +3,7 @@
 %
 % Oct-2023, Pat Welch, pat@mousebrains.com
 
-year = "2023";
+year = "2022";
 project = "ARCTERX";
 subproj = "Interior";
 
@@ -16,8 +16,8 @@ output_root = fullfile(parent_root, "Processed/VMP");
 
 addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 
-GPS_filename = fullfile(data_root, "ship/ship.gps.mat");
-GPS_class = GPS_from_mat(GPS_filename, missing);
+GPS_filename = fullfile(data_root, "GPS/gps.nc");
+GPS_class = GPS_from_netCDF(GPS_filename);
 
 pars = process_P_files( ...
     "debug", true, ...
