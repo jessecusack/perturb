@@ -61,6 +61,10 @@ if any(cellfun(@isempty, data.data))
     delete(dd); % Cleanup after myself
 end % if any
 
+t0 = cellfun(@(x) x.info.t0(1), data.data, "UniformOutput", true); % First time of each block
+[~, ix] = sort(t0);
+data.data = data.data(ix); % Sort temporaly into ascending order
+
 if pars.profile_direction == "time"
     tbl = glue_lengthwise("bin", data.data);
 else
