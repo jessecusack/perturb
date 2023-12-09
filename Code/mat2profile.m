@@ -120,6 +120,7 @@ for j = 1:nProfiles
     for name = namesOtro
         profile.(name) = mat.(name);
     end % for namesOtro
+
     profile.lat = gps.lat(profile.slow.t); % Latitude at start of profile
     profile.lon = gps.lon(profile.slow.t); % Longitude at start of profile
     profile.dtGPS = gps.dt(profile.slow.t); % Nearest GPS timestamp
