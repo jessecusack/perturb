@@ -68,7 +68,11 @@ classdef GPS_base_class
                 val double
             end % arguments Output
             
-            val = interp1(obj.tbl.time, obj.tbl.lat, time, obj.method, "extrap");
+            if isscalar(obj.tbl.lat)
+                val = obj.tbl.lat
+            else
+                val = interp1(obj.tbl.time, obj.tbl.lat, time, obj.method, "extrap");
+            end
         end % lat
 
         function val = lon(obj, time)
@@ -80,7 +84,11 @@ classdef GPS_base_class
                 val double
             end % arguments Output
 
-            val = interp1(obj.tbl.time, obj.tbl.lon, time, obj.method, "extrap");
+            if isscalar(obj.tbl.lon)
+                val = obj.tbl.lon
+            else
+                val = interp1(obj.tbl.time, obj.tbl.lon, time, obj.method, "extrap");
+            end
         end % lon
 
         function val = dt(obj, time)
@@ -92,7 +100,15 @@ classdef GPS_base_class
                 val double
             end % arguments Output
 
-            tNearest = interp1(obj.tbl.time, obj.tbl.time, time, "nearest", "extrap");
+            if isscalar(obj.tbl.time)
+                if isnat(obj.tbl.time)
+                    tNearest = time;
+                else
+                    tNearest = obj.tbl.time;
+                end
+            else
+                tNearest = interp1(obj.tbl.time, obj.tbl.time, time, "nearest", "extrap");
+            end
             val = abs(seconds(tNearest - time));
         end % dt
     end % methods
