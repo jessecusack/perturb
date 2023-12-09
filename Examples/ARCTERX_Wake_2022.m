@@ -47,4 +47,4 @@ catch ME
     disp(getReport(ME));
 end % try
 
-path(origPath);
+path(origPath); % Restore the original path

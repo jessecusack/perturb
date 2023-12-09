@@ -23,7 +23,7 @@ output_root = fullfile(parent_root, "Processed", MR_dir);
 origPath = addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
 
 try
-    GPS_class = GPS_from_vectors(datetime(["2023-04-01", "2023-06-01"]), 6.930167 + [0, 0], 134.199417 + [0,0]);
+    GPS_class = GPS_from_fixed(6.930167, 134.199417);
 
     % "p2mat_speed_cutout", 0.01, ... % Don't floor the speed at 0.05, the default
 
@@ -68,4 +68,4 @@ catch ME
     disp(getReport(ME));
 end % try
 
-path(origPath);
+path(origPath); % Restore the original path
