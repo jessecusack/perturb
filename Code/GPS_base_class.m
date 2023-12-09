@@ -7,6 +7,7 @@ classdef GPS_base_class
     properties
         tbl
         method
+        qFixed
     end % properties
 
     methods
@@ -29,6 +30,7 @@ classdef GPS_base_class
                 obj GPS_base_class
             end % arguments Output
 
+            disp(obj)
             error("No initialization method provided.")
         end % initialize
 
@@ -47,7 +49,7 @@ classdef GPS_base_class
                 error("Time must be a vector of datetime objects, %s", class(time));
             end % if isdatetime
 
-	    if ~isequal(size(time), size(latitude)) || ~isequal(size(time), size(longitude))
+            if ~isequal(size(time), size(latitude)) || ~isequal(size(time), size(longitude))
                 error("Time, latitude, and longitude must all have the same size.")
             end % if isdatetime
 
@@ -57,6 +59,7 @@ classdef GPS_base_class
             obj.tbl = timetable(time);
             obj.tbl.lat = latitude(ix);
             obj.tbl.lon = longitude(ix);
+            obj.qFixed = size(obj.tbl,1) == 1;
         end
 
         function val = lat(obj, time)
@@ -67,9 +70,9 @@ classdef GPS_base_class
             arguments (Output)
                 val double
             end % arguments Output
-            
-            if isscalar(obj.tbl.lat)
-                val = obj.tbl.lat
+
+            if obj.qFixed
+                val = obj.tbl.lat + zeros(size(time));
             else
                 val = interp1(obj.tbl.time, obj.tbl.lat, time, obj.method, "extrap");
             end
@@ -84,8 +87,8 @@ classdef GPS_base_class
                 val double
             end % arguments Output
 
-            if isscalar(obj.tbl.lon)
-                val = obj.tbl.lon
+            if obj.qFixed
+                val = obj.tbl.lon + zeros(size(time));
             else
                 val = interp1(obj.tbl.time, obj.tbl.lon, time, obj.method, "extrap");
             end
@@ -100,12 +103,8 @@ classdef GPS_base_class
                 val double
             end % arguments Output
 
-            if isscalar(obj.tbl.time)
-                if isnat(obj.tbl.time)
-                    tNearest = time;
-                else
-                    tNearest = obj.tbl.time;
-                end
+            if obj.qFixed
+                tNearest = time + zeros(size(time));
             else
                 tNearest = interp1(obj.tbl.time, obj.tbl.time, time, "nearest", "extrap");
             end

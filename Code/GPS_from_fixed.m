@@ -6,8 +6,8 @@
 
 classdef GPS_from_fixed <GPS_base_class
     properties
-        lat
-        lon
+        latValue
+        lonValue
     end % properaties
 
     methods
@@ -21,8 +21,8 @@ classdef GPS_from_fixed <GPS_base_class
             end % arguments Output
 
             obj = obj@GPS_base_class("linear");
-            obj.lat = lat;
-            obj.lon = lon;
+            obj.latValue = lat;
+            obj.lonValue = lon;
         end % GPS_from_fixed
 
         function obj = initialize(obj)
@@ -33,7 +33,7 @@ classdef GPS_from_fixed <GPS_base_class
                 obj GPS_from_fixed
             end % arguments Output
 
-            obj = obj.addTimeLatLon(NaT, obj.lat, obj.lon);
+            obj = obj.addTimeLatLon(datetime("now"), obj.latValue, obj.lonValue);
         end % initialize
     end % methods
 end % classdef % GPS_from_fixed
