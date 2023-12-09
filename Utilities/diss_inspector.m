@@ -27,18 +27,29 @@ addParameter(p, "debug", false, @islogical); % Enable debugging
 addParameter(p, "xLim", [], @(x) isdatetime(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "yLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "cLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
+addParameter(p, "diss_combo_root", [], @isdir);
+addParameter(p, "diss_root", [], @isdir);
+addParameter(p, "profile_root", [], @isdir);
 
 parse(p, varargin{:});
 a = p.Results(1);
+
 pars = a.pars;
 
-if isempty(fieldnames(pars))
-    error("You must supply pars!");
-end % if isempty
-
 for name = setdiff(string(fieldnames(a))', "pars")
+    if ismember(name, p.UsingDefaults) && ~isequal(name, "figure"), continue; end
     pars.(name) = a.(name);
 end % for name
+
+required = ["diss_combo_root", "diss_root", "profile_root"];
+q = ismember(required, fieldnames(pars));
+if all(q), return; end
+
+if sum(~q) == 1
+    error("%s is required to be specified", required(~q));
+else
+    error("%s are required to be specified", strjoin(required(~q), ", "));
+end % if sum
 end % parse_arguments
 
 function mkPlot(pars)
@@ -67,9 +78,9 @@ linkaxes(h, "y"); % We'll use y linkage on many plots so split out from linkprop
 persistent hLink; % Unfortunately, hLink must be long lived to keep linkprop working
 hLink = linkprop(h, ["CLim", "XLim"]);
 
-if ~isempty(pars.xLim), xlim(pars.xLim); end
-if ~isempty(pars.yLim), ylim(pars.yLim); end
-if ~isempty(pars.cLim)
+if isfield(pars, "xLim") && ~isempty(pars.xLim), xlim(pars.xLim); end
+if isfield(pars, "yLim") && ~isempty(pars.yLim), ylim(pars.yLim); end
+if isfield(pars, "cLim") && ~isempty(pars.cLim)
     clim(pars.cLim);
 else
     clim(quantile(log10(combo.tbl.epsilonMean(:)), [0.05, 0.95]));
@@ -503,3 +514,18 @@ else % if qRedraw
     end
 end % if qRedraw
 end % mkProfilePlots
+
+%% This is a rewritten version of William's texstr code from ODAS
+
+function result = texstr(input, escChars)
+arguments (Input)
+    input string {mustBeNonempty}
+    escChars string = "_\"
+end % arguments Input
+arguments (Output)
+    result string
+end % arguments Output
+
+pattern = append("[", strrep(escChars, "\", "\\"), "]");
+result = regexprep(input, pattern, "\\$0");
+end % texstr
