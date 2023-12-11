@@ -93,7 +93,13 @@ addParameter(p, "diss_trim_top_offset", 0, @isreal); % Meters added to top trim 
 addParameter(p, "diss_trim_bottom_offset", 0, @isreal); % Meters added to bottom trim before dissipation calc
 addParameter(p, "diss_reverse", false, validLogical); % Calculate dissipation backwards in time, for BBL on downcast
 addParameter(p, "diss_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds
-addParameter(p, "diss_length_fac", 2, validPositive); % Multiples fft_length_sec to get dissipation length
+addParameter(p, "diss_length_fac", 2, @(x) x>=2); % Multiples fft_length_sec to get dissipation length
+addParameter(p, "diss_overlap_factor", 2, @(x) x>=0 && x<=1); % Distance of the overlap of successive dissipation estimates, 0-> none
+addParameter(p, "diss_fit_order", nan, validPositive); % Polynomial order of fit to shear spectra, in log-space
+addParameter(p, "diss_f_AA", nan, validPositive); % Cut-off frequency of the anti-aliasing filter
+addParameter(p, "diss_fit_2_isr", nan, validPositive); % Value of dissipation rate to switch from isr to integration
+addParameter(p, "diss_f_limit", nan, validPositive); % Maximum frequency to use when estimating the rate of dissipation
+addParameter(p, "diss_goodman", nan, validLogical); % Should Goodman coherent noise reduction be applied?
 addParameter(p, "diss_speed_source", "speed_fast", validString); % Source of axial flow speed
 addParameter(p, "diss_T_source", missing, validMissingString); % Temperature source for kinematic viscosity estimate
                                                                % If missing, then use T1*T1_norm+T2*T2_norm
@@ -110,6 +116,7 @@ addParameter(p, "binDiss_method", "mean", validMethod); % Which method to use to
 addParameter(p, "binDiss_width", 1, validPositive); % Bin width in (m)
 addParameter(p, "binDiss_variable", "depth", validString); % Which variable to bin by, unless direction==time
 %% CTD time binning parameters
+addParameter(p, "ctd_bin_enable", true, validLogical); % Should CTD be binned outside of profiles?
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
 addParameter(p, "ctd_bin_variables", ["JAC_T", "JAC_C", "Chlorophyll", "DO", "DO_T", "P_slow"], validString); % Sensors to time bin
 addParameter(p, "ctd_method", "mean", validMethod); % How to average
@@ -155,15 +162,18 @@ if ~isfolder(a.p_file_root)
     error("p_file_root is not a folder, %s", a.p_file_root);
 end % if
 
-names = string(p.Parameters);
+% Convert numbers from strings to double for non-default values
 
-% Convert numbers from strings to double
-for name = names(~ismember(names, p.UsingDefaults)) % Only work with non-default values
+for name = setdiff(string(p.Parameters), p.UsingDefaults) % Only work with non-default values
     x = str2double(a.(name));
     if ~isnan(x)
         a.(name) = x;
     end % if ~isnan
 end % for name
+
+if ismember("ctd_bin_enable", p.UsingDefaults) && isequal(a.profile_direction, "time")
+    a.ctd_bin_enable = false;
+end % if ~ismember
 end % getInfo
 
 %% Function to check if a value, string or numeric, is in a range, open/closed

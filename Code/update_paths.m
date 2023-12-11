@@ -58,8 +58,10 @@ my_mk_directory(pars.output_root); % Make sure the root path exists
 pars.p_trim_root      = mkRootDir(pars.output_root, "trimed_p_files", hashPtrimmed, jsonPtrimmed, pars.p_file_trim); % Trimmed P files
 pars.p_merge_root     = mkRootDir(pars.output_root, "merged_p_files", hashPmerged, jsonPmerged, pars.p_file_merge); % Merged P files
 pars.mat_root         = mkRootDir(pars.output_root, "Matfiles", hashP2Mat, jsonP2Mat);
-pars.ctd_root         = mkRootDir(pars.output_root, "CTD", hashCTD, jsonCTD);
-pars.ctd_combo_root   = mkRootDir(pars.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
+if pars.ctd_bin_enable
+    pars.ctd_root         = mkRootDir(pars.output_root, "CTD", hashCTD, jsonCTD);
+    pars.ctd_combo_root   = mkRootDir(pars.output_root, "CTD_combo", hashCTDcombo, jsonCTDcombo);
+end % if
 pars.profile_root     = mkRootDir(pars.output_root, "profiles", hashProf, jsonProf);
 pars.prof_binned_root = mkRootDir(pars.output_root, "profiles_binned", hashProfBin, jsonProfBin);
 pars.prof_combo_root  = mkRootDir(pars.output_root, "profiles_combo", hashProfCombo, jsonProfCombo);

@@ -159,7 +159,7 @@ gps = [];
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
 if ~row.qMatOkay, return; end % Failed going through odas_p2mat
 
-if ~ismissing(pars.CT_T_name) && ~ismissing(pars.CT_C_name)
+if pars.ctd_bin_enable && ~ismissing(pars.CT_T_name) && ~ismissing(pars.CT_C_name)
     % Use the profiles information to get "tow-yo" estimates for GPS locations.
     [row, ctdBinned, mat, gps] = ctd2binned(row, mat, pars); % time bin up scalers with no profiles
 end % if

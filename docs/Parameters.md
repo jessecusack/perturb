@@ -76,19 +76,25 @@ The parameter functionality is grouped by the parameter prefix:
   * `despike_A_smooth` Vibration/accelerometer sensors' smoothing parameter.
   * `despike_A_N_FS` Vibration/accelerometer sensors' spike removal scale in fs units.
 - `diss_` Dissipation estimation parameters. See ***get_diss_odas*** for some explanation. See [profile2diss](../Code/profile2diss.m)
-  * `diss_trim_top` Should the shallowest depths be trimmed by trim_depth prior to calculating the dissipation?
-  * `diss_trim_top_offset` Amount to add to trim_depth for dissipation estimate triming.
-  * `diss_trim_bottom` Should the deepest depths be trimmed by bbl_depth prior to calculating the dissipation?
-  * `diss_trim_bottom_offset` Amount to add to bottom crsh depth for dissipation estimate triming.
-  * `diss_reverse` Should the dissipations estimates be calculated from latest to earliest? For a downcast VMP, this is from the bottom up.
+  * `diss_epsilon_minimum` If epsilon values are less than this, set them to ***NaN*** This is useful when there is bad electronics in a channel.
+  * `diss_f_AA` Anti-aliasing cut off frequency
+  * `diss_f_limit` Maximum frequency to use when estimating the rate of dissipation
+  * `diss_fit_2_isr` Value of dissipation rate to switch from ISR to integration.
+  * `diss_fit_order` Polynomial order to fit shear spectra with.
   * `diss_fft_length_sec` FFT window size in seconds.
+  * `diss_goodman` Should Goodman coherent noise filter be applied? Default is true.
   * `diss_length_fac` Multiply `diss_fft_length_sec` by this parameter to the the dissipation length in seconds.
+  * `diss_overlap_factor` Successive dissipation overlaps, 0-> no overlap, default 2
+  * `diss_reverse` Should the dissipations estimates be calculated from latest to earliest? For a downcast VMP, this is from the bottom up.
   * `diss_speed_source` Data source for estimating the axial speed.
   * `diss_T_source` Temperature source, if missing then use T1*`diss_T1_norm` + T2*`diss_T2_norm`.
   * `diss_T1_norm`
   * `diss_T2_norm`
+  * `diss_trim_bottom` Should the deepest depths be trimmed by bbl_depth prior to calculating the dissipation?
+  * `diss_trim_bottom_offset` Amount to add to bottom crsh depth for dissipation estimate triming.
+  * `diss_trim_top` Should the shallowest depths be trimmed by trim_depth prior to calculating the dissipation?
+  * `diss_trim_top_offset` Amount to add to trim_depth for dissipation estimate triming.
   * `diss_warning_fraction` What fraction of epsilon pairs outside the 95% confidence interval should a warning be generated.
-  * `diss_epsilon_minimum` If epsilon values are less than this, set them to ***NaN*** This is useful when there is bad electronics in a channel.
 - `bin_` How profile bins are constructed. See [profile2binned](../Code/profile2binned.m)
   * `bin_method` How should profile bins be aggregated, mean or median?
   * `bin_width` Binning width in meters for down or up profiling direction or seconds for time.
@@ -96,6 +102,7 @@ The parameter functionality is grouped by the parameter prefix:
   * `binDiss_method` How should dissipation bins be aggregated, mean or median?
   * `binDiss_width` Binning width in meters for down or up profiling direction or seconds for time.
 - `ctd_` How to calculate CTD bins See [ctd2binned](../Code/ctd2binned.m)
+  * `ctd_bin_enable` Time bin CTD the variables in ctd_bin_variables over the whole P file. For downward casts, a tow-yo model is assumed for the lat/lon positions. The default is true for `profile_direction` down or up, false for time. 
   * `ctd_bin_dt` Bin width for scalar variable time binning in seconds.
   * `ctd_bin_variables` Scalar variables to bin, if they exist.
   * `ctd_method` How should scalar bins be aggregated, mean or median?
