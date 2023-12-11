@@ -94,7 +94,7 @@ addParameter(p, "diss_trim_bottom_offset", 0, @isreal); % Meters added to bottom
 addParameter(p, "diss_reverse", false, validLogical); % Calculate dissipation backwards in time, for BBL on downcast
 addParameter(p, "diss_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds
 addParameter(p, "diss_length_fac", 2, @(x) x>=2); % Multiples fft_length_sec to get dissipation length
-addParameter(p, "diss_overlap_factor", 2, validNotNegative); % Distance of the overlap of successive dissipation estimates, 0-> none
+addParameter(p, "diss_overlap_factor", 2, @(x) x>=0 && x<=1); % Distance of the overlap of successive dissipation estimates, 0-> none
 addParameter(p, "diss_fit_order", nan, validPositive); % Polynomial order of fit to shear spectra, in log-space
 addParameter(p, "diss_f_AA", nan, validPositive); % Cut-off frequency of the anti-aliasing filter
 addParameter(p, "diss_fit_2_isr", nan, validPositive); % Value of dissipation rate to switch from isr to integration
@@ -162,15 +162,18 @@ if ~isfolder(a.p_file_root)
     error("p_file_root is not a folder, %s", a.p_file_root);
 end % if
 
-names = string(p.Parameters);
+% Convert numbers from strings to double for non-default values
 
-% Convert numbers from strings to double
-for name = names(~ismember(names, p.UsingDefaults)) % Only work with non-default values
+for name = setdiff(string(p.Parameters), p.UsingDefaults) % Only work with non-default values
     x = str2double(a.(name));
     if ~isnan(x)
         a.(name) = x;
     end % if ~isnan
 end % for name
+
+if ismember("ctd_bin_enable", p.UsingDefaults) && isequal(a.profile_direction, "time")
+    a.ctd_bin_enable = false;
+end % if ~ismember
 end % getInfo
 
 %% Function to check if a value, string or numeric, is in a range, open/closed
