@@ -40,7 +40,6 @@ try
         "profile_direction", "time", ... % Not profiling, bin by time
         "p2mat_hotel_file", hotel_file, ... % CTD informationa.
         "p2mat_vehicle", "AUV_EMC", ... % Use EM sensor
-        "ctd_bin_enable", false, ... % Don't bin CTD outside of profiles
         "CT_T_name", "CTD_temp_slow", ... % No CT information
         "CT_C_name", "CTD_cond_slow", ... % No CT information
         "fp07_calibration", true, ... % Don't calibrate the FP07 sensors
