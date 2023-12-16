@@ -27,9 +27,10 @@ addParameter(p, "debug", false, @islogical); % Enable debugging
 addParameter(p, "xLim", [], @(x) isdatetime(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "yLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "cLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
-addParameter(p, "diss_combo_root", [], @isdir);
-addParameter(p, "diss_root", [], @isdir);
-addParameter(p, "profile_root", [], @isdir);
+addParameter(p, "diss_combo_root", [], @isfolder);
+addParameter(p, "diss_root", [], @isfolder);
+addParameter(p, "profile_root", [], @isfolder);
+addParameter(p, "dtMax", minutes(10), @isduration); % Maximum time between casts to consider consecutive
 
 parse(p, varargin{:});
 a = p.Results(1);
@@ -37,7 +38,7 @@ a = p.Results(1);
 pars = a.pars;
 
 for name = setdiff(string(fieldnames(a))', "pars")
-    if ismember(name, p.UsingDefaults) && ~isequal(name, "figure"), continue; end
+    if ismember(name, p.UsingDefaults) && ~ismember(name, ["figure", "dtMax"]), continue; end
     pars.(name) = a.(name);
 end % for name
 
@@ -57,64 +58,73 @@ arguments (Input)
     pars struct % paths to where output of process_P_files is stored
 end % arguments Input
 
-combo = load(fullfile(pars.diss_combo_root, "combo.mat"));
+combo = load(fullfile(pars.diss_combo_root, "combo.mat")); % Combined and binned dissipation estimates
+
+ud = struct();
+ud.pInfo = combo.info;
+ud.tbl = combo.tbl;
+ud.pars = pars;
+ud.tMid = combo.info.t0 + (combo.info.t1 - combo.info.t0) / 2; % Mid point of time bin
 
 fig = figure(pars.figure);
-% clf;
+
 t = tiledlayout(1, 3, "TileSpacing", "tight", "Padding", "tight");
-h = cell(prod(t.GridSize),1);
-h{1} = mkEpsilonPlot(combo, "epsilonMean");
+gInfo = cell(prod(t.GridSize), 1);
+
+gInfo{1} = mkEpsilonPlot(combo, "epsilonMean", pars.dtMax);
 ylabel("Depth (meters)");
-h{2} = mkEpsilonPlot(combo, "e_1");
-h{3} = mkEpsilonPlot(combo, "e_2", true);
+gInfo{2} = mkEpsilonPlot(combo, "e_1", pars.dtMax);
+gInfo{3} = mkEpsilonPlot(combo, "e_2", pars.dtMax, true);
+
+gInfo = vertcat(gInfo{:});
+
+ud.gInfo = gInfo;
+
 cb = colorbar("EastOutside");
 cb.Label.String = "log_{10}(\epsilon) (W kg^-1)";
 sgtitle(pars.diss_combo_root, "Interpreter", "none");
 
-h = vertcat(h{:});
-
-linkaxes(h, "y"); % We'll use y linkage on many plots so split out from linkprop
-
-persistent hLink; % Unfortunately, hLink must be long lived to keep linkprop working
-hLink = linkprop(h, ["CLim", "XLim"]);
+linkaxes(gInfo.tile, "y"); % We'll use y linkage on many plots so split out from linkprop
+ud.hLink = linkprop(gInfo.tile, ["CLim", "XLim"]); % hLink needs to be persistent
 
 if isfield(pars, "xLim") && ~isempty(pars.xLim), xlim(pars.xLim); end
 if isfield(pars, "yLim") && ~isempty(pars.yLim), ylim(pars.yLim); end
 if isfield(pars, "cLim") && ~isempty(pars.cLim)
     clim(pars.cLim);
 else
-    clim(quantile(log10(combo.tbl.epsilonMean(:)), [0.05, 0.95]));
+    clim(quantile(log10(combo.tbl.epsilonMean(:)), [0.01, 0.99]));
 end
 
-for ax = h(2:end-1)' % Turn off y axis labels of middle plots
-    ax.YAxis(1).Visible = "off";
-end
+fig.UserData = ud; % Before assignment of callbacks
 
-for ax = h' % Add callbacks to each plot
-    for kid = ax.Children'
-        kid.ButtonDownFcn = @(src, evt) myButtonPress(src, evt, pars, combo.info, h);
-    end
-end
-
-fig.KeyPressFcn = @(src, evt) mySpectralKeyPress(src, evt, pars, combo.info);
+set(gInfo.tile(2:end-1).YAxis, "Visible", "off");
+set(gInfo.pcolor, "ButtonDownFcn", @myButtonPress);
+set(fig, "KeyPressFcn", @myKeyPress)
 end % mkPlot
 
-function h = mkEpsilonPlot(combo, name, qRHS)
+function gInfo = mkEpsilonPlot(combo, name, dtMax, qRHS)
 arguments (Input)
     combo struct % binned dissipation information
     name string  % Dissipation column to plot
+    dtMax duration % Maximum time between casts to consider together
     qRHS logical = false % Use RHS axis
 end % arguments Input
 arguments (Output)
-    h matlab.graphics.axis.Axes % Output of nexttile
+    gInfo (1,4) table; % Graphics objects
 end % arguments Output
 
-h = nexttile();
+gInfo = table();
+gInfo.tile = nexttile();
+gInfo.pcolor = osgl_vmp_plot(combo.info.t0, combo.info.t1, combo.tbl.bin, log10(combo.tbl.(name)), dtMax);
 
-p = pcolor(combo.info.t0, combo.tbl.bin, log10(combo.tbl.(name)));
-p.LineStyle = "None";
-axis ij;
-grid("on");
+hold on;
+p = plot(...
+    [combo.info.t0(1), combo.info.t0(1)], [combo.tbl.bin(1), combo.tbl.bin(end)], "-k", ...
+    [combo.info.t0(1), combo.info.t1(end)], [combo.tbl.bin(1), combo.tbl.bin(1)], "-k", ...
+    "visible", "off");
+gInfo.xHair = p(1);
+gInfo.yHair = p(2);
+hold off;
 xlabel("Time (UTC)");
 title(name, "Interpreter", "none");
 
@@ -123,191 +133,286 @@ if qRHS
 end
 end % mkEpsilonPlot
 
-function myButtonPress(src, evt, pars, pInfo, h)
-ax = src.Parent; % Axis of what was clicked on
-t     = num2ruler(evt.IntersectionPoint(1), ax.XAxis); % Time of bin clicked
-depth = num2ruler(evt.IntersectionPoint(2), ax.YAxis); % Depth of bin clicked
+function myButtonPress(src, evt)
+arguments (Input)
+    src         % Source object of callback, surface
+    evt         % Callback hit event
+end
 
-[~, ix] = min(abs(t - pInfo.t0));
-if pInfo.t0(ix) > t, ix = max(ix - 1, 1); end % Time before t
+ax = src.Parent; % Axis of pcolor plot
+fig = ax.Parent.Parent; % Figure holding all the panels
+ud = fig.UserData; % Data from figure's UserData
 
-hExtra = cbCommon(pars, pInfo(ix,:), depth, h);
+pt = evt.IntersectionPoint; % where button was pressed
+tPt = num2ruler(pt(1), ax.XAxis); % datetime of point clicked
+yPt = num2ruler(pt(2), ax.YAxis); % depth of point clicked
 
-depths = [];
-for ax = hExtra'
-    for kid = ax.Children'
-        if endsWith(class(kid), "Patch"), continue; end
-        depths = kid.YData;
-        break;
-    end
-    if ~isempty(depths), break; end
-end % for item
+[~, ud.iProfile] = min(abs(ud.tMid - tPt));
+[~, ud.iDepth] = min(abs(ud.tbl.bin - yPt));
+ud.tPt = ud.tMid(ud.iProfile);
+ud.yPt = ud.tbl.bin(ud.iDepth);
 
-fig = src.Parent.Parent.Parent;
-fig.UserData = struct( ...
-    "t", t, ...
-    "iTime", ix, ...
-    "depth", depth, ...
-    "pars", pars, ...
-    "depths", depths, ...
-    "pInfo", pInfo, ...
-    "h", h);
-fig.KeyPressFcn = @mySpectralKeyPress;
+adjustCrosshair(ud);
+
+dInfo = mkDissPlots(ud);
+ud.depthVertices = dInfo.depthVertices;
+pInfo = mkProfilePlots(ud, yPt + ud.depthVertices);
+
+ud.dBars = dInfo.tbl.depthBar;
+ud.pBars = pInfo.tbl.depthBar;
+
+adjustDepthBar(ud.yPt, ud.depthVertices, ud.dBars, ud.pBars);
+
+for name = ["iProfile", "iDepth", "tPt", "yPt", "depthVertices", "dBars", "pBars"] % Only what was updated for speed
+    fig.UserData.(name) = ud.(name);
+end
 
 figure(fig); % Bring focus back to me
 end % myButtonPress
 
-function mySpectralKeyPress(src, evt)
-ud = src.UserData;
-iTime = ud.iTime;
-[~, iDepth] = min(abs(ud.depth - ud.depths));
+function myKeyPress(src, evt)
+arguments (Input)
+    src         % Source object of callback, surface
+    evt         % Callback hit event
+end % arguments Input
+
+ud = src.UserData; % UserData from the figure
+
+if ~isfield(ud, "iProfile"), return; end % Not initialized yet
+
+iProfile = ud.iProfile;
+iDepth = ud.iDepth;
 
 switch evt.Key
     case "leftarrow"
-        iTime = max(iTime - 1, 1);
+        iProfile = max(iProfile - 1, 1);
     case "rightarrow"
-        iTime = min(iTime + 1, size(ud.pInfo,1));
+        iProfile = min(iProfile + 1, numel(ud.tMid));
     case "uparrow"
         iDepth = max(iDepth - 1, 1);
     case "downarrow"
-        iDepth = min(iDepth + 1, length(ud.depths));
+        iDepth = min(iDepth + 1, size(ud.tbl,1));
 end
 
-depth = ud.depths(iDepth);
-src.UserData.depth = depth;
-src.UserData.iTime = iTime;
+ud.tPt = ud.tMid(iProfile);
+ud.yPt = ud.tbl.bin(iDepth);
 
-cbCommon(ud.pars, ud.pInfo(iTime,:), depth, ud.h);
-figure(src); % Bring focus back to me after mkDiagnosticPlots
-end % mySpectralButtonPress
+ud.iProfile = iProfile;
+ud.iDepth = iDepth;
 
-function hExtra = cbCommon(pars, row, depth, h)
-hExtra = mkDiagnosticPlots(pars, row, depth);
-linkaxes(vertcat(h, hExtra), "y"); % Link depths across figures
+dInfo = mkDissPlots(ud);
+ud.depthVertices = dInfo.depthVertices;
+pInfo = mkProfilePlots(ud, ud.yPt + ud.depthVertices);
 
-for ax = hExtra'
-    for kid = ax.Children'
-        if endsWith(class(kid), "Patch"), continue; end
-        kid.ButtonDownFcn = @(src, evt) myDiagButtonPress(src, evt, pars, row);
-    end % for kid
-end % for ax
+ud.dBars = dInfo.tbl.depthBar;
+ud.pBars = pInfo.tbl.depthBar;
+
+adjustCrosshair(ud);
+adjustDepthBar(ud.yPt, ud.depthVertices, ud.dBars, ud.pBars);
+
+for name = ["iProfile", "iDepth", "tPt", "yPt", "depthVertices", "dBars", "pBars"] % Only updated fields to save time
+    src.UserData.(name) = ud.(name);
 end
 
-function myDiagButtonPress(src, evt, pars, pInfo)
-ax = src.Parent; % Axis of what was clicked on
-depth = num2ruler(evt.IntersectionPoint(2), ax.YAxis); % Depth of bin clicked
-mkDiagnosticPlots(pars, pInfo, depth);
+figure(src); % Bring focus back to me
+end % myKeyPress
+
+function adjustCrosshair(ud)
+arguments (Input)
+    ud struct % UserData from fig with updated yPt and tPt
+end % arguments Input
+
+set(ud.gInfo.xHair, "XData", [ud.tPt, ud.tPt], "Visible", "on");
+set(ud.gInfo.yHair, "YData", [ud.yPt, ud.yPt], "Visible", "on");
+end % adjustCrosshair
+
+function adjustDepthBar(depth0, depthVertices, dBars, pBars)
+arguments (Input)
+    depth0 double
+    depthVertices (4,1) double
+    dBars (:,1)
+    pBars (:,1)
+end % arguments Input
+
+vertices = depth0 + depthVertices;
+
+for item = dBars'
+    if isgraphics(item) && ~isequal(item.Vertices(:,2), vertices)
+        item.Vertices(:,2) = vertices;
+    end
+end % for
+
+for item = pBars'
+    if isgraphics(item) && ~isequal(item.Vertices(:,2), vertices)
+        item.Vertices(:,2) = vertices;
+    end
+end % for
+end
+
+function myDiagButtonPress(src, evt)
+arguments (Input)
+    src % Source object clicked on
+    evt % Event
+end
+
+if ~isequal(get(src, "type"), "axes")
+    src = src.Parent;
+end
+
+myUD = src.Parent.Parent.UserData;
+fig = figure(myUD.figMaster);
+ud = fig.UserData; % Master figure's UserData
+
+yPt = num2ruler(evt.IntersectionPoint(2), src.YAxis); % depth of point clicked
+
+[~, ud.iDepth] = min(abs(ud.tbl.bin - yPt));
+ud.yPt = ud.tbl.bin(ud.iDepth);
+
+mkDissPlots(ud);
+
+adjustCrosshair(ud);
+adjustDepthBar(ud.yPt, ud.depthVertices, ud.dBars, ud.pBars);
+
+for name = ["iDepth", "yPt"] % Only updated fields to save time
+    fig.UserData.(name) = ud.(name);
+end
 end % myDiagButtonPress
 
-function h = mkDiagnosticPlots(pars, pInfo, depth)
+function myDiagKeyPress(src, evt)
 arguments (Input)
-    pars struct
-    pInfo (1,:) table
-    depth double
-end % arguments (Input)
-arguments (Output)
-    h (:,1) % Array of axes from nexttile
-end % arguments Output
+    src         % Source object of callback, surface
+    evt         % Callback hit event
+end % arguments Input
 
-[h0, depthVertices] = mkDissPlots(pars, pInfo, depth);
-h1 = mkProfilePlots(pars, pInfo, depthVertices);
+fig = figure(src.UserData.figMaster);
+ud = fig.UserData; % Master figure's UserData
 
-h = vertcat(h0, h1);
-end % mkDiagnosticPlots
+iDepth = ud.iDepth;
 
-function [h, depthVertices] = mkDissPlots(pars, pInfo, depth)
-arguments (Input)
-    pars struct
-    pInfo (1,:) table
-    depth double
-end % arguments (Input)
-arguments (Output)
-    h (:,1) % Array of axes from nexttile
-    depthVertices (4,1) double % Vertices of depth rectangle
-end % arguments Output
-
-persistent fnDiss df iProfile tiles % Long lived variables so we're not reloading unless needed
-
-fn = fullfile(pars.diss_root, append(pInfo.name, ".mat"));
-if ~isequal(fnDiss, fn)
-    df = load(fn);
-    fnDiss = fn;
+switch evt.Key
+    case "uparrow"
+        iDepth = max(iDepth - 1, 1);
+    case "downarrow"
+        iDepth = min(iDepth + 1, size(ud.tbl,1));
 end
 
-qRedraw = ~isequal(pInfo.index, iProfile);
+ud.yPt = ud.tbl.bin(iDepth);
+ud.iDepth = iDepth;
 
-iProfile = pInfo.index;
-dInfo = df.info(iProfile,:);
-profile = df.profiles{iProfile};
+dInfo = mkDissPlots(ud);
 
-[~, iMin] = min(abs(profile.depth - depth));
-if profile.depth(iMin) > depth, iMin = max(iMin  - 1, 1); end
+adjustCrosshair(ud);
+adjustDepthBar(ud.yPt, ud.depthVertices, ud.dBars, ud.pBars);
 
-depthm1 = profile.depth(max(iMin - 1, 1));
-depth0  = profile.depth(iMin);
-depthp1 = profile.depth(min(iMin + 1, length(profile.depth)));
-depthTop = (depthm1 + depth0) / 2;
-depthBot = (depthp1 + depth0) / 2;
-depthVertices = [depthTop, depthTop, depthBot, depthBot];
+for name = ["iDepth", "yPt"] % Only updated fields to save time
+    fig.UserData.(name) = ud.(name);
+end
+figure(src); % Bring focus back to me
+end % myDiagKeyPress
 
-if qRedraw
-    figure(pars.figure+1);
-    % clf;
-    t = tiledlayout(1,6);
-    h = cell(prod(t.GridSize),1);
+function gInfo = mkDissPlots(ud)
+arguments (Input)
+    ud struct % UserData from main figure
+end % arguments (Input)
+arguments (Output)
+    gInfo struct % Information for dissipation related plots
+end % arguments Output
 
-    h{1} = nexttile();
-    plot(log10(profile.e), profile.depth, ".-", ...
-        log10(profile.epsilonMean), profile.depth, "o-");
+fig = figure(ud.pars.figure + 1); % Dissipation plots figure
+
+if isstruct(fig.UserData)
+    gInfo = fig.UserData;
+else
+    gInfo = struct();
+end
+
+qProfile = isfield(gInfo, "iProfile") && isequal(gInfo.iProfile, ud.iProfile);
+qDepth = isfield(gInfo, "iDepth") && isequal(gInfo.iDepth, ud.iDepth);
+
+if qProfile && qDepth, return; end % Nothing changed
+
+row = ud.pInfo(ud.iProfile,:);
+
+if ~isfield(gInfo, "name") || ~isequal(gInfo.name, row.name)
+    fn = fullfile(ud.pars.diss_root, append(row.name, ".mat"));
+    gInfo.data = load(fn);
+    gInfo.name = row.name;
+    fprintf("Loaded %s\n", fn);
+end
+
+gInfo.iProfile = ud.iProfile;
+gInfo.iDepth = ud.iDepth;
+gInfo.figMaster = ud.pars.figure;
+
+pInfo = gInfo.data.info(row.index,:);
+profile = gInfo.data.profiles{row.index};
+
+depth0 = ud.tbl.bin(ud.iDepth);
+[~, iProfileMin] = min(abs(profile.depth - depth0));
+halfWidth = 0.5 * pInfo.diss_length * profile.speed(iProfileMin) / pInfo.fs_fast;
+gInfo.depthVertices = halfWidth * [-1, -1, 1, 1];
+
+if qProfile % Profile didn't change, only the depth, no need to redraw profile figures
+    mkSpectralPlot(ud, gInfo, row, profile(iProfileMin,:));
+    return;
+end
+
+figure(fig);
+t = tiledlayout(1,6);
+tbl = table();
+tbl.tile = gobjects(prod(t.GridSize), 1);
+tbl.depthBar = gobjects(size(tbl,1), 1);
+
+tbl.tile(1) = nexttile();
+plot(log10(profile.e), profile.depth, ".-", ...
+    log10(profile.epsilonMean), profile.depth, "o-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+ylabel ("Depth (m)");
+xlabel("log_{10}(\epsilon) (W kg^{-1})");
+axis tight;
+tbl.depthBar(1) = drawDepthBar(depth0 + gInfo.depthVertices); % After axis tight
+
+items = [ ...
+    "FM", "FM", "."; ...
+    "method", "Method", "-"; ...
+    "speed", "Speed (m/s)", "-"; ...
+    "nu", "\nu (m^2/s)", "-"; ...
+    "T", "T (C)", "-"; ...
+    ];
+
+for i = 1:size(items,1)
+    item = items(i,:);
+    tbl.tile(i+1) = nexttile();
+    plot(profile.(item(1)), profile.depth, item(3), ...
+        "ButtonDownFcn", @myDiagButtonPress);
     axis ij;
     grid on;
-    ylabel ("Depth (m)");
-    xlabel("log_{10}(\epsilon) (W kg^{-1})");
+    xlabel(item(2));
     axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+    tbl.depthBar(i+1) = drawDepthBar(depth0 + gInfo.depthVertices); % After axis tight
+end
 
-    items = [ ...
-        "FM", "FM", "."; ...
-        "method", "Method", "-"; ...
-        "speed", "Speed (m/s)", "-"; ...
-        "nu", "\nu (m^2/s)", "-"; ...
-        "T", "T (C)", "-"; ...
-        ];
+sgtitle(sprintf("%s profile %d, %s to %s", gInfo.name, row.index, row.t0, row.t1), ...
+    "Interpreter", "none");
 
-    for i = 1:size(items,1)
-        item = items(i,:);
-        h{i+1} = nexttile();
-        plot(profile.(item(1)), profile.depth, item(3));
-        axis ij;
-        grid on;
-        xlabel(item(2));
-        axis tight;
-        drawDepthBar(depthVertices); % After axis tight
-    end
+gInfo.tbl = tbl;
+set(fig, "UserData", gInfo);
 
-    sgtitle(sprintf("%s profile %d, %s to %s", pInfo.name, iProfile, dInfo.t0, dInfo.t1), ...
-        "Interpreter", "none");
+mkSpectralPlot(ud, gInfo, row, profile(iProfileMin,:));
 
-    h = vertcat(h{:});
-    tiles = h;
-else
-    h = tiles;
-    for ax = h'
-        for kid = ax.Children'
-            if ~endsWith(class(kid), "Patch"), continue; end
-            kid.YData = depthVertices;
-            break;
-        end
-    end % for ax
-end % if qRedraw
-
-mkSpectralPlot(pars, profile(iMin,:), dInfo);
+set(tbl.tile, "ButtonDownFcn", @myDiagButtonPress);
+set(fig, "KeyPressFcn", @myDiagKeyPress)
 end % mkDissPlots
 
-function drawDepthBar(depthVertices)
+function h = drawDepthBar(depthVertices)
 arguments (Input)
     depthVertices(4,1) double
-end % arguments (Input)
+end % arguments Input
+arguments (Output)
+    h % Output of fill
+end % arguments Output
 
 lhs = min(xlim);
 rhs = max(xlim);
@@ -315,18 +420,19 @@ rhs = max(xlim);
 alpha = 0.25;
 
 hold on;
-fill([lhs, rhs, rhs, lhs], depthVertices, ...
+h = fill([lhs, rhs, rhs, lhs], depthVertices, ...
     [0, 0, 0], ...
     "FaceAlpha", alpha, ...
     "EdgeAlpha", alpha);
 hold off;
 end % drawDepthBar
 
-function mkSpectralPlot(pars, row, pInfo)
+function mkSpectralPlot(ud, gInfo, pInfo, row)
 arguments (Input)
-    pars struct
-    row (1,:) table
-    pInfo (1,:) table
+    ud struct % Main figure UserData
+    gInfo struct % Dissipation info
+    pInfo (1,:) table % Profile information
+    row (1,:) table % pInfo to plot data for
 end % arguments Input
 
 K = row.K;
@@ -336,8 +442,7 @@ Nasmyth_spec = squeeze(row.Nasmyth_spec);
 epsilon = row.e;
 Kmax = row.K_max;
 
-figure(pars.figure+2);
-% clf;
+figure(ud.pars.figure+2);
 colors = get(gca, "ColorOrder");
 
 tits = strings(4, numel(Kmax));
@@ -370,7 +475,7 @@ ylabel("\Phi(k) (s^{-2} cpm^{-1})");
 xlabel("k (cpm)");
 
 title([ ...
-    sprintf("%s %s profile %d", texstr(pInfo.name), pInfo.t0, pInfo.index), ...
+    sprintf("%s %s profile %d", texstr(gInfo.name), pInfo.t0, pInfo.index), ...
     sprintf("Depth=%.1f m FM=[%s] method=[%s] $$log_{10}(\\epsilon) = %.2f\\pm%.2f$$", ...
     row.depth, ...
     num2str(row.FM, 2), ...
@@ -381,138 +486,145 @@ title([ ...
     "interpreter", "latex");
 end % mkSpectralPlot
 
-function h = mkProfilePlots(pars, dInfo, depthVertices)
+function gInfo = mkProfilePlots(ud, depthVertices)
 arguments (Input)
-    pars struct
-    dInfo (1,:) table
-    depthVertices (4,1) double
+    ud struct % Userdata from main figure
+    depthVertices (4,1) double % Corners of depth box
 end
 arguments (Output)
-    h (:,1) % Array of axis from next tile
+    gInfo struct % struct of graphics objects
 end
 
-persistent fnProf df iProfile tiles
+fig = figure(ud.pars.figure+3);
 
-fn = fullfile(pars.profile_root, append(dInfo.name, ".mat"));
-
-if ~isequal(fnProf, fn)
-    df = load(fn);
-    fnProf = fn;
+if isstruct(fig.UserData)
+    gInfo = fig.UserData;
+else
+    gInfo = struct();
 end
 
-qRedraw = ~isequal(iProfile, dInfo.index);
+if isfield(gInfo, "iProfile") && isequal(gInfo.iProfile, ud.iProfile)
+    return;
+end % No need to do anything
 
-iProfile = dInfo.index;
-pInfo = df.pInfo(iProfile,:);
+row = ud.pInfo(ud.iProfile,:);
+gInfo.iProfile = ud.iProfile;
+gInfo.figMaster = ud.pars.figure;
 
-if qRedraw
-    profile = df.profiles{iProfile};
-    slow = profile.slow;
-    fast = profile.fast;
+if ~isfield(gInfo, "name") || ~isequal(gInfo.name, row.name) % We need to load new data
+    fn = fullfile(ud.pars.profile_root, append(row.name, ".mat"));
+    gInfo.data = load(fn);
+end
 
-    qFast = true(size(fast, 1), 1);
-    qSlow = true(size(slow, 1), 1);
+pInfo = gInfo.data.pInfo(row.index,:);
+profile = gInfo.data.profiles{row.index};
+slow = profile.slow;
+fast = profile.fast;
 
-    pNames = string(pInfo.Properties.VariableNames);
-    if ismember("trim_depth", pNames)
-        qFast = fast.depth >= pInfo.trim_depth;
-        qSlow = slow.depth >= pInfo.trim_depth;
-    end % if ismember
+qFast = true(size(fast, 1), 1);
+qSlow = true(size(slow, 1), 1);
 
-    if ismember("bottom_depth", pNames)
-        qFast = qFast & fast.depth <= pInfo.bottom_depth;
-        qSlow = qSlow & slow.depth <= pInfo.bottom_depth;
-    end
+pNames = string(pInfo.Properties.VariableNames);
 
-    figure(pars.figure+3);
-    t = tiledlayout(1,6);
-    h = cell(prod(t.GridSize), 1);
+if ismember("trim_depth", pNames)
+    qFast = fast.depth >= pInfo.trim_depth;
+    qSlow = slow.depth >= pInfo.trim_depth;
+end % trim_depth
 
-    h{1} = nexttile();
-    plot(slow.JAC_T, slow.depth, "-", ...
+if ismember("bottom_depth", pNames)
+    qFast = qFast & fast.depth <= pInfo.bottom_depth;
+    qSlow = qSlow & slow.depth <= pInfo.bottom_depth;
+end % bottom_depth
+
+figure(fig);
+t = tiledlayout(1,6);
+tbl = table();
+tbl.tile = gobjects(prod(t.GridSize), 1);
+tbl.depthBar = gobjects(size(tbl,1), 1);
+
+tbl.tile(1) = nexttile();
+plot(slow.JAC_T, slow.depth, "-", ...
         fast.T1_fast, fast.depth, "-", ...
         fast.T2_fast, fast.depth, "-", ...
         slow.JAC_T(qSlow), slow.depth(qSlow), "-", ...
         fast.T1_fast(qFast), fast.depth(qFast), "-", ...
-        fast.T2_fast(qFast), fast.depth(qFast), "-");
-    axis ij;
-    grid on;
-    ylabel("Depth (m)");
-    xlabel ("T (C)");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+        fast.T2_fast(qFast), fast.depth(qFast), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+ylabel("Depth (m)");
+xlabel("T (C)");
+axis tight;
+tbl.depthBar(1) = drawDepthBar(depthVertices);
 
-    h{2} = nexttile();
-    dT1 = interp1(fast.t_fast, fast.T1_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
-    dT2 = interp1(fast.t_fast, fast.T2_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
+tbl.tile(2) = nexttile();
+dT1 = interp1(fast.t_fast, fast.T1_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
+dT2 = interp1(fast.t_fast, fast.T2_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
 
-    plot(dT1, slow.depth, "-", ...
-        dT2, slow.depth, "-", ...
-        dT1(qSlow), slow.depth(qSlow), "-", ...
-        dT2(qSlow), slow.depth(qSlow), "-");
-    axis ij;
-    grid on;
-    xlabel ("\delta T (C)");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+plot(dT1, slow.depth, "-", ...
+    dT2, slow.depth, "-", ...
+    dT1(qSlow), slow.depth(qSlow), "-", ...
+    dT2(qSlow), slow.depth(qSlow), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+xlabel ("\delta T (C)");
+axis tight;
+tbl.depthBar(2) = drawDepthBar(depthVertices); % After axis tight
 
-    h{3} = nexttile();
-    plot(slow.JAC_C, slow.depth, "-", slow.JAC_C(qSlow), slow.depth(qSlow), "-");
-    axis ij;
-    grid on;
-    xlabel("Cond");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+tbl.tile(3) = nexttile();
+plot(slow.JAC_C, slow.depth, "-", ...
+    slow.JAC_C(qSlow), slow.depth(qSlow), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+xlabel("Cond");
+axis tight;
+tbl.depthBar(3) = drawDepthBar(depthVertices); % After axis tight
 
-    h{4} = nexttile();
-    plot(slow.Incl_X, slow.depth, "-", ...
-        slow.Incl_Y, slow.depth, "-", ...
-        slow.Incl_X(qSlow), slow.depth(qSlow), "-", ...
-        slow.Incl_Y(qSlow), slow.depth(qSlow), "-");
-    axis ij;
-    grid on;
-    xlabel("Incl");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+tbl.tile(4) = nexttile();
+plot(slow.Incl_X, slow.depth, "-", ...
+    slow.Incl_Y, slow.depth, "-", ...
+    slow.Incl_X(qSlow), slow.depth(qSlow), "-", ...
+    slow.Incl_Y(qSlow), slow.depth(qSlow), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+xlabel("Incl");
+axis tight;
+tbl.depthBar(4) = drawDepthBar(depthVertices); % After axis tight
 
-    h{5} = nexttile();
-    plot(fast.Ax, fast.depth, "-", ...
-        fast.Ay, fast.depth, "-", ...
-        fast.Ax(qFast), fast.depth(qFast), "-", ...
-        fast.Ay(qFast), fast.depth(qFast), "-");
-    axis ij;
-    grid on;
-    xlabel("Ax/Ay");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+tbl.tile(5) = nexttile();
+plot(fast.Ax, fast.depth, "-", ...
+    fast.Ay, fast.depth, "-", ...
+    fast.Ax(qFast), fast.depth(qFast), "-", ...
+    fast.Ay(qFast), fast.depth(qFast), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+xlabel("Ax/Ay");
+axis tight;
+tbl.depthBar(5) = drawDepthBar(depthVertices); % After axis tight
 
-    h{6} = nexttile();
-    plot(fast.sh1, fast.depth, "-", ...
-        fast.sh2, fast.depth, "-", ...
-        fast.sh1(qFast), fast.depth(qFast), "-", ...
-        fast.sh2(qFast), fast.depth(qFast), "-");
-    axis ij;
-    grid on;
-    xlabel("sh1/sh2");
-    axis tight;
-    drawDepthBar(depthVertices); % After axis tight
+tbl.tile(6) = nexttile();
+plot(fast.sh1, fast.depth, "-", ...
+    fast.sh2, fast.depth, "-", ...
+    fast.sh1(qFast), fast.depth(qFast), "-", ...
+    fast.sh2(qFast), fast.depth(qFast), "-", ...
+    "ButtonDownFcn", @myDiagButtonPress);
+axis ij;
+grid on;
+xlabel("sh1/sh2");
+axis tight;
+tbl.depthBar(6) = drawDepthBar(depthVertices); % After axis tight
 
+sgtitle(sprintf("%s profile %d, %s to %s", pInfo.name, pInfo.index, pInfo.t0, pInfo.t1), ...
+    "Interpreter", "none");
 
-    sgtitle(sprintf("%s profile %d, %s to %s", pInfo.name, pInfo.index, pInfo.t0, pInfo.t1), ...
-        "Interpreter", "none");
-
-    h = vertcat(h{:});
-    tiles = h;
-else % if qRedraw
-    h = tiles;
-    for ax = tiles'
-        for kid = ax.Children'
-            if ~endsWith(class(kid), "Patch"), continue; end
-            kid.YData = depthVertices;
-            break;
-        end
-    end
-end % if qRedraw
+set(tbl.tile, "ButtonDownFcn", @myDiagButtonPress);
+set(fig, "KeyPressFcn", @myDiagKeyPress)
+gInfo.tbl = tbl;
+set(fig, "UserData", gInfo);
 end % mkProfilePlots
 
 %% This is a rewritten version of William's texstr code from ODAS
