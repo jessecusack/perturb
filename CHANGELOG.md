@@ -1,3 +1,6 @@
+# 17-Dec-2023: Pat Welch, pat@mousebrains.com
+  * Processing for CASPER East and West and gluing up and down profiles together
+
 # 8-Dec-2023: Pat Welch, pat@mousebrains.com
  * Restore path in examples
 

@@ -31,6 +31,8 @@ addParameter(p, "diss_combo_root", [], @isfolder);
 addParameter(p, "diss_root", [], @isfolder);
 addParameter(p, "profile_root", [], @isfolder);
 addParameter(p, "dtMax", minutes(10), @isduration); % Maximum time between casts to consider consecutive
+addParameter(p, "CT_T_name", [], @isstring);
+addParameter(p, "CT_C_name", [], @isstring);
 
 parse(p, varargin{:});
 a = p.Results(1);
@@ -42,7 +44,7 @@ for name = setdiff(string(fieldnames(a))', "pars")
     pars.(name) = a.(name);
 end % for name
 
-required = ["diss_combo_root", "diss_root", "profile_root"];
+required = ["diss_combo_root", "diss_root", "profile_root", "CT_T_name", "CT_C_name"];
 q = ismember(required, fieldnames(pars));
 if all(q), return; end
 
@@ -536,6 +538,9 @@ if ismember("bottom_depth", pNames)
     qSlow = qSlow & slow.depth <= pInfo.bottom_depth;
 end % bottom_depth
 
+T_name = ud.pars.CT_T_name;
+C_name = ud.pars.CT_C_name;
+
 figure(fig);
 t = tiledlayout(1,6);
 tbl = table();
@@ -543,10 +548,10 @@ tbl.tile = gobjects(prod(t.GridSize), 1);
 tbl.depthBar = gobjects(size(tbl,1), 1);
 
 tbl.tile(1) = nexttile();
-plot(slow.JAC_T, slow.depth, "-", ...
+plot(slow.(T_name), slow.depth, "-", ...
         fast.T1_fast, fast.depth, "-", ...
         fast.T2_fast, fast.depth, "-", ...
-        slow.JAC_T(qSlow), slow.depth(qSlow), "-", ...
+        slow.(T_name)(qSlow), slow.depth(qSlow), "-", ...
         fast.T1_fast(qFast), fast.depth(qFast), "-", ...
         fast.T2_fast(qFast), fast.depth(qFast), "-", ...
     "ButtonDownFcn", @myDiagButtonPress);
@@ -558,8 +563,8 @@ axis tight;
 tbl.depthBar(1) = drawDepthBar(depthVertices);
 
 tbl.tile(2) = nexttile();
-dT1 = interp1(fast.t_fast, fast.T1_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
-dT2 = interp1(fast.t_fast, fast.T2_fast, slow.t_slow, "linear", "extrap") - slow.JAC_T;
+dT1 = interp1(fast.t_fast, fast.T1_fast, slow.t_slow, "linear", "extrap") - slow.(T_name);
+dT2 = interp1(fast.t_fast, fast.T2_fast, slow.t_slow, "linear", "extrap") - slow.(T_name);
 
 plot(dT1, slow.depth, "-", ...
     dT2, slow.depth, "-", ...
@@ -573,8 +578,8 @@ axis tight;
 tbl.depthBar(2) = drawDepthBar(depthVertices); % After axis tight
 
 tbl.tile(3) = nexttile();
-plot(slow.JAC_C, slow.depth, "-", ...
-    slow.JAC_C(qSlow), slow.depth(qSlow), "-", ...
+plot(slow.(C_name), slow.depth, "-", ...
+    slow.(C_name)(qSlow), slow.depth(qSlow), "-", ...
     "ButtonDownFcn", @myDiagButtonPress);
 axis ij;
 grid on;
