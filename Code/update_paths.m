@@ -34,6 +34,10 @@ qDiss = qProf ...
     | startsWith(names, "diss_"); % Dissipation parameters
 qDissBin = qDiss ...
     | startsWith(names, "binDiss_"); % how to bin dissipation
+qChi = qDiss ...
+    | startsWith(names, "chi_"); % Chi related parameters
+qChiBin = qChi ...
+    | startsWith(names, "binChi_"); % how to bin chi
 qCTD = qP2Mat ...
     | (qProfileGen & (pars.profile_direction == "down")) ...
     | qCT ...
@@ -51,6 +55,9 @@ qCTD = qP2Mat ...
 [hashDiss,      jsonDiss]      = mk_hash_json(pars, names(qDiss));
 [hashDissBin,   jsonDissBin]   = mk_hash_json(pars, names(qDissBin));
 [hashDissCombo, jsonDissCombo] = mk_hash_json(pars, names(qDissBin | qPfiles | qNetCDF));
+[hashChi,       jsonChi]       = mk_hash_json(pars, names(qChi));
+[hashChiBin,    jsonChiBin]    = mk_hash_json(pars, names(qChiBin));
+[hashChiCombo,  jsonChiCombo]  = mk_hash_json(pars, names(qChiBin | qPfiles | qNetCDF));
 
 pars.output_root = abspath(pars.output_root); % Get rid of ~ or relative paths
 my_mk_directory(pars.output_root); % Make sure the root path exists
@@ -68,6 +75,11 @@ pars.prof_combo_root  = mkRootDir(pars.output_root, "profiles_combo", hashProfCo
 pars.diss_root        = mkRootDir(pars.output_root, "diss", hashDiss, jsonDiss);
 pars.diss_binned_root = mkRootDir(pars.output_root, "diss_binned", hashDissBin, jsonDissBin);
 pars.diss_combo_root  = mkRootDir(pars.output_root, "diss_combo", hashDissCombo, jsonDissCombo);
+if pars.chi_enable
+    pars.chi_root = mkRootDir(pars.output_root, "chi", hashChi, jsonChi);
+    pars.chi_binned_root = mkRootDir(pars.output_root, "chi_binned", hashChiBin, jsonChiBin);
+    pars.chi_combo_root  = mkRootDir(pars.output_root, "chi_combo", hashChiCombo, jsonChiCombo);
+end % if chi
 
 pars.log_root = fullfile(pars.output_root, "logs"); % Where to write log files to
 pars.database_root = fullfile(pars.output_root, "database"); % Where to store various databases

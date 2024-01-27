@@ -107,6 +107,8 @@ addParameter(p, "diss_T1_norm", 1, validPositive); % Value to multiple T1_fast t
 addParameter(p, "diss_T2_norm", 1, validPositive); % Value to multiple T2_fast temperature probe by to calculate mean for dissipation estimate
 addParameter(p, "diss_warning_fraction", 0.1); % When to warn about difference of e probes > diss_warning_ratio
 addParameter(p, "diss_epsilon_minimum", 1e-13, validPositive); % Dissipation estimates less than this are set to nan, for bad electronics
+%% Chi parameters
+addParameter(p, "chi_enable", false, validLogical); % Calculate chi
 %% Binning parameters for profiles, non-dissipation
 addParameter(p, "bin_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "bin_width", 1, validPositive); % Bin width in (m)
@@ -115,6 +117,10 @@ addParameter(p, "bin_variable", "depth", validString); % Which variable to bin b
 addParameter(p, "binDiss_method", "mean", validMethod); % Which method to use to combine bins together
 addParameter(p, "binDiss_width", 1, validPositive); % Bin width in (m)
 addParameter(p, "binDiss_variable", "depth", validString); % Which variable to bin by, unless direction==time
+%% Binning parameters for chi
+addParameter(p, "binChi_method", "mean", validMethod); % Which method to use to combine bins together
+addParameter(p, "binChi_width", 1, validPositive); % Bin width in (m)
+addParameter(p, "binChi_variable", "depth", validString); % Which variable to bin by, unless direction==time
 %% CTD time binning parameters
 addParameter(p, "ctd_bin_enable", true, validLogical); % Should CTD be binned outside of profiles?
 addParameter(p, "ctd_bin_dt", 0.5, validPositive); % Width in seconds of CTD binning
