@@ -64,9 +64,10 @@ try
 
     params = parallel.pool.Constant(pars); % Doesn't change from here on
 
-    binnedProfile = cell(size(p_filenames,1),1);
-    binnedDiss = cell(size(binnedProfile));
-    binnedCTD = cell(size(binnedProfile));
+    profileBinned = cell(size(p_filenames,1),1);
+    dissBinned = cell(size(profileBinned));
+    chiBinned = cell(size(profileBinned));
+    ctdBinned = cell(size(profileBinned));
 
     parfor index = 1:size(p_filenames,1)
         st = tic();
@@ -80,7 +81,12 @@ try
         try
             warning("off", "MATLAB:dispatcher:nameConflict");
             if row.qMatOkay
-                [row, binnedProfile{index}, binnedDiss{index}, binnedCTD{index}] = P_to_binned_profile(row, params.Value);
+                [row, ...
+                    profileBinned{index}, ...
+                    dissBinned{index}, ...
+                    chiBinned{index}, ...
+                    ctdBinned{index} ...
+                    ] = P_to_binned_profile(row, params.Value);
                 qMatOkay(index) = row.qMatOkay;
                 qProfileOkay(index) = row.qProfileOkay;
             else
@@ -109,22 +115,27 @@ try
     my_mk_directory(qUseDB, pars.debug);
     save(qUseDB, "qUse", pars.matlab_file_format);
 
-    binnedProfile = binnedProfile(~cellfun(@isempty, binnedProfile)); % Prune empty bins
-    binnedDiss = binnedDiss(~cellfun(@isempty, binnedDiss)); % Prune empty bins
-    binnedCTD = binnedCTD(~cellfun(@isempty, binnedCTD)); % Prune empty bins
+    profileBinned = profileBinned(~cellfun(@isempty, profileBinned)); % Prune empty bins
+    dissBinned = dissBinned(~cellfun(@isempty, dissBinned)); % Prune empty bins
+    chiBinned = chiBinned(~cellfun(@isempty, chiBinned)); % Prune empty bins
+    ctdBinned = ctdBinned(~cellfun(@isempty, ctdBinned)); % Prune empty bins
 
-    qProf = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), binnedProfile); % Valid data for profile depth binning
-    qDiss = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), binnedDiss);    % Valid data for diss depth binning
-    qCTD  = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), binnedCTD);     % Valid data for CTD time binning
+    qProf = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), profileBinned); % Valid data for profile depth binning
+    qDiss = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), dissBinned);    % Valid data for diss depth binning
+    qChi  = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), chiBinned);     % Valid data for chi depth binning
+    qCTD  = ~cellfun(@(x) isempty(x{1}) || ismissing(x{1}), ctdBinned);     % Valid data for CTD time binning
 
     if any(qProf)
-        profiles2combo(binnedProfile(qProf), pars);
+        profiles2combo(profileBinned(qProf), pars);
     end % if any qProf
     if any(qDiss)
-        diss2combo(binnedDiss(qDiss), pars);
+        diss2combo(dissBinned(qDiss), pars);
+    end % if any qDiss
+    if any(qChi)
+        chi2combo(chiBinned(qChi), pars);
     end % if any qDiss
     if ~ismissing(pars.CT_T_name) && ~ismissing(pars.CT_C_name) && any(qCTD)
-        ctd2combo(binnedCTD(qCTD), pars);
+        ctd2combo(ctdBinned(qCTD), pars);
     end % if any qCTD
 
     fprintf("\n********* Finished at %s in %.0f seconds **********\n", datetime(), toc(stime));
@@ -139,21 +150,23 @@ end % try
 warning(warningState); % Restore the warning status
 end % process_P_files
 
-function [row, binnedProfile, binnedDiss, ctdBinned] = P_to_binned_profile(row, pars)
+function [row, profileBinned, dissBinned, chiBinned, ctdBinned] = P_to_binned_profile(row, pars)
 arguments (Input)
     row (1,:) table
     pars struct
 end % arguments Input
 arguments (Output)
     row (1,:) table
-    binnedProfile (2,1) cell % {filename, data}
-    binnedDiss (2,1) cell
-    ctdBinned    (2,1) cell
+    profileBinned (2,1) cell % {filename, data}
+    dissBinned (2,1) cell
+    chiBinned (2,1) cell
+    ctdBinned  (2,1) cell
 end % arguments Input
 
-binnedProfile = {missing, []}; % Filename of binned profile information, binned profile data
-binnedDiss = {missing, []};
+profileBinned = {missing, []}; % Filename of binned profile information, binned profile data
+dissBinned = {missing, []};
 ctdBinned = {missing, []};
+chiBinned = {missing, []};
 gps = [];
 
 [row, mat] = convert2mat(row, pars); % Convert P file to mat via odas_p2mat
@@ -170,11 +183,17 @@ if ~row.qProfileOkay, return; end % Failed in the past, so don't work on the pro
 
 if ~row.qProfileOkay, return; end % Nothing more to do
 
-[row, binnedProfile] = profile2binned(row, profiles, pars); % Bin profiles by depth
+[row, profileBinned] = profile2binned(row, profiles, pars); % Bin profiles by depth
 
 % Calculate the dissipations for each profile
 [row, diss] = profile2diss(row, profiles, pars); % Calculate dissipations
-[row, binnedDiss] = diss2binned(row, diss, pars); % Bin the dissipation
+[row, dissBinned] = diss2binned(row, diss, pars); % Bin the dissipation
+
+% Calculate Chi
+if pars.chi_enable
+    [row, chi] = profile2chi(row, profiles, diss, pars); % Calculate Chi for each profile
+    [row, chiBinned] = chi2binned(row, chi, pars); % Bin the chi estimates
+end % if chi
 end %s process_P_to_binned_profile
 
 function startProcessPool(pars)
