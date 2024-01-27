@@ -12,4 +12,4 @@ end % arguments Input
 
 [a, fnCombo] = save2combo(binned, pars, pars.diss_combo_root);
 save2NetCDF(a, fnCombo, pars);
-end % profiles2combo
+end % diss2combo
