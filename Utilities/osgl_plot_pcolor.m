@@ -67,4 +67,5 @@ if ~ismissing(dxMax) % User specified a dtMax
 end % if ismissing
 
 h = pcolor(xx, y, zz);
+h.EdgeColor = "none";
 end % tpw_plot_color
