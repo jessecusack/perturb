@@ -37,6 +37,7 @@ addParameter(p, "CT_C_name", [], @isstring);
 addParameter(p, "plotEmean", true, @islogical); % Plot the combined epsilon mean
 addParameter(p, "plotE1", true, @islogical); % Plot shear probe 1 epsilon
 addParameter(p, "plotE2", true, @islogical); % Plot shear probe 2 epsilon
+addParameter(p, "dropOverlapping", false, @islogical); % Drop overlapping casts, for multiple instruments
 
 parse(p, varargin{:});
 a = p.Results(1);
@@ -68,6 +69,18 @@ arguments (Input)
 end % arguments Input
 
 combo = load(fullfile(pars.diss_combo_root, "combo.mat")); % Combined and binned dissipation estimates
+
+if isfield(pars, "dropOverlapping") && pars.dropOverlapping
+    q = [combo.info.t1(1:end-1) <= combo.info.t0(2:end); true];
+    if any(~q) % Some to drop
+        combo.info = combo.info(q,:);
+        for name = string(combo.tbl.Properties.VariableNames)
+            if size(combo.tbl.(name), 2) == numel(q)
+                combo.tbl.(name) = combo.tbl.(name)(:,q);
+            end
+        end
+    end % if any ~q
+end % if dropOverlapping
 
 ud = struct();
 ud.pInfo = combo.info;
@@ -118,7 +131,7 @@ cb = colorbar("EastOutside");
 cb.Label.String = "log_{10}(\epsilon) (W kg^-1)";
 sgtitle(pars.diss_combo_root, "Interpreter", "none");
 
-linkaxes(gInfo.tile, "y"); % We'll use y linkage on many plots so split out from linkprop
+ud.ylink = linkprop(gInfo.tile, "yLim"); % We'll use y link on many plots
 ud.hLink = linkprop(gInfo.tile, ["CLim", "XLim"]); % hLink needs to be persistent
 
 if isfield(pars, "xLim") && ~isempty(pars.xLim), xlim(pars.xLim); end
@@ -132,6 +145,7 @@ end
 fig.UserData = ud; % Before assignment of callbacks
 
 if size(gInfo,1) > 2, set(gInfo.tile(2:end-1).YAxis, "Visible", "off"); end
+
 set(gInfo.pcolor, "ButtonDownFcn", @myButtonPress);
 set(fig, "KeyPressFcn", @myKeyPress)
 end % mkPlot
