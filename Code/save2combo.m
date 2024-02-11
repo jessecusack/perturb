@@ -63,6 +63,7 @@ end % if any
 
 t0 = cellfun(@(x) x.info.t0(1), data.data, "UniformOutput", true); % First time of each block
 [~, ix] = sort(t0);
+
 data.data = data.data(ix); % Sort temporaly into ascending order
 
 if pars.profile_direction == "time"
@@ -73,6 +74,16 @@ end % if direction
 
 pInfo = cellfun(@(x) x.info, data.data, "UniformOutput", false);
 pInfo = vertcat(pInfo{:});
+
+[~, ix] = sort(pInfo.t0); % We sorted the individual files, now we need to sort the individual casts, if needed
+if any(ix(1:end-1) > ix(2:end)) % Something to resort
+    pInfo = pInfo(ix,:); % Time sort each cast
+    for name = string(tbl.Properties.VariableNames)
+        if numel(ix) == size(tbl.(name),2)
+            tbl.(name) = tbl.(name)(:,ix);
+        end % if
+    end % for
+end % if any
 
 a = struct();
 a.tbl = tbl;

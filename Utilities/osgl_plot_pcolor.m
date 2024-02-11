@@ -39,13 +39,6 @@ if any(x1(1:end-1) > x0(2:end))
     error("Some x1(1:end-1) > x0(2:end)")
 end % if any
 
-% x = [x0; x1(end)];
-% x(2:end-1) = x1(1:end-1) + (x0(2:end) - x1(1:end-1)) / 2;
-% zz = nan(numel(y), numel(x0) + 1);
-% zz(:,1:end-1) = z;
-% h = pcolor(x, y, zz);
-% return;
-
 x = [x0, x1]; % First col is starting time of cast, second is ending time
 xx = reshape(x', 1, []); % A vector twice t0, t1, ...
 
@@ -67,4 +60,5 @@ if ~ismissing(dxMax) % User specified a dtMax
 end % if ismissing
 
 h = pcolor(xx, y, zz);
+h.EdgeColor = "none";
 end % tpw_plot_color

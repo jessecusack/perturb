@@ -27,12 +27,17 @@ addParameter(p, "debug", false, @islogical); % Enable debugging
 addParameter(p, "xLim", [], @(x) isdatetime(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "yLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "cLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
+addParameter(p, "shLim", [], @(x) isreal(x) && numel(x) == 2 && isvector(x))
 addParameter(p, "diss_combo_root", [], @isfolder);
 addParameter(p, "diss_root", [], @isfolder);
 addParameter(p, "profile_root", [], @isfolder);
-addParameter(p, "dtMax", minutes(10), @isduration); % Maximum time between casts to consider consecutive
+addParameter(p, "dtMax", minutes(10), @isduration); % Maximum time between casts to consider gap free
 addParameter(p, "CT_T_name", [], @isstring);
 addParameter(p, "CT_C_name", [], @isstring);
+addParameter(p, "plotEmean", true, @islogical); % Plot the combined epsilon mean
+addParameter(p, "plotE1", true, @islogical); % Plot shear probe 1 epsilon
+addParameter(p, "plotE2", true, @islogical); % Plot shear probe 2 epsilon
+addParameter(p, "dropOverlapping", false, @islogical); % Drop overlapping casts, for multiple instruments
 
 parse(p, varargin{:});
 a = p.Results(1);
@@ -40,8 +45,11 @@ a = p.Results(1);
 pars = a.pars;
 
 for name = setdiff(string(fieldnames(a))', "pars")
-    if ismember(name, p.UsingDefaults) && ~ismember(name, ["figure", "dtMax"]), continue; end
-    pars.(name) = a.(name);
+    if ~ismember(name, p.UsingDefaults) ...
+            || ismember(name, ["figure", "dtMax"]) ...
+            || startsWith(name, "plotE")
+        pars.(name) = a.(name);
+    end
 end % for name
 
 required = ["diss_combo_root", "diss_root", "profile_root", "CT_T_name", "CT_C_name"];
@@ -62,21 +70,58 @@ end % arguments Input
 
 combo = load(fullfile(pars.diss_combo_root, "combo.mat")); % Combined and binned dissipation estimates
 
+if isfield(pars, "dropOverlapping") && pars.dropOverlapping
+    q = [combo.info.t1(1:end-1) <= combo.info.t0(2:end); true];
+    if any(~q) % Some to drop
+        combo.info = combo.info(q,:);
+        for name = string(combo.tbl.Properties.VariableNames)
+            if size(combo.tbl.(name), 2) == numel(q)
+                combo.tbl.(name) = combo.tbl.(name)(:,q);
+            end
+        end
+    end % if any ~q
+end % if dropOverlapping
+
 ud = struct();
 ud.pInfo = combo.info;
 ud.tbl = combo.tbl;
 ud.pars = pars;
 ud.tMid = combo.info.t0 + (combo.info.t1 - combo.info.t0) / 2; % Mid point of time bin
 
+figVars = ["epsilonMean", "e_1", "e_2"];
+
+if ~pars.plotEmean, figVars(1) = missing; end
+if ~pars.plotE1, figVars(2) = missing; end
+if ~pars.plotE2, figVars(3) = missing; end
+
+figVars = figVars(~ismissing(figVars));
+if isempty(figVars)
+    figVars = "epsilonMean";
+end
+
+nEpsilon = numel(figVars);
+if nEpsilon == 1
+    tSpacing = "tight";
+    tPadding = "loose";
+elseif nEpsilon == 2
+    tSpacing = "compact";
+    tPadding = "tight";
+else
+    tSpacing = "tight";
+    tPadding = "tight";
+end
+
 fig = figure(pars.figure);
 
-t = tiledlayout(1, 3, "TileSpacing", "tight", "Padding", "tight");
+t = tiledlayout(1, nEpsilon, "TileSpacing", tSpacing, "Padding", tPadding);
+
 gInfo = cell(prod(t.GridSize), 1);
 
-gInfo{1} = mkEpsilonPlot(combo, "epsilonMean", pars.dtMax);
-ylabel("Depth (meters)");
-gInfo{2} = mkEpsilonPlot(combo, "e_1", pars.dtMax);
-gInfo{3} = mkEpsilonPlot(combo, "e_2", pars.dtMax, true);
+for index = 1:nEpsilon
+    name = figVars(index);
+    gInfo{index} = mkEpsilonPlot(combo, name, pars.dtMax, index ~= 1 && index == nEpsilon);
+    if index == 1, ylabel("Depth (m)"); end
+end
 
 gInfo = vertcat(gInfo{:});
 
@@ -86,7 +131,7 @@ cb = colorbar("EastOutside");
 cb.Label.String = "log_{10}(\epsilon) (W kg^-1)";
 sgtitle(pars.diss_combo_root, "Interpreter", "none");
 
-linkaxes(gInfo.tile, "y"); % We'll use y linkage on many plots so split out from linkprop
+ud.ylink = linkprop(gInfo.tile, "yLim"); % We'll use y link on many plots
 ud.hLink = linkprop(gInfo.tile, ["CLim", "XLim"]); % hLink needs to be persistent
 
 if isfield(pars, "xLim") && ~isempty(pars.xLim), xlim(pars.xLim); end
@@ -99,7 +144,8 @@ end
 
 fig.UserData = ud; % Before assignment of callbacks
 
-set(gInfo.tile(2:end-1).YAxis, "Visible", "off");
+if size(gInfo,1) > 2, set(gInfo.tile(2:end-1).YAxis, "Visible", "off"); end
+
 set(gInfo.pcolor, "ButtonDownFcn", @myButtonPress);
 set(fig, "KeyPressFcn", @myKeyPress)
 end % mkPlot
@@ -541,8 +587,10 @@ end % bottom_depth
 T_name = ud.pars.CT_T_name;
 C_name = ud.pars.CT_C_name;
 
+qEM = ismember("U_EM", slow.Properties.VariableNames);
+
 figure(fig);
-t = tiledlayout(1,6);
+t = tiledlayout(1,6+qEM);
 tbl = table();
 tbl.tile = gobjects(prod(t.GridSize), 1);
 tbl.depthBar = gobjects(size(tbl,1), 1);
@@ -621,7 +669,23 @@ axis ij;
 grid on;
 xlabel("sh1/sh2");
 axis tight;
+if isfield(ud.pars, "shLim") && ~isempty(ud.pars.shLim)
+    xlim(sort(ud.pars.shLim));
+end % isfield
 tbl.depthBar(6) = drawDepthBar(depthVertices); % After axis tight
+
+if qEM
+    tbl.tile(7) = nexttile();
+    plot(slow.U_EM, slow.depth, "-", ...
+        slow.U_EM(qSlow), slow.depth(qSlow), "-", ...
+        slow.speed_slow, slow.depth, "-", ...
+        slow.speed_slow(qSlow), slow.depth(qSlow), "-");
+    axis ij;
+    grid on;
+    xlabel("U_{EM}/speed (m/s)");
+    axis tight;
+    tbl.depthBar(7) = drawDepthBar(depthVertices); % After axis tight
+end % if qEM
 
 sgtitle(sprintf("%s profile %d, %s to %s", pInfo.name, pInfo.index, pInfo.t0, pInfo.t1), ...
     "Interpreter", "none");
