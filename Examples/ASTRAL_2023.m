@@ -5,7 +5,7 @@
 
 my_root = fileparts(mfilename("fullpath"));
 code_root = fullfile(my_root, "../Code");
-parent_root = fullfile(my_root, "../../ASTRAL");
+parent_root = fullfile(my_root, "../../ASTRAL/2023");
 data_root = fullfile(parent_root, "Data");
 p_file_root = fullfile(data_root, "VMP");
 output_root = fullfile(parent_root, "Processed");
