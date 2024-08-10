@@ -4,11 +4,11 @@
 %
 % Nov-2023, Pat Welch, pat@mousebrains.com
 
-function [row, chiInfo] = profile2chi(row, profileInfo, chiInfo, pars)
+function [row, chiInfo] = profile2chi(row, profileInfo, dissInfo, pars)
 arguments (Input)
     row (1,:) table % row to work on
     profileInfo struct % Output of mat2profile
-    chiInfo struct % Output of profile2diss
+    dissInfo struct % Dissipation for this this profile
     pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
@@ -42,8 +42,8 @@ profiles = profileInfo.profiles;
 pInfo = profileInfo.pInfo;
 nProfiles = numel(profiles);
 
-dProfiles = chiInfo.profiles;
-dInfo = chiInfo.info;
+dProfiles = dissInfo.profiles;
+dInfo = dissInfo.info;
 
 if size(pInfo,1) ~= size(dInfo,1)
     warning("Mismatched number of profiles in chi calculation, %d ~= %d", size(pInfo,1), size(dInfo,1));
