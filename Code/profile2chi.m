@@ -1,13 +1,13 @@
 %
-% For each profile, calculate dissipation estimates
+% For each profile, calculate chi estimates
 %
 % Nov-2023, Pat Welch, pat@mousebrains.com
 
-function [row, chiInfo] = profile2chi(row, profileInfo, dissInfo, pars)
+function [row, chiInfo] = profile2chi(row, profileInfo, chiInfo, pars)
 arguments (Input)
     row (1,:) table % row to work on
     profileInfo struct % Output of mat2profile
-    dissInfo struct % Output of profile2diss
+    chiInfo struct % Output of profile2diss
     pars struct % Parameters, defaults from get_info
 end % arguments Input
 arguments (Output)
@@ -30,44 +30,83 @@ if isempty(profileInfo) % we need to load profileInfo
     profileInfo = load(row.fnProf);
 end
 
-if isempty(dissInfo) % we need to load dissInfo
+if isempty(chiInfo) % we need to load dissInfo
     fprintf("Loading %s\n", row.fnDiss);
-    dissInfo = load(row.fnDiss);
+    chiInfo = load(row.fnDiss);
 end
 
-warning("Chi not implemented");
-% return;
-% 
-% stime = tic();
-% 
-% profiles = profileInfo.profiles;
-% pInfo = profileInfo.pInfo;
-% nProfiles = numel(profiles);
-% 
-% tbl = cell(nProfiles, 1);
-% dInfo = cell(size(tbl));
-% 
-% for index = 1:nProfiles
-%     [dInfo{index}, tbl{index}] = calc_diss_shear(profiles{index}, pInfo(index,:), pars);
-% end % for index
-% 
-% qEmpty = cellfun(@isempty, tbl);
-% if all(qEmpty) % No dissipation estimates
-%     fprintf("%s: No dissipation estimates found", row.name);
-%     return;
-% end
-% 
-% tbl = tbl(~qEmpty);
-% dInfo = dInfo(~qEmpty);
-% 
-% dissInfo = struct();
-% dissInfo.info = vertcat(dInfo{:});
-% dissInfo.profiles = tbl;
-% if isfield(profileInfo, "fp07Lags")
-%     dissInfo.fp07 = profileInfo.fp07Lags;
-% end % if isfield
-% 
-% my_mk_directory(fnChi);
-% save(fnChi, "-struct", "chiInfo", pars.matlab_file_format);
-% fprintf("Took %.2f seconds to create %s\n", toc(stime), fnChi);
+stime = tic();
+
+profiles = profileInfo.profiles;
+pInfo = profileInfo.pInfo;
+nProfiles = numel(profiles);
+
+dProfiles = chiInfo.profiles;
+dInfo = chiInfo.info;
+
+if size(pInfo,1) ~= size(dInfo,1)
+    warning("Mismatched number of profiles in chi calculation, %d ~= %d", size(pInfo,1), size(dInfo,1));
+    return;
+end % if size
+
+tbl = cell(nProfiles, 1);
+dInfo = cell(size(tbl));
+
+for index = 1:nProfiles
+    profile = profiles{index};
+    fast = profile.fast;
+    slow = profile.slow;
+    diss = dProfiles{index};
+    fast.dDepth = interp1(diss.depth, diss.depth, fast.depth, "nearest", "extrap");
+    fast.grp = findgroups(fast.dDepth);
+    a = rowfun(@(x) x(1), fast, ...
+        InputVariables="dDepth", ...
+        GroupingVariables="grp", ...
+        OutputVariableNames="depth");
+    names = string(fast.Properties.VariableNames);
+    names = names(startsWith(names, "gradT"));
+    for name = names
+        a.(name) = rowfun(@(x) median(x, "omitnan"), fast, ...
+            InputVariables=name, ...
+            GroupingVariables="grp", ...
+            OutputFormat="uniform");
+    end % for
+
+    N2 = table();
+    [N2.N2, N2.pMid] = gsw_Nsquared(slow.SA, slow.theta, slow.P_slow, slow.lat);
+    N2.depth = (slow.depth(1:end-1) + slow.depth(2:end)) / 2;
+    N2.dDepth = interp1(diss.depth, diss.depth, N2.depth, "nearest", "extrap");
+    N2.grp = findgroups(N2.dDepth);
+
+    b = rowfun(@(x) x(1), N2, ...
+        InputVariables="dDepth", ...
+        GroupingVariables="grp", ...
+        OutputVariableNames="depth");
+    b.N2 = rowfun(@(x) median(x, "omitnan"), N2, ...
+            InputVariables="N2", ...
+            GroupingVariables="grp", ...
+            OutputFormat="uniform");
+
+    diss = innerjoin(diss, a, Keys="depth", RightVariables=names);
+    diss = innerjoin(diss, b, Keys="depth", RightVariables="N2");
+
+    [dInfo{index}, tbl{index}] = calc_chi(diss, pInfo(index,:));
+end % for index
+
+qEmpty = cellfun(@isempty, tbl);
+if all(qEmpty) % No dissipation estimates
+    fprintf("%s: No dissipation estimates found", row.name);
+    return;
+end
+
+tbl = tbl(~qEmpty);
+dInfo = dInfo(~qEmpty);
+
+chiInfo = struct();
+chiInfo.info = vertcat(dInfo{:});
+chiInfo.profiles = tbl;
+
+my_mk_directory(fnChi);
+save(fnChi, "-struct", "chiInfo", pars.matlab_file_format);
+fprintf("Took %.2f seconds to create %s\n", toc(stime), fnChi);
 end % profile2diss

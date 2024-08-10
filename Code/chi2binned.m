@@ -19,30 +19,31 @@ if ~row.qProfileOkay
     return;
 end % if ~row.qProfileOkay
 
-warning("Chi binning not implemented");
+fnChi = row.fnChi;
+fnBin = fullfile(pars.chi_binned_root, append(row.name, ".mat"));
+row.fnChiBin = fnBin;
 
-% fnChi = row.fnChi;
-% fnBin = fullfile(pars.chi_binned_root, append(row.name, ".mat"));
-% row.fnChiBin = fnBin;
-% 
-% if isnewer(fnBin, fnChi)
-%     retval = {fnBin, []}; % We want this for combining
-%     fprintf("%s: %s is newer than %s\n", row.name, row.fnBin, row.fnChi);
-%     return;
-% end % if isnewer
-% 
-% if isempty(a)
-%     fprintf("Loading %s\n", row.fnChi);
-%     a = load(row.fnChi);
-% end % if isempty
-% 
-% %% Bin the data into depth bins
-% 
-% pInfo = a.info;
-% profiles = a.profiles;
-% 
-% fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
-% 
+if isnewer(fnBin, fnChi)
+    retval = {fnBin, []}; % We want this for combining
+    fprintf("%s: %s is newer than %s\n", row.name, row.fnBin, row.fnChi);
+    return;
+end % if isnewer
+
+if isempty(a)
+    fprintf("Loading %s\n", row.fnChi);
+    a = load(row.fnChi);
+end % if isempty
+
+%% Bin the data into depth bins
+
+pInfo = a.info;
+profiles = a.profiles;
+
+fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
+
+pInfo
+profiles{1}
+error("GotMe");
 % if pars.profile_direction == "time" % Bin in time
 %     binSize = seconds(pars.binChi_width); % Bin stepsize in (sec)
 %     keyName = "t";
