@@ -41,66 +41,51 @@ profiles = a.profiles;
 
 fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
 
-pInfo
-profiles{1}
-error("GotMe");
+if pars.profile_direction == "time" % Bin in time
+    binSize = seconds(pars.binChi_width); % Bin stepsize in (sec)
+    keyName = "t";
+    binFunc = @bin_by_time;
+    glueFunc = @glue_lengthwise;
+else % Bin by depth
+    binSize = pars.binChi_width; % Bin stepsize (m)
+    keyName = pars.binChi_variable; % Variable to bin by
+    binFunc = @bin_by_real;
+    glueFunc = @glue_widthwise;
+end % if profile_direction
 
-% if pars.profile_direction == "time" % Bin in time
-%     binSize = seconds(pars.binChi_width); % Bin stepsize in (sec)
-%     keyName = "t";
-%     binFunc = @bin_by_time;
-%     glueFunc = @glue_lengthwise;
-% else % Bin by depth
-%     binSize = pars.binChi_width; % Bin stepsize (m)
-%     keyName = pars.binChi_variable; % Variable to bin by
-%     binFunc = @bin_by_real;
-%     glueFunc = @glue_widthwise;
-% end % if profile_direction
-% 
-% casts = cell(numel(profiles),1);
-% for index = 1:numel(profiles)
-%     profile = profiles{index};
-%     nE = size(profile.e, 2);
-%     prof2 = table();
-%     for name = string(profile.Properties.VariableNames)
-%         sz = size(profile.(name),2);
-%         if ~ismatrix(profile.(name)), continue; end
-%         if sz == 1
-%             prof2.(name) = profile.(name);
-%         elseif sz == nE
-%             for j = 1:sz
-%                 prof2.(append(name, "_", string(j))) = profile.(name)(:,j);
-%             end % for j;
-%         end % if sz
-%     end % for name
-% 
-%     casts{index} = binFunc(binSize, keyName, prof2, pars.binChi_method);
-% end % for index
-% 
-% qDrop = cellfun(@isempty, casts); % This shouldn't happend
-% 
-% if any(qDrop)
-%     casts = casts(~qDrop);
-%     pInfo = pInfo(~qDrop,:);
-% end % any qDrop
-% 
-% if isempty(casts)
-%     row.qProfileOkay = false;
-%     fprintf("%s: No usable casts found in %s\n", row.name, row.fnProf);
-%     return;
-% end
-% 
-% tbl = glueFunc("bin", casts);
-% 
-% binned = struct ( ...
-%     "tbl", tbl, ...
-%     "info", pInfo);
-% if isfield(a, "fp07")
-%     binned.fp07 = a.fp07;
-% end % if isfield
-% 
-% my_mk_directory(fnBin);
-% save(fnBin, "-struct", "binned", pars.matlab_file_format);
-% fprintf("%s: Saving %d profiles to %s\n", row.name, size(binned.info,1), fnBin);
-% retval = {fnBin, binned};
+casts = cell(numel(profiles),1);
+for index = 1:numel(profiles)
+    profile = profiles{index};
+    prof2 = table();
+    for name = string(profile.Properties.VariableNames)
+        if ~ismatrix(profile.(name)), continue; end
+        prof2.(name) = profile.(name);
+    end % for name
+
+    casts{index} = binFunc(binSize, keyName, prof2, pars.binChi_method);
+end % for index
+
+qDrop = cellfun(@isempty, casts); % This shouldn't happend
+
+if any(qDrop)
+    casts = casts(~qDrop);
+    pInfo = pInfo(~qDrop,:);
+end % any qDrop
+
+if isempty(casts)
+    row.qProfileOkay = false;
+    fprintf("%s: No usable casts found in %s\n", row.name, row.fnProf);
+    return;
+end
+
+tbl = glueFunc("bin", casts);
+
+binned = struct ( ...
+    "tbl", tbl, ...
+    "info", pInfo);
+
+my_mk_directory(fnBin);
+save(fnBin, "-struct", "binned", pars.matlab_file_format);
+fprintf("%s: Saving %d profiles to %s\n", row.name, size(binned.info,1), fnBin);
+retval = {fnBin, binned};
 end % chi2binned
