@@ -44,6 +44,7 @@ fprintf("%s: Binning %d profiles\n", row.name, numel(profiles));
 pInfo
 profiles{1}
 error("GotMe");
+
 % if pars.profile_direction == "time" % Bin in time
 %     binSize = seconds(pars.binChi_width); % Bin stepsize in (sec)
 %     keyName = "t";
