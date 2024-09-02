@@ -157,7 +157,7 @@ try
     calendar = netcdf.getAtt(ncid, varid, "calendar"); % Should be there, but somem people don't have it
 catch ME
     getReport(ME)
-    calendar = /Users/pat/Desktop/Chi/perturb/Code/osgl_get_netCDF.m"; % Default
+    calendar = "proleptic_gregorian"; % Default
 end
 
 goodCalendars = ["", "standard", "gregorian", "proleptic_gregorian"];
