@@ -17,6 +17,7 @@ try
 
     pars = process_P_files( ...
         "debug", true, ...
+        "chi_enable", true, ... % Calculate chi
         "p_file_root", p_file_root, ... % Where the input .P files are located
         "p_file_pattern", "SN*/*", ...  % Glob pattern appended to p_file_root to locate P files
         "output_root", output_root, ... % Where to write output to

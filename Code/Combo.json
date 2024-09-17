@@ -546,6 +546,11 @@
 			"units": "",
 			"long_name": "ODAS Library Version",
 			"coverage_content_type": "auxiliaryInformation"
+		},
+		"sn": {
+			"units": "",
+			"long_name": "Serial Number",
+			"coverage_content_type": "auxiliaryInformation"
 		}
 	},
 

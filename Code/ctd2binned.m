@@ -144,7 +144,7 @@ end % if ismember P_slow
 fnCTD = fullfile(pars.ctd_root, append(row.name, ".mat"));
 row.fnCTD = fnCTD;
 
-cInfo = row(:,["name", "t0", "tEnd"]);
+cInfo = row(:,["name", "t0", "tEnd", "sn"]);
 cInfo = renamevars(cInfo, "tEnd", "t1"); % For NetCDF time range
 
 binned = struct("tbl", tbl, "info", cInfo);
