@@ -94,7 +94,7 @@ addParameter(p, "diss_trim_bottom_offset", 0, @isreal); % Meters added to bottom
 addParameter(p, "diss_reverse", false, validLogical); % Calculate dissipation backwards in time, for BBL on downcast
 addParameter(p, "diss_fft_length_sec", 0.5, validPositive); % Disspation FFT length in seconds
 addParameter(p, "diss_length_fac", 2, @(x) x>=2); % Multiples fft_length_sec to get dissipation length
-addParameter(p, "diss_overlap_factor", 2, @(x) x>=0 && x<=1); % Distance of the overlap of successive dissipation estimates, 0-> none
+addParameter(p, "diss_overlap_factor", 0.5, @(x) x>=0 && x<=1); % Distance of the overlap of successive dissipation estimates, 0-> none
 addParameter(p, "diss_fit_order", nan, validPositive); % Polynomial order of fit to shear spectra, in log-space
 addParameter(p, "diss_f_AA", nan, validPositive); % Cut-off frequency of the anti-aliasing filter
 addParameter(p, "diss_fit_2_isr", nan, validPositive); % Value of dissipation rate to switch from isr to integration
