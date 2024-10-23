@@ -165,13 +165,13 @@ SH_HP = filter(bh, ah, SH_HP); % Filter backwards
 SH_HP = flipud(SH_HP); % Flip backwards to forward
 
 dissInfo = struct();
-dissInfo.fft_length = round(fft_length_sec * pInfo.fs_fast); % FFT length in bins
-dissInfo.diss_length = diss_length_factor * dissInfo.fft_length; % Dissipation length in bins
+dissInfo.fft_length = round(fft_length_sec * pInfo.fs_fast); % number of points for fft
+dissInfo.diss_length = diss_length_factor * dissInfo.fft_length; % number of points (fft lengths) for dissipation estimate
 
 if pars.diss_overlap_factor == 0
     dissInfo.overlap = 0; % No overlap
 else
-    dissInfo.overlap = ceil(dissInfo.diss_length / pars.diss_overlap_factor); % Number of bins to overlap
+    dissInfo.overlap = ceil(dissInfo.diss_length * pars.diss_overlap_factor); % nuber of overlapping dissipation points
 end
 
 for name = ["goodman", "f_limit", "fit_2_isr", "f_AA", "fit_order"]
