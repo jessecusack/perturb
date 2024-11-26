@@ -15,27 +15,21 @@
 %                      for speed reasons
 % Dec-2022, Pat Welch, pat@mousebrains.com, add in compliance with CF-1.8
 %                      metadata standards
-%
+% Jan-2024, Pat Welch, pat@mosuebrains.com, straighten out handling of variable names
 
-function a = osgl_get_netCDF(fn, varargin)
+function a = osgl_get_netCDF(fn, names)
 arguments (Input)
     fn string {mustBeFile} % Input filename
 end % arguments Input
 arguments (Input,Repeating)
-    varargin % Optional arguments
+    names (:,1) string % Optional variable names
 end % arguments Repeating
 arguments (Output)
     a struct % Output structure of data read from fn
 end % arguments output
 
-names = cell(numel(varargin),1); % Pre-allocate
-
-for i = 1:numel(varargin)
-    item = string(varargin{i});
-    names{i} = item(:);
-end % for i
-
-names = string(names); % Convert to an array of strings from a cell array
+names = cellfun(@(x) x(:), names, "UniformOutput", false); % Make sure any arrays are in the same orientation
+names = string(vertcat(names{:}));
 
 ncid = netcdf.open(fn); % Open the netCDF file
 cleanUpObj = onCleanup(@() netcdf.close(ncid)); % In case of errors/warnings/...
@@ -43,6 +37,7 @@ cleanUpObj = onCleanup(@() netcdf.close(ncid)); % In case of errors/warnings/...
 if isempty(names)
     [names, varids] = loadNames(ncid);
 else
+    names = unique(names); % No duplicates
     [names, varids] = getVarIDs(ncid, names);
 end % if
 
@@ -70,6 +65,15 @@ end % if
 end % osgl_get_netCDF
 
 function data = modifyCF(data, ncid, varid)
+arguments (Input)
+    data % Input data column from NetCDF file
+    ncid double % NetCDF id from netcdf.open
+    varid double % Variable id within ncid
+end % arguments Output
+arguments (Output)
+    data % Possibly modified version of input data
+end % arguments Output
+
 qOkay = true(size(data)); % Initially assume all the data is good
 
 try
@@ -137,18 +141,31 @@ end % try calendar
 end % modifyCF
 
 function data = ctConvert(data, ncid, varid, dtUnits, timeStr, qOkay)
+arguments (Input)
+    data         % Input from NetCDF file various formats
+    ncid double  % NetCDF id from netcdf.open
+    varid double % Variable id within ncid
+    dtUnits string % Time units from units attribute (The part before "since")
+    timeStr string % Time reference from units attribute (The part after "since")
+    qOkay logical % % Which data entries are good
+end % arguments Input
+arguments (Output)
+    data % possibly datetime, if converted
+end % arguments Output
+
 try
-    calendar = netcdf.getAtt(ncid, varid, "calendar");
-    goodCalendars = ["", "standard", "gregorian", "proleptic_gregorian"];
-    if ~ismember(calendar, goodCalendars)
-        warning("Unsupported calendar, %s, for %s", ...
-            calendar, netcdf.inqVar(ncid, varid));
-        return
-    end % if
+    calendar = netcdf.getAtt(ncid, varid, "calendar"); % Should be there, but somem people don't have it
 catch ME
     getReport(ME)
-    % Do nothing
+    calendar = "proleptic_gregorian"; % Default
 end
+
+goodCalendars = ["", "standard", "gregorian", "proleptic_gregorian"];
+if ~ismember(calendar, goodCalendars)
+    warning("Unsupported calendar, %s, for %s", ...
+	    calendar, netcdf.inqVar(ncid, varid));
+    return
+end % if
 
 switch lower(dtUnits) % The part before since
     case {"years", "year", "y"}
@@ -175,11 +192,16 @@ switch lower(dtUnits) % The part before since
         return
 end % switch
 
-fmt = "^\s*(\d{4})-(\d{1,2})-(\d{1,2})(\s+\d{1,2}:\d{1,2}:\d{1,2}([.]\d*|)(\s+([A-Za-z/_]+|[+-]?\d{1,2}([:]?\d{1,2}|))|)|)\s*$";
-tfmt = "^\s+(\d{1,2}):(\d{1,2}):(\d{1,2}([.]?\d*|))(\s+([A-Za-z/_]+|[+-]?\d{1,2}([:]?\d{1,2}|))|)$";
+fmt = strjoin([
+    "^(\d{4})-(\d{1,2})-(\d{1,2})", % yyyy-mm-dd
+    "(|(\s+|[Tt])\d{1,2}:\d{1,2}:\d{1,2}(|[.]\d*))", % (\s|T)HH:MM:SS.ssss
+    "(|\s+([A-Za-z/_]+|[+-]?\d{1,2}(|[:]?\d{1,2})))", % (UTC|[+-]00:00)
+    "\s*$"], "");
+tfmt = "^[Tt\s]+(\d{1,2}):(\d{1,2}):(\d{1,2}([.]?\d*|))(\s+([A-Za-z/_]+|[+-]?\d{1,2}([:]?\d{1,2}|))|)$";
 
 tokens = regexp(timeStr, fmt, "tokens", "once");
 if isempty(tokens)
+    fmt
     warning("Unable to parse time string, %s, for %s", ...
         timeStr, netcdf.inqVar(ncid, varid));
     return
@@ -228,6 +250,14 @@ data.TimeZone = ""; % Drop an explict timezone since it causes other problems
 end % ctConvert
 
 function [names, varids] = loadNames(ncid)
+arguments (Input)
+    ncid double % NetCDF file id from netcdf.open
+end % arguments Input
+arguments (Output)
+    names (:,1) string  % Variable names in NetCDF file
+    varids (:,1) double % Variable ids in ncid
+end % arguments Output
+
 [~, n] = netcdf.inq(ncid); % Get the number of variables
 names = cell(n,1);
 varids = zeros(size(names)) - 1;
@@ -246,6 +276,15 @@ varids = varids(msk);
 end % loadNames
 
 function [names, varids] = getVarIDs(ncid, names)
+arguments (Input)
+    ncid double % NetCDF file id from netcdf.open
+    names (:,1) string  % Variable names to get from the NetCDF file
+end % arguments Input
+arguments (Output)
+    names (:,1) string  % Variable names to get from the NetCDF file
+    varids (:,1) double % Variable ids in ncid
+end % arguments Output
+
 varids = zeros(size(names));
 for i = 1:numel(names)
     varids(i) = netcdf.inqVarID(ncid, names(i));
