@@ -121,16 +121,19 @@ end
 
 directory = fullfile(root, append(prefix, "_0000"));
 
-items = struct2table(dir(fullfile(root, append(prefix, "_*"))));
+prefixDir = fullfile(root, append(prefix, "_*"));
+if exist(prefixDir, "dir")
+    items = struct2table(dir(fullfile(root, append(prefix, "_*"))));
 
-if ~isempty(items)
-    n = regexp(string(items.name), append("^", prefix, "_(\d{4})$"), "tokens", "once");
-    n = n(~cellfun(@isempty, n)); % Get rid of things like CTD_combo_\d{4} when looking for CTD_\d{4}
-    if ~isempty(n)
-        n = max(str2double(string(n)));
-        directory = fullfile(root, sprintf("%s_%04d", prefix, n + 1));
-    end
-end
+    if ~isempty(items)
+        n = regexp(string(items.name), append("^", prefix, "_(\d{4})$"), "tokens", "once");
+        n = n(~cellfun(@isempty, n)); % Get rid of things like CTD_combo_\d{4} when looking for CTD_\d{4}
+        if ~isempty(n)
+            n = max(str2double(string(n)));
+            directory = fullfile(root, sprintf("%s_%04d", prefix, n + 1));
+        end % isempty n
+    end % if ~isempty items
+end % if isdir
 
 fn = fullfile(directory, fn);
 
