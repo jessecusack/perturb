@@ -80,7 +80,7 @@ classdef GPS_base_class
             if obj.qFixed
                 val = obj.tbl.lat + zeros(size(time));
             else
-                val = interp1(obj.tbl.time, obj.tbl.lat, time, obj.method, "extrap");
+                val = interp1(obj.tbl.Time, obj.tbl.lat, time, obj.method, "extrap");
             end
         end % lat
 
@@ -96,7 +96,7 @@ classdef GPS_base_class
             if obj.qFixed
                 val = obj.tbl.lon + zeros(size(time));
             else
-                val = interp1(obj.tbl.time, obj.tbl.lon, time, obj.method, "extrap");
+                val = interp1(obj.tbl.Time, obj.tbl.lon, time, obj.method, "extrap");
             end
         end % lon
 
@@ -112,7 +112,7 @@ classdef GPS_base_class
             if obj.qFixed
                 tNearest = time + zeros(size(time));
             else
-                tNearest = interp1(obj.tbl.time, obj.tbl.time, time, "nearest", "extrap");
+                tNearest = interp1(obj.tbl.Time, obj.tbl.Time, time, "nearest", "extrap");
             end
             val = abs(seconds(tNearest - time));
         end % dt
