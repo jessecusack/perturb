@@ -53,13 +53,19 @@ classdef GPS_base_class
                 error("Time, latitude, and longitude must all have the same size.")
             end % if isdatetime
 
-            [time, ix] = unique(time);
+            [~, ix] = unique(time);
+            ix = ix(~isnat(time(ix)));
+            
             time.TimeZone = "UTC"; % Convert to UTC
             time.TimeZone = ""; % Drop the timezone for interpolation
-            obj.tbl = timetable(time);
+            obj.tbl = timetable(time(ix));
             obj.tbl.lat = latitude(ix);
             obj.tbl.lon = longitude(ix);
+            obj.tbl = rmmissing(obj.tbl);
+            obj.tbl = obj.tbl(~isinf(obj.tbl.lat) & ~isinf(obj.tbl.lon), :);
+
             obj.qFixed = size(obj.tbl,1) == 1;
+
         end
 
         function val = lat(obj, time)
