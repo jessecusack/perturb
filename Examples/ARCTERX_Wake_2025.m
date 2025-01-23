@@ -1,0 +1,49 @@
+%
+% Convert ARCTERX Wake VMP .P files to binned data
+%
+% June-2023, Pat Welch, pat@mousebrains.com
+
+year = "2025";
+project = "Saipan/Tinan";
+subproj = "Wake";
+
+my_root = fileparts(mfilename("fullpath"));
+code_root = fullfile(my_root, "../Code");
+
+parent_root = fullfile(my_root, "../..");
+data_root = fullfile(parent_root, "VMP");
+p_file_root = data_root;
+output_root = fullfile(parent_root, "Processed");
+
+origPath = addpath(code_root, "-begin"); % Before reference to GPS_from_netCDF
+
+try
+    GPS_filename = fullfile(parent_root, "ship/ship.nc");
+    GPS_class = GPS_from_netCDF(GPS_filename, "linear", "time", "lat", "lon");
+
+    pars = process_P_files( ...
+        "debug", true, ...
+        "p_file_root", p_file_root, ... % Where the input .P files are located
+        "p_file_pattern", "SN*_processed/*", ...   % Glob pattern appended to p_file_root to locate P files
+        "output_root", output_root, ...  % Where to write output to
+        "gps_class", GPS_class, ... % Class to supply GPS data
+        "diss_epsilon_minimum", 3e-10, ...   % Drop dissipation estimates smaller than this value
+        "netCDF_contributor_name", "Pat Welch", ...
+        "netCDF_contributor_role", "researcher", ...
+        "netCDF_creator_name", "Pat Welch", ...
+        "netCDF_creator_email", "pat@mousebrains.com", ...
+        "netCDF_creator_institution", "CEOAS, Oregon State University", ...
+        "netCDF_creator_type", "researcher", ...
+        "netCDF_creator_url", "https://arcterx.ceoas.oregonstat.edu", ...
+        "netCDF_id", sprintf("%s %s %s", project, subproj, year), ...
+        "netCDF_institution", "CEOAS, Oregon State University", ...
+        "netCDF_platform", "Rockland VMP250", ...
+        "netCDF_product_version", "0.1", ...
+        "netCDF_program", sprintf("%s %s %s", project, subproj, year), ...
+        "netCDF_project", sprintf("%s %s %s", project, subproj, year) ...
+        );
+catch ME
+    disp(getReport(ME));
+end % try
+
+path(origPath); % Restore the original path
