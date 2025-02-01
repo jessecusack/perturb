@@ -36,6 +36,14 @@ try
     a = odas_p2mat(char(row.fn), p2args{:}); % extract P file contents
     my_mk_directory(row.fnMat);
     save(row.fnMat, "-struct", "a", pars.matlab_file_format); % save into a mat file
+
+    row.sn = setupstr(a.setupfilestr, 'instrument_info', 'sn'); % Get the serial number in the instrument_info stanza
+    if isempty(row.sn)
+        row.sn = missing;
+    else
+        row.sn = string(row.sn{1});
+    end % if isempty
+
     row.qMatOkay = true;
     fprintf("Took %.2f seconds to convert %s\n", toc(stime), row.name);
 catch ME

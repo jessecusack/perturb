@@ -200,6 +200,11 @@
 			"long_name": "Turbidity",
 			"standard_name": "sea_water_turbidity",
 			"coverage_content_type": "physicalMeasurement"
+		},
+		"sn": {
+			"units": "",
+			"long_name": "Serial Number",
+			"coverage_content_type": "auxiliaryInformation"
 		}
 	},
 
