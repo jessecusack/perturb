@@ -157,7 +157,7 @@ profileInfo = trim_top_profiles(profiles, profileInfo, pars);
 
 profilesInfo = struct();
 profilesInfo.profiles = profiles;
-profilesInfo.row = row(1,["name", "date", "fClock" "t0", "t1", "tEnd"]);
+profilesInfo.row = row(1,["name", "date", "fClock" "t0", "t1", "tEnd", "sn"]);
 profilesInfo.pInfo = profileInfo;
 if qFP07
     profilesInfo.fp07Lags = fp07_lags;
@@ -181,6 +181,7 @@ end % arguments Output
 tbl = table();
 tbl.name = repmat(row.name, nProfiles, 1);
 tbl.index = (1:nProfiles)';
+tbl.sn = repmat(row.sn, nProfiles,1);
 tbl.t0 = NaT(nProfiles,1);
 tbl.t1 = NaT(nProfiles,1);
 tbl.n_slow = nan(nProfiles,1);
