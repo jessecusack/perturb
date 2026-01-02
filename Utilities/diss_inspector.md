@@ -9,13 +9,31 @@ is to run your perturb script, like
 [example0.m](../Examples/examaple0.m)
 in the examples folder, then run `diss_inspector(pars=pars, xLim=datetime("2023-05-12 05:15") + minutes([-2,4]))` from within MATLAB. This will open the combined dissipation estimates from 
 [example0.m](../Examples/examaple0.m)
-in the diss_inspector GUI, with the x-axis limited to a 6 minute windo about the specified datetime. For your data will will either want to remove the `xLim` option or change the limits. This example is a single profile. For real data you will see many profiles. 
+in the diss_inspector GUI, with the x-axis limited to a 6 minute window about the specified datetime. For your data will will either want to remove the `xLim` option or change the limits. This example is a single profile. For real data you will see many profiles. 
 
-You will see three panels representing the average dissipation, `epsilonMean`, `e_` from shear probe 1, and `e_2` from shear probe 2. 
-- You can zoom in on a depth range in any of the plots and they will all zoom into the same depth range.
-- If you click on a dissipation cell, three additional figures will be opened:
+You will see figure 10 with three panels representing the average dissipation, `epsilonMean`, `e_` from shear probe 1, and `e_2` from shear probe 2. 
+- You can zoom in on a depth and time range in any of the plots and they will all zoom into the same depth range.
+- If you click on a dissipation cell, three additional figures will be created:
  - Figure 11 are various dissipation related diagnostics for the profile.  The horizontal grey band is the depth of the selected cell
  - Figure 12 is the Kolmogorov fits for the selected dissipation estimate.
  - Figure 13 are various scalar diagnostics for the profile. The horizontal grey band is the depth of the selected cell
 
 In addition to clicking on a cell, you can navigate using the arrow keys. 
+
+The [diss_inspector](diss_inspector.m) parameters include:
+- `pars` - the perturb parameters structure used to generate the combined dissipation estimates
+- `figure` - figure number for the main dissipation inspector figure, default is 10
+- `debug` - boolean to turn on debug mode, default is false
+- `xLim` - datetime vector of length 2 to limit the x-axis range, default is []
+- `yLim` - depth vector of length 2 to limit the y-axis range, default is []
+- `cLim` - color axis limits for the dissipation plots, default is [-10 -4]
+- `diss_combo_root` - root directory for the combined dissipation estimates, default is `pars.diss_combo_root`
+- `diss_root` - root directory for the dissipation estimates, default is `pars.diss_root`
+- `profile_root` - root directory for the profile data, default is `pars.profile_root`
+- `dtMax` - Maximum time between casts to consider gap free, default is 300 seconds
+- `CT_T_name` - name of the temperature variable in the profile data, default is `JAC_T`
+- `CT_C_name` - name of the temperature variable in the profile data, default is `JAC_C`
+- `plotEmean` - boolean to plot the mean dissipation, default is true
+- `plotE1` - boolean to plot shear probe 1 dissipation, default is true
+- `plotE2` - boolean to plot shear probe 2 dissipation, default is true
+- `dropOverlapping` - boolean to drop overlapping dissipation estimates, default is false (This is useful when one has multiple VMPs or MRs with the overlapping timestamps)
