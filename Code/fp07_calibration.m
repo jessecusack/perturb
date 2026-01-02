@@ -165,7 +165,7 @@ if row.type == "therm"
     factor = factor * 2 / (row.G * row.E_B);
     Z = factor * (T - row.a) / row.b;
 else
-    Z = T * factor + row.adc+zero;
+    Z = T * factor + row.adc_zero;
     Z = ((Z - row.a) / row.b) * 2 / (row.G * row.E_B);
 end
 

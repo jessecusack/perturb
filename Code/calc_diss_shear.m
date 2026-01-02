@@ -77,11 +77,11 @@ try % dissipation estimates
     [dInfo, tbl] = mk_diss_struct(pInfo, diss);
 catch ME
     rethrow(ME)
-    fprintf("Error %s calculating dissipation, %s\n", label, ME.message);
-    for i = 1:numel(ME.stack)
-        stk = ME.stack(i);
-        fprintf("Stack(%d) line=%d name=%s file=%s\n", i, stk.line, string(stk.name), string(stk.file));
-    end % for i
+    % fprintf("Error %s calculating dissipation, %s\n", label, ME.message);
+    % for i = 1:numel(ME.stack)
+    %     stk = ME.stack(i);
+    %     fprintf("Stack(%d) line=%d name=%s file=%s\n", i, stk.line, string(stk.name), string(stk.file));
+    % end % for i
 end % try
 end % calc_diss_shear
 

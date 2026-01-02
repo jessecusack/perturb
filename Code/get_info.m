@@ -188,9 +188,9 @@ arguments
     x % Input value to check
     lhs double = nan % minimum value
     rhs double = nan % maximum value
-    clhs double = false % < or <=
-    crhs double = false % > or >=
-end; % arguments
+    clhs logical = false % < or <=
+    crhs logical = false % > or >=
+end % arguments
 
 q = false;
 

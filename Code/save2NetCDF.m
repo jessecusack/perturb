@@ -105,7 +105,13 @@ attrG.time_coverage_resolution = sprintf("T%fS", seconds(mk_resolution(tbl.t)));
 
 fnNC = abspath(fnNC); % Matlab's netcdf does not like ~ in filenames, so get rid of it
 
-if exist(fnNC, "file"), delete(fnNC); end % We say to clobber, but it still fails sometimes
+if exist(fnNC, "file")
+    try
+        delete(fnNC);
+    catch ME
+        warning("Failed to delete existing NetCDF file %s: %s", fnNC, ME.message);
+    end
+end % We say to clobber, but it still fails sometimes
 
 fprintf("Writing %s\n", fnNC);
 ncid = netcdf.create(fnNC, ... % Create a fresh copy

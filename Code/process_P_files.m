@@ -194,7 +194,7 @@ if pars.chi_enable
     [row, chi] = profile2chi(row, profiles, diss, pars); % Calculate Chi for each profile
     [row, chiBinned] = chi2binned(row, chi, pars); % Bin the chi estimates
 end % if chi
-end %s process_P_to_binned_profile
+end % P_to_binned_profile
 
 function startProcessPool(pars)
 arguments (Input)
