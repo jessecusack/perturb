@@ -37,3 +37,15 @@ The [diss_inspector](diss_inspector.m) parameters include:
 - `plotE1` - boolean to plot shear probe 1 dissipation, default is true
 - `plotE2` - boolean to plot shear probe 2 dissipation, default is true
 - `dropOverlapping` - boolean to drop overlapping dissipation estimates, default is false (This is useful when one has multiple VMPs or MRs with the overlapping timestamps)
+
+The required [diss_inspector](diss_inspector.m) parameters include:
+- `diss_combo_root` - root directory for the combined dissipation estimates
+- `diss_root` - root directory for the dissipation estimates
+- `profile_root` - root directory for the profile data
+- `CT_T_name` - name of the temperature variable in the profile data
+- `CT_C_name` - name of the temperature variable in the profile data
+
+The value for these parameters is found in one of two methods:
+- If explicitly provided to the function, that value is used
+- If not provided, the function looks for the value in the `pars` structure
+- If not found in `pars`, the function will throw an error indicating the missing required parameter
