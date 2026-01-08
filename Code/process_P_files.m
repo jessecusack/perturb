@@ -138,6 +138,16 @@ try
         ctd2combo(ctdBinned(qCTD), pars);
     end % if any qCTD
 
+    if exist("pars", "var") && ...
+            isstruct(pars) && ...
+            isfield(pars, "diss_combo_root") && ...
+            exist(pars.diss_combo_root, "dir") && ...
+            ~exist(fullfile(pars.diss_combo_root, "pars.mat"))
+        ofn = fullfile(pars.diss_combo_root, "pars.mat")
+        fprintf("Creating %s\n", ofn)
+        save(ofn, "-struct", "pars");
+    end % if pars
+
     fprintf("\n********* Finished at %s in %.0f seconds **********\n", datetime(), toc(stime));
     diary off;
 catch ME
