@@ -1,6 +1,6 @@
 # perturb - a microstructure processing toolbox for [Rockland Scientific](https://rocklandscientific.com) instruments
 
-## This package is no longer under active development. Please use my, Pat, Python package [turbulence](https://github.com/mousebrains/turbulence).
+## This package is no longer under active development. Please use my Python package [turbulence](https://github.com/mousebrains/turbulence), Pat.
 
 - [Examples](Examples/README.md)
 - [Utilities](Utilities/README.md)
